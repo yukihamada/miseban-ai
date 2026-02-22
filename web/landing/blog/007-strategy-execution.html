@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>7つの意思決定を即日実行した全記録 — Day 2｜ミセバンAI Blog</title>
+<meta name="description" content="AI経営会議で決定した7つのアクションを即日実行。価格改定、LP刷新、AI推論実装、プライバシー対応、顧客インタビュー準備の全記録。">
+<meta name="keywords" content="戦略実行,スプリント,価格改定,AI推論,ONNX,YOLOv8,ミセバンAI">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://miseban.ai/blog/007-strategy-execution">
+
+<!-- OGP -->
+<meta property="og:title" content="7つの意思決定を即日実行した全記録 — Day 2｜ミセバンAI Blog">
+<meta property="og:description" content="AI経営会議で決定した7つのアクションを即日実行した全記録。">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://miseban.ai/blog/007-strategy-execution">
+<meta property="og:image" content="https://miseban.ai/ogp.png">
+<meta property="og:site_name" content="ミセバンAI">
+<meta property="og:locale" content="ja_JP">
+<meta property="article:published_time" content="2026-02-23">
+<meta property="article:author" content="ミセバンAI チーム">
+<meta property="article:tag" content="戦略実行">
+<meta property="article:tag" content="スプリント">
+
+<!-- Twitter Card -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="7つの意思決定を即日実行した全記録 — Day 2">
+<meta name="twitter:description" content="AI経営会議で決定した7つのアクションを即日実行した全記録。">
+<meta name="twitter:image" content="https://miseban.ai/ogp.png">
+
+<!-- Favicon -->
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%234f46e5'/><text x='50%25' y='54%25' dominant-baseline='middle' text-anchor='middle' fill='white' font-size='18' font-weight='bold' font-family='sans-serif'>M</text></svg>">
+
+<!-- Google Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --white:#ffffff;--gray-50:#f8fafc;--gray-100:#f1f5f9;--gray-200:#e2e8f0;--gray-300:#cbd5e1;--gray-400:#94a3b8;--gray-500:#64748b;
+  --slate-600:#475569;--slate-700:#334155;--slate-800:#1e293b;--slate-900:#0f172a;
+  --indigo-50:#eef2ff;--indigo-100:#e0e7ff;--indigo-500:#6366f1;--indigo-600:#4f46e5;--indigo-700:#4338ca;--indigo-900:#312e81;--indigo-950:#1e1b4b;
+  --emerald-50:#ecfdf5;--emerald-500:#10b981;--emerald-600:#059669;
+  --amber-50:#fffbeb;--amber-500:#f59e0b;--amber-600:#d97706;
+  --rose-50:#fff1f2;--rose-500:#f43f5e;--rose-600:#e11d48;
+  --radius-sm:8px;--radius:12px;--radius-lg:16px;--radius-xl:24px;
+  --shadow-sm:0 1px 3px rgba(0,0,0,.1),0 1px 2px rgba(0,0,0,.06);--shadow-md:0 4px 6px -1px rgba(0,0,0,.1),0 2px 4px -2px rgba(0,0,0,.1);--shadow-lg:0 10px 15px -3px rgba(0,0,0,.1),0 4px 6px -4px rgba(0,0,0,.1);
+}
+html{scroll-behavior:smooth}
+body{font-family:'Noto Sans JP','Inter',system-ui,sans-serif;color:var(--slate-900);background:var(--white);line-height:1.8;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+a{text-decoration:none;color:inherit;transition:color .2s}
+ul,ol{list-style:none}
+.container{max-width:1200px;margin:0 auto;padding:0 24px}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;font-family:inherit;font-size:.9375rem;font-weight:600;padding:14px 28px;border-radius:100px;border:none;cursor:pointer;transition:all .2s;white-space:nowrap}
+.btn-primary{background:var(--indigo-600);color:var(--white)}
+.btn-primary:hover{background:var(--indigo-700);transform:translateY(-1px)}
+.btn-sm{padding:10px 20px;font-size:.875rem}
+
+.header{position:fixed;top:0;left:0;width:100%;z-index:1000;background:rgba(255,255,255,.92);backdrop-filter:blur(16px) saturate(180%);box-shadow:0 1px 3px rgba(0,0,0,.06);border-bottom:1px solid rgba(0,0,0,.04)}
+.header-inner{display:flex;align-items:center;justify-content:space-between;height:72px}
+.logo{display:flex;align-items:center;gap:2px;font-size:1.25rem;font-weight:700;color:var(--slate-900)}
+.logo-ai{color:var(--indigo-600)}
+.nav{display:flex;align-items:center;gap:32px}
+.nav a{font-size:.875rem;font-weight:500;color:var(--slate-600)}
+.nav a:hover{color:var(--slate-900)}
+.nav-cta{margin-left:8px}
+.mobile-toggle{display:none;background:none;border:none;cursor:pointer;padding:8px}
+.mobile-toggle span{display:block;width:22px;height:2px;background:var(--slate-900);margin:5px 0;border-radius:1px}
+.mobile-menu{display:none;position:fixed;inset:0;background:var(--white);z-index:999;flex-direction:column;align-items:center;justify-content:center;gap:28px}
+.mobile-menu.open{display:flex}
+.mobile-menu a{font-size:1.125rem;color:var(--slate-900);font-weight:500}
+.mobile-close{position:absolute;top:24px;right:24px;background:none;border:none;color:var(--slate-600);cursor:pointer;width:40px;height:40px;display:flex;align-items:center;justify-content:center;border-radius:50%}
+@media(max-width:768px){.nav{display:none}.mobile-toggle{display:block}}
+
+.article-hero{background:linear-gradient(165deg,var(--slate-900) 0%,#1a1647 50%,var(--indigo-950) 100%);padding:140px 0 72px;color:var(--white);position:relative;overflow:hidden}
+.article-hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 80% 50% at 50% -20%,rgba(99,102,241,.15),transparent);pointer-events:none}
+.article-hero-content{position:relative;z-index:1;max-width:800px;margin:0 auto;text-align:center}
+.article-hero-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.1);padding:7px 18px;border-radius:100px;font-size:.8125rem;font-weight:500;color:rgba(255,255,255,.8);margin-bottom:24px}
+.article-hero h1{font-size:clamp(1.75rem,4.5vw,2.5rem);font-weight:700;line-height:1.4;margin-bottom:20px;letter-spacing:-.02em}
+.article-hero-meta{display:flex;align-items:center;justify-content:center;gap:16px;font-size:.875rem;color:rgba(255,255,255,.5)}
+
+.article-body{max-width:800px;margin:0 auto;padding:64px 24px 96px}
+.article-body h2{font-size:1.5rem;font-weight:700;color:var(--slate-900);margin:56px 0 24px;padding-bottom:12px;border-bottom:2px solid var(--indigo-100);letter-spacing:-.01em}
+.article-body h3{font-size:1.1875rem;font-weight:700;color:var(--slate-800);margin:40px 0 16px}
+.article-body p{font-size:.9375rem;color:var(--slate-700);line-height:2;margin-bottom:20px}
+.article-body ul,.article-body ol{margin:0 0 24px;padding-left:0}
+.article-body ul li,.article-body ol li{font-size:.9375rem;color:var(--slate-700);line-height:2;padding-left:24px;position:relative;margin-bottom:8px}
+.article-body ul li::before{content:'';position:absolute;left:6px;top:13px;width:6px;height:6px;border-radius:50%;background:var(--indigo-500)}
+.article-body ol{counter-reset:ol-counter}
+.article-body ol li{counter-increment:ol-counter}
+.article-body ol li::before{content:counter(ol-counter)'.';position:absolute;left:0;font-weight:700;color:var(--indigo-600);font-size:.875rem}
+.article-body strong{font-weight:700;color:var(--slate-900)}
+.article-body blockquote{border-left:4px solid var(--indigo-500);background:var(--indigo-50);padding:20px 24px;margin:24px 0;border-radius:0 var(--radius) var(--radius) 0}
+.article-body blockquote p{color:var(--indigo-900);margin-bottom:0;font-style:italic}
+.article-body code{font-family:'JetBrains Mono',monospace;background:var(--gray-100);padding:2px 8px;border-radius:4px;font-size:.85em;color:var(--indigo-700)}
+.article-body pre{background:var(--slate-900);color:#e2e8f0;padding:24px;border-radius:var(--radius);margin:24px 0;overflow-x:auto;line-height:1.7}
+.article-body pre code{background:none;padding:0;color:inherit;font-size:.8125rem}
+
+.change-card{background:var(--white);border:1px solid var(--gray-200);border-radius:var(--radius-lg);padding:28px 32px;margin:24px 0;transition:all .3s}
+.change-card:hover{box-shadow:var(--shadow-md)}
+.change-header{display:flex;align-items:center;gap:16px;margin-bottom:16px}
+.change-status{display:inline-flex;align-items:center;gap:6px;font-size:.75rem;font-weight:700;padding:4px 12px;border-radius:100px}
+.status-done{background:var(--emerald-50);color:var(--emerald-600)}
+.status-progress{background:var(--amber-50);color:var(--amber-600)}
+.status-ready{background:var(--indigo-50);color:var(--indigo-600)}
+.change-card h3{font-size:1.0625rem;font-weight:700;color:var(--slate-900);margin:0 0 12px}
+.change-card p{font-size:.9rem;color:var(--slate-600);line-height:1.9;margin-bottom:8px}
+.change-card p:last-child{margin-bottom:0}
+
+.diff-block{background:var(--gray-50);border:1px solid var(--gray-200);border-radius:var(--radius);padding:20px 24px;margin:16px 0;font-size:.8125rem;font-family:'JetBrains Mono',monospace;line-height:1.8}
+.diff-old{color:var(--rose-600);text-decoration:line-through;display:block}
+.diff-new{color:var(--emerald-600);display:block}
+.diff-label{font-family:'Noto Sans JP',sans-serif;font-size:.75rem;font-weight:600;color:var(--gray-400);margin-bottom:8px}
+
+.summary-box{background:linear-gradient(135deg,var(--indigo-50),#faf5ff);border:1px solid var(--indigo-100);border-radius:var(--radius-lg);padding:32px;margin:32px 0}
+.summary-box p{font-size:.9375rem;color:var(--slate-700);line-height:2;margin-bottom:12px}
+.summary-box p:last-child{margin-bottom:0}
+
+.back-link{display:inline-flex;align-items:center;gap:8px;font-size:.875rem;font-weight:600;color:var(--indigo-600);margin-bottom:32px}
+.back-link:hover{color:var(--indigo-700);gap:10px}
+
+.footer{background:var(--slate-900);color:rgba(255,255,255,.5);padding:64px 0 32px}
+.footer-grid{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:40px;margin-bottom:48px}
+.footer-brand{font-size:1.125rem;font-weight:700;color:var(--white);margin-bottom:8px}
+.footer-brand .logo-ai{color:var(--indigo-500)}
+.footer-tagline{font-size:.8125rem;line-height:1.8;margin-bottom:20px}
+.footer-email{font-size:.8125rem;color:var(--indigo-500)}
+.footer h4{font-size:.75rem;font-weight:600;color:rgba(255,255,255,.7);margin-bottom:16px;letter-spacing:.05em;text-transform:uppercase}
+.footer ul{list-style:none;padding:0}
+.footer ul li{margin-bottom:8px}
+.footer ul a{font-size:.8125rem;transition:color .2s}
+.footer ul a:hover{color:var(--white)}
+.footer-bottom{border-top:1px solid rgba(255,255,255,.06);padding-top:24px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;font-size:.75rem}
+@media(max-width:768px){.footer-grid{grid-template-columns:1fr 1fr;gap:32px}.change-card{padding:20px 24px}}
+@media(max-width:480px){.footer-grid{grid-template-columns:1fr}}
+
+.reveal{opacity:0;transform:translateY(20px);transition:opacity .5s ease,transform .5s ease}
+.reveal.visible{opacity:1;transform:none}
+</style>
+</head>
+<body>
+
+<header class="header" id="header">
+  <div class="container header-inner">
+    <a href="/" class="logo">ミセバン<span class="logo-ai">AI</span></a>
+    <nav class="nav">
+      <a href="/#setup">導入方法</a>
+      <a href="/#features">機能</a>
+      <a href="/#pricing">料金</a>
+      <a href="/cameras.html">対応カメラ</a>
+      <a href="/blog/">ブログ</a>
+      <a href="/#cta" class="btn btn-primary btn-sm nav-cta">無料で始める</a>
+    </nav>
+    <button class="mobile-toggle" id="mobileToggle" aria-label="メニューを開く"><span></span><span></span><span></span></button>
+  </div>
+</header>
+
+<div class="mobile-menu" id="mobileMenu">
+  <button class="mobile-close" id="mobileClose" aria-label="メニューを閉じる">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+  </button>
+  <a href="/#setup">導入方法</a><a href="/#features">機能</a><a href="/#pricing">料金</a><a href="/cameras.html">対応カメラ</a><a href="/blog/">ブログ</a><a href="/#cta" class="btn btn-primary">無料で始める</a>
+</div>
+
+<section class="article-hero">
+  <div class="container">
+    <div class="article-hero-content">
+      <div class="article-hero-badge">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="13 17 18 12 13 7"/><polyline points="6 17 11 12 6 7"/></svg>
+        Day 2 スプリント
+      </div>
+      <h1>7つの意思決定を即日実行した全記録</h1>
+      <div class="article-hero-meta">
+        <time datetime="2026-02-23">2026.02.23</time>
+        <span>|</span>
+        <span>ミセバンAI チーム</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<article class="article-body">
+
+  <a href="/blog/" class="back-link">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+    ブログ一覧に戻る
+  </a>
+
+  <div class="summary-box reveal">
+    <p>昨日の<a href="./006-meeting-decisions.html" style="color:var(--indigo-600);font-weight:600;">AI経営会議</a>で決定した7つのアクションアイテムを、<strong>1日で全て実行</strong>しました。この記事では、各変更の「Before → After」と、なぜその判断に至ったかの根拠を公開します。</p>
+  </div>
+
+  <h2>実行結果サマリー</h2>
+
+  <div class="change-card reveal">
+    <div class="change-header">
+      <span class="change-status status-done">完了</span>
+    </div>
+    <h3>1. 価格改定: Starter ¥2,980 → ¥4,980</h3>
+    <div class="diff-block">
+      <div class="diff-label">料金テーブル変更</div>
+      <span class="diff-old">Starter ¥2,980/月 → Pro ¥5,980/月 → Enterprise ¥14,800/月</span>
+      <span class="diff-new">Starter ¥4,980/月 → Pro ¥9,800/月 → Enterprise ¥19,800/月</span>
+    </div>
+    <p><strong>根拠（CFO鈴木）:</strong> 旧価格ではLTV/CAC比率が1.8-2.4倍で、SaaS健全性基準の3倍を下回っていた。新価格でLTV = ¥76,615（チャーン率6.5%想定）となり、LTV/CAC = 3.0-4.0倍に改善。</p>
+    <p><strong>年間プラン:</strong> 20%OFFを適用。Starter年額¥47,760（月あたり¥3,980）、Pro年額¥94,080（月あたり¥7,840）。</p>
+    <p><strong>Freeプラン:</strong> データ保存を3日→7日間に拡大。無料トライアルの価値を高めつつ、有料プランへの引き上げ動機（30日保存）を明確にした。</p>
+  </div>
+
+  <div class="change-card reveal">
+    <div class="change-header">
+      <span class="change-status status-done">完了</span>
+    </div>
+    <h3>2. 顧客インタビュー準備</h3>
+    <p>30分の半構造化インタビューのための完全ガイドを作成。</p>
+    <ul>
+      <li><strong>対象:</strong> 飲食店2件、小売2件、サービス業1件（計5件）</li>
+      <li><strong>質問設計:</strong> 「来客データが欲しいですか？」という誘導ではなく、「経営で一番困っていることは？」というオープンクエスチョンから始める</li>
+      <li><strong>成功基準:</strong> 5件中3件以上が来客データの需要に自発的に言及 → GO</li>
+      <li><strong>記録テンプレート:</strong> 各インタビューごとに議事録を残すMarkdownテンプレートを用意</li>
+      <li><strong>募集方法:</strong> 知人紹介、商店街、飲食店直接訪問のアプローチを記載</li>
+    </ul>
+    <p>ドキュメント: <code>docs/customer-interview-guide.md</code></p>
+  </div>
+
+  <div class="change-card reveal">
+    <div class="change-header">
+      <span class="change-status status-done">完了</span>
+    </div>
+    <h3>3. AI推論パイプラインの実装</h3>
+    <p>CTOが「致命的ブロッカー」と指摘した、AI推論ゼロ問題を解消。<code>crates/ai/src/lib.rs</code> を121行→455行に大幅拡張。</p>
+    <p><strong>技術スタック:</strong></p>
+    <ul>
+      <li><strong>推論エンジン:</strong> ONNX Runtime（<code>ort</code> crate v2）</li>
+      <li><strong>モデル:</strong> YOLOv8n（nano）ONNX形式 — 軽量で推論速度を優先</li>
+      <li><strong>前処理:</strong> JPEG decode → 640x640リサイズ → [0,1]正規化 → NCHW tensor</li>
+      <li><strong>後処理:</strong> 8400検出候補 → NMS（IoU 0.45、信頼度閾値0.25）→ person class（COCO class 0）のみフィルタ</li>
+      <li><strong>初期化:</strong> <code>OnceLock</code>パターンでモデルを遅延ロード（シングルトン）</li>
+    </ul>
+    <pre><code>// 推論パイプラインの核心部分
+pub async fn analyze_frame(frame: &FrameData) -> AnalysisResult {
+    let detections = detect_people(&frame.jpeg_bytes);
+    let people_count = detections.len() as u32;
+    let zones = map_detections_to_zones(&detections);
+    // ...
+}</code></pre>
+    <p><strong>フォールバック:</strong> <code>mock</code> featureフラグで旧モック動作も維持。モデルファイルがない開発環境でもテスト可能。</p>
+  </div>
+
+  <div class="change-card reveal">
+    <div class="change-header">
+      <span class="change-status status-done">完了</span>
+    </div>
+    <h3>4. LP刷新: Docker削除 + メッセージリポジショニング</h3>
+    <div class="diff-block">
+      <div class="diff-label">ヒーローコピー</div>
+      <span class="diff-old">既存カメラが、AI店長に変わる。</span>
+      <span class="diff-new">既存カメラが、経営判断を変える。</span>
+    </div>
+    <div class="diff-block">
+      <div class="diff-label">サブコピー</div>
+      <span class="diff-old">来客分析・防犯・AIアドバイスが始まる</span>
+      <span class="diff-new">売上予測・スタッフ最適化・AIアドバイスが始まる</span>
+    </div>
+    <div class="diff-block">
+      <div class="diff-label">セットアップ第1選択肢</div>
+      <span class="diff-old">PCで始める — Dockerで1コマンド起動</span>
+      <span class="diff-new">スマホで始める — アプリをインストールするだけ</span>
+    </div>
+    <p><strong>変更の意図:</strong></p>
+    <ul>
+      <li>CPO中村の指摘通り、「Docker」という単語がターゲット顧客（飲食店オーナー等）の99%を離脱させる</li>
+      <li>「来客カウント」は手段。「経営判断サポート」が顧客の本当のJob-to-be-Done</li>
+      <li>セットアップの順序をスマホ→PC→専用デバイスに変更し、最もハードルが低い方法を第一に</li>
+    </ul>
+  </div>
+
+  <div class="change-card reveal">
+    <div class="change-header">
+      <span class="change-status status-done">完了</span>
+    </div>
+    <h3>5. 代理店手数料: 30% → 20% + 初回設置料¥15,000</h3>
+    <div class="diff-block">
+      <div class="diff-label">報酬体系</div>
+      <span class="diff-old">月額の30%（ランク昇格で最大45%）</span>
+      <span class="diff-new">月額の20%（ランク昇格で最大35%）+ 初回設置支援料 ¥15,000/件</span>
+    </div>
+    <p>代理店ペルソナ（高橋）の「初回フロー収入がないとモチベーション維持できない」という指摘を反映。CFOの「30%はユニットエコノミクスを圧迫する」という指摘とのバランスを取った。</p>
+    <p><code>docs/reseller-program.md</code> のシミュレーション数値も全て再計算済み。</p>
+  </div>
+
+  <div class="change-card reveal">
+    <div class="change-header">
+      <span class="change-status status-done">完了</span>
+    </div>
+    <h3>6. プライバシーポリシーテンプレート</h3>
+    <p>個人情報保護委員会ガイドラインに準拠した2種類のテンプレートを作成。</p>
+    <ul>
+      <li><strong>Web用プライバシーポリシー</strong> — 店舗のWebサイトに掲載する詳細版（<code>docs/privacy-policy-template.md</code>）</li>
+      <li><strong>店頭掲示用テンプレート</strong> — 店内に掲示するA4サイズの簡易版（<code>docs/store-signage-template.md</code>）</li>
+    </ul>
+    <p><strong>要点:</strong></p>
+    <ul>
+      <li>映像データはAI処理後に即座に破棄、統計データのみ保存</li>
+      <li>顔認識は行わない。個人を特定できる情報は一切収集しない</li>
+      <li>利用目的は「店舗の安全管理」と「サービス向上のための来客傾向分析」に限定</li>
+      <li>店舗名・連絡先のプレースホルダーを含み、各店舗がカスタマイズ可能</li>
+    </ul>
+    <p>CEO田中の指摘通り、プライバシー対応は「リスク回避」ではなく「差別化要素」として位置づけた。</p>
+  </div>
+
+  <div class="change-card reveal">
+    <div class="change-header">
+      <span class="change-status status-ready">設計完了</span>
+    </div>
+    <h3>7. NSM = 週間アクティブ店舗数</h3>
+    <p>PM伊藤の提案に従い、North Star Metricを「週間アクティブ店舗数」に定義。</p>
+    <blockquote><p>過去7日間に1回以上ダッシュボードにログインした、またはLINE通知を開封した店舗数</p></blockquote>
+    <p>計測はベータ5店舗が稼働した時点で開始。API側にログインイベントのトラッキングを追加予定。</p>
+  </div>
+
+  <h2>変更ファイル一覧</h2>
+
+  <ul>
+    <li><code>web/landing/index.html</code> — ヒーロー、セットアップ、価格、比較、パートナーセクション全面改修</li>
+    <li><code>crates/ai/src/lib.rs</code> — ONNX Runtime推論パイプライン実装（121→455行）</li>
+    <li><code>crates/ai/Cargo.toml</code> — ort, image, anyhow追加</li>
+    <li><code>docs/reseller-program.md</code> — 報酬体系・シミュレーション全面改定</li>
+    <li><code>docs/privacy-policy-template.md</code> — 新規作成</li>
+    <li><code>docs/store-signage-template.md</code> — 新規作成</li>
+    <li><code>docs/customer-interview-guide.md</code> — 新規作成</li>
+    <li><code>web/landing/sitemap.xml</code> — 新規ブログ記事追加</li>
+  </ul>
+
+  <h2>次にやること</h2>
+
+  <p><strong>Week 1（2/24-3/2）最優先タスク:</strong></p>
+  <ol>
+    <li>顧客インタビュー5件を実施。インタビューガイドに沿って「本当の痛み」を聞く</li>
+    <li>YOLOv8n ONNXモデルの実環境テスト。静止画→人物検出→カウントの一気通貫を確認</li>
+    <li>基本ダッシュボードのUI設計。モックデータで日別・時間別グラフを表示</li>
+  </ol>
+
+  <p><strong>Week 2以降:</strong></p>
+  <ol>
+    <li>インタビュー結果をもとにLPのコピーを最終調整</li>
+    <li>ベータ店舗5件の確保</li>
+    <li>Google Ads ¥30,000テスト開始（インタビュー結果がGO判定の場合のみ）</li>
+  </ol>
+
+  <h2>振り返り</h2>
+
+  <p>Day 1で「プロダクトを作った」。Day 2で「プロダクトを直した」。</p>
+
+  <p>正直、昨日の時点では「いい感じにできた」と思っていた。しかしAI経営会議で出た指摘は、すべて正しかった。¥2,980は安すぎた。Dockerは余計だった。AI推論が入っていないプロダクトは、ただの「画像アップローダー」だった。</p>
+
+  <p>スタートアップにおいて<strong>方向修正は早ければ早いほどコストが安い</strong>。AI経営会議→即日実行のサイクルを回せたことは、1人開発 + Claude Codeの組み合わせの強みだと思う。</p>
+
+  <p>次のブログは、インタビュー結果の報告になる予定です。5人のリアルな店舗オーナーの声を、忖度なしでお届けします。</p>
+
+  <p style="margin-top:48px;padding-top:24px;border-top:1px solid var(--gray-200);font-size:.8125rem;color:var(--gray-400);">
+    関連記事: <a href="./005-product-meeting.html" style="color:var(--indigo-600);">AI経営会議の全記録</a> | <a href="./006-meeting-decisions.html" style="color:var(--indigo-600);">7つの意思決定</a>
+  </p>
+
+</article>
+
+<footer class="footer">
+  <div class="container">
+    <div class="footer-grid">
+      <div>
+        <div class="footer-brand">ミセバン<span class="logo-ai">AI</span></div>
+        <p class="footer-tagline">既存カメラが、経営判断を変える。<br>小規模店舗のための次世代AI分析。</p>
+        <a href="mailto:info@miseban.ai" class="footer-email">info@miseban.ai</a>
+      </div>
+      <div>
+        <h4>サービス</h4>
+        <ul><li><a href="/#features">機能</a></li><li><a href="/#pricing">料金</a></li><li><a href="/cameras.html">対応カメラ</a></li><li><a href="/#faq">FAQ</a></li></ul>
+      </div>
+      <div>
+        <h4>開発者</h4>
+        <ul><li><a href="/blog/">ブログ</a></li><li><a href="https://github.com/yukihamada/miseban-ai">GitHub</a></li></ul>
+      </div>
+      <div>
+        <h4>お問い合わせ</h4>
+        <ul><li><a href="mailto:info@miseban.ai">一般のお問い合わせ</a></li><li><a href="mailto:partner@miseban.ai">パートナー窓口</a></li></ul>
+      </div>
+    </div>
+    <div class="footer-bottom"><p>&copy; 2026 MisebanAI. All rights reserved.</p></div>
+  </div>
+</footer>
+
+<script>
+(function(){
+  var toggle=document.getElementById('mobileToggle'),menu=document.getElementById('mobileMenu'),close=document.getElementById('mobileClose'),links=menu.querySelectorAll('a');
+  function open(){menu.classList.add('open');document.body.style.overflow='hidden'}
+  function shut(){menu.classList.remove('open');document.body.style.overflow=''}
+  toggle.addEventListener('click',open);close.addEventListener('click',shut);
+  for(var i=0;i<links.length;i++)links[i].addEventListener('click',shut);
+})();
+(function(){
+  var els=document.querySelectorAll('.reveal');
+  if(!('IntersectionObserver' in window)){els.forEach(function(el){el.classList.add('visible')});return}
+  var observer=new IntersectionObserver(function(entries){entries.forEach(function(e){if(e.isIntersecting){e.target.classList.add('visible');observer.unobserve(e.target)}})},{threshold:0.1});
+  els.forEach(function(el){observer.observe(el)});
+})();
+</script>
+
+</body>
+</html>

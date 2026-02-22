@@ -3,12 +3,21 @@ name = "ai"
 version.workspace = true
 edition.workspace = true
 
+[features]
+default = []
+mock = []
+
 [dependencies]
 shared = { path = "../shared" }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 chrono = "0.4"
 uuid = { version = "1", features = ["v4"] }
+
+# Real inference dependencies (excluded when `mock` feature is active)
+ort = { version = "=2.0.0-rc.9" }
+ndarray = "0.16"
+image = { version = "0.24", default-features = false, features = ["jpeg"] }
 
 [dev-dependencies]
 tokio = { version = "1", features = ["macros", "rt"] }

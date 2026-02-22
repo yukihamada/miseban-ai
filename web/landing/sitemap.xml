@@ -38,4 +38,19 @@
     <lastmod>2026-02-22</lastmod>
     <priority>0.6</priority>
   </url>
+  <url>
+    <loc>https://miseban-ai.fly.dev/blog/005-product-meeting.html</loc>
+    <lastmod>2026-02-22</lastmod>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://miseban-ai.fly.dev/blog/006-meeting-decisions.html</loc>
+    <lastmod>2026-02-22</lastmod>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://miseban-ai.fly.dev/blog/007-strategy-execution.html</loc>
+    <lastmod>2026-02-23</lastmod>
+    <priority>0.8</priority>
+  </url>
 </urlset>
