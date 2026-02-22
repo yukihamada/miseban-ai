@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>リリース判定サマリー — 10のアクションと6週スプリント｜ミセバンAI Blog</title>
+<meta name="description" content="リリース準備会議の結論を10のアクションアイテムに集約。合同会社設立、顧客インタビュー、エッジ推論、ダッシュボード構築の6週スプリント計画。">
+<meta name="keywords" content="リリース判定,アクションアイテム,スプリント計画,合同会社,MVP,ミセバンAI">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://miseban.ai/blog/009-release-decisions">
+
+<!-- OGP -->
+<meta property="og:title" content="リリース判定サマリー — 10のアクションと6週スプリント｜ミセバンAI Blog">
+<meta property="og:description" content="リリース準備会議の結論を10のアクションアイテムに集約。6週スプリント計画を公開。">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://miseban.ai/blog/009-release-decisions">
+<meta property="og:image" content="https://miseban.ai/ogp.png">
+<meta property="og:site_name" content="ミセバンAI">
+<meta property="og:locale" content="ja_JP">
+<meta property="article:published_time" content="2026-02-23">
+<meta property="article:author" content="ミセバンAI チーム">
+<meta property="article:tag" content="リリース判定">
+<meta property="article:tag" content="スプリント計画">
+
+<!-- Twitter Card -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="リリース判定サマリー — 10のアクションと6週スプリント">
+<meta name="twitter:description" content="リリース準備会議の結論を10のアクションアイテムに集約。6週スプリント計画を公開。">
+<meta name="twitter:image" content="https://miseban.ai/ogp.png">
+
+<!-- Favicon -->
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%234f46e5'/><text x='50%25' y='54%25' dominant-baseline='middle' text-anchor='middle' fill='white' font-size='18' font-weight='bold' font-family='sans-serif'>M</text></svg>">
+
+<!-- Google Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<style>
+/* ===== Reset & Custom Properties ===== */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --white:#ffffff;
+  --gray-50:#f8fafc;
+  --gray-100:#f1f5f9;
+  --gray-200:#e2e8f0;
+  --gray-300:#cbd5e1;
+  --gray-400:#94a3b8;
+  --gray-500:#64748b;
+  --slate-600:#475569;
+  --slate-700:#334155;
+  --slate-800:#1e293b;
+  --slate-900:#0f172a;
+  --indigo-50:#eef2ff;
+  --indigo-100:#e0e7ff;
+  --indigo-500:#6366f1;
+  --indigo-600:#4f46e5;
+  --indigo-700:#4338ca;
+  --indigo-900:#312e81;
+  --indigo-950:#1e1b4b;
+  --emerald-50:#ecfdf5;
+  --emerald-500:#10b981;
+  --emerald-600:#059669;
+  --amber-50:#fffbeb;
+  --amber-500:#f59e0b;
+  --amber-600:#d97706;
+  --rose-50:#fff1f2;
+  --rose-500:#f43f5e;
+  --rose-600:#e11d48;
+  --sky-50:#f0f9ff;
+  --sky-500:#0ea5e9;
+  --sky-600:#0284c7;
+  --purple-50:#faf5ff;
+  --purple-500:#a855f7;
+  --purple-600:#9333ea;
+  --teal-50:#f0fdfa;
+  --teal-500:#14b8a6;
+  --teal-600:#0d9488;
+  --radius-sm:8px;
+  --radius:12px;
+  --radius-lg:16px;
+  --radius-xl:24px;
+  --shadow-sm:0 1px 3px rgba(0,0,0,.1),0 1px 2px rgba(0,0,0,.06);
+  --shadow-md:0 4px 6px -1px rgba(0,0,0,.1),0 2px 4px -2px rgba(0,0,0,.1);
+  --shadow-lg:0 10px 15px -3px rgba(0,0,0,.1),0 4px 6px -4px rgba(0,0,0,.1);
+}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+body{font-family:'Noto Sans JP','Inter',system-ui,-apple-system,sans-serif;color:var(--slate-900);background:var(--white);line-height:1.8;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+img{max-width:100%;height:auto;display:block}
+a{text-decoration:none;color:inherit;transition:color .2s}
+ul,ol{list-style:none}
+.container{max-width:1200px;margin:0 auto;padding:0 24px}
+.nums{font-family:'Inter','Noto Sans JP',sans-serif}
+
+/* ===== Buttons ===== */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;font-family:inherit;font-size:.9375rem;font-weight:600;padding:14px 28px;border-radius:100px;border:none;cursor:pointer;transition:all .2s ease;white-space:nowrap;line-height:1.4}
+.btn-primary{background:var(--indigo-600);color:var(--white);box-shadow:0 1px 2px rgba(79,70,229,.3),0 4px 12px rgba(79,70,229,.2)}
+.btn-primary:hover{background:var(--indigo-700);transform:translateY(-1px)}
+.btn-sm{padding:10px 20px;font-size:.875rem}
+
+/* ===== Header ===== */
+.header{position:fixed;top:0;left:0;width:100%;z-index:1000;background:rgba(255,255,255,.92);backdrop-filter:blur(16px) saturate(180%);-webkit-backdrop-filter:blur(16px) saturate(180%);box-shadow:0 1px 3px rgba(0,0,0,.06);border-bottom:1px solid rgba(0,0,0,.04)}
+.header-inner{display:flex;align-items:center;justify-content:space-between;height:72px}
+.logo{display:flex;align-items:center;gap:2px;font-size:1.25rem;font-weight:700;color:var(--slate-900)}
+.logo-ai{color:var(--indigo-600);font-weight:700}
+.nav{display:flex;align-items:center;gap:32px}
+.nav a{font-size:.875rem;font-weight:500;color:var(--slate-600);transition:color .2s}
+.nav a:hover{color:var(--slate-900)}
+.nav-cta{margin-left:8px}
+.mobile-toggle{display:none;background:none;border:none;cursor:pointer;padding:8px}
+.mobile-toggle span{display:block;width:22px;height:2px;background:var(--slate-900);margin:5px 0;border-radius:1px;transition:.3s}
+.mobile-menu{display:none;position:fixed;inset:0;background:var(--white);z-index:999;flex-direction:column;align-items:center;justify-content:center;gap:28px}
+.mobile-menu.open{display:flex}
+.mobile-menu a{font-size:1.125rem;color:var(--slate-900);font-weight:500}
+.mobile-close{position:absolute;top:24px;right:24px;background:none;border:none;color:var(--slate-600);font-size:1.5rem;cursor:pointer;width:40px;height:40px;display:flex;align-items:center;justify-content:center;border-radius:50%;transition:background .2s}
+.mobile-close:hover{background:var(--gray-100)}
+
+@media(max-width:768px){
+  .nav{display:none}
+  .mobile-toggle{display:block}
+}
+
+/* ===== Article Hero ===== */
+.article-hero{background:linear-gradient(165deg,var(--slate-900) 0%,#1a1647 50%,var(--indigo-950) 100%);padding:140px 0 72px;color:var(--white);position:relative;overflow:hidden}
+.article-hero::before{content:'';position:absolute;top:0;left:0;right:0;bottom:0;background:radial-gradient(ellipse 80% 50% at 50% -20%,rgba(99,102,241,.15),transparent);pointer-events:none}
+.article-hero-content{position:relative;z-index:1;max-width:800px;margin:0 auto;text-align:center}
+.article-hero-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.1);padding:7px 18px;border-radius:100px;font-size:.8125rem;font-weight:500;color:rgba(255,255,255,.8);margin-bottom:24px;backdrop-filter:blur(8px)}
+.article-hero h1{font-size:clamp(1.75rem,4.5vw,2.5rem);font-weight:700;line-height:1.4;margin-bottom:20px;letter-spacing:-.02em}
+.article-hero-meta{display:flex;align-items:center;justify-content:center;gap:16px;font-size:.875rem;color:rgba(255,255,255,.5)}
+
+/* ===== Article Body ===== */
+.article-body{max-width:800px;margin:0 auto;padding:64px 24px 96px}
+.article-body h2{font-size:1.5rem;font-weight:700;color:var(--slate-900);margin:56px 0 24px;padding-bottom:12px;border-bottom:2px solid var(--indigo-100);letter-spacing:-.01em}
+.article-body h3{font-size:1.1875rem;font-weight:700;color:var(--slate-800);margin:40px 0 16px}
+.article-body p{font-size:.9375rem;color:var(--slate-700);line-height:2;margin-bottom:20px}
+.article-body ul,.article-body ol{margin:0 0 24px 0;padding-left:0}
+.article-body ul li,.article-body ol li{font-size:.9375rem;color:var(--slate-700);line-height:2;padding-left:24px;position:relative;margin-bottom:8px}
+.article-body ul li::before{content:'';position:absolute;left:6px;top:13px;width:6px;height:6px;border-radius:50%;background:var(--indigo-500)}
+.article-body ol{counter-reset:ol-counter}
+.article-body ol li{counter-increment:ol-counter}
+.article-body ol li::before{content:counter(ol-counter)'.';position:absolute;left:0;font-weight:700;color:var(--indigo-600);font-size:.875rem}
+.article-body strong{font-weight:700;color:var(--slate-900)}
+.article-body blockquote{border-left:4px solid var(--indigo-500);background:var(--indigo-50);padding:20px 24px;margin:24px 0;border-radius:0 var(--radius) var(--radius) 0}
+.article-body blockquote p{color:var(--indigo-900);margin-bottom:0;font-style:italic}
+.article-body code{font-family:'JetBrains Mono','Noto Sans JP',monospace;background:var(--gray-100);padding:2px 8px;border-radius:4px;font-size:.85em;color:var(--indigo-700)}
+.article-body pre{background:var(--slate-900);color:#e2e8f0;padding:24px;border-radius:var(--radius);margin:24px 0;overflow-x:auto;line-height:1.7}
+.article-body pre code{background:none;padding:0;color:inherit;font-size:.8125rem}
+
+/* ===== Back to blog ===== */
+.back-link{display:inline-flex;align-items:center;gap:8px;font-size:.875rem;font-weight:600;color:var(--indigo-600);margin-bottom:32px;transition:all .2s}
+.back-link:hover{color:var(--indigo-700);gap:10px}
+
+/* ===== Intro Box ===== */
+.intro-box{background:linear-gradient(135deg,var(--indigo-50),var(--purple-50));border:1px solid var(--indigo-100);border-radius:var(--radius-lg);padding:32px;margin:32px 0}
+.intro-box p{font-size:.9375rem;color:var(--slate-700);line-height:2;margin-bottom:12px}
+.intro-box p:last-child{margin-bottom:0}
+
+/* ===== Decision Card ===== */
+.decision-card{background:var(--white);border:1px solid var(--gray-200);border-radius:var(--radius-lg);padding:28px 32px;margin:24px 0;position:relative;transition:all .3s ease}
+.decision-card:hover{box-shadow:var(--shadow-md);border-color:var(--gray-300)}
+.decision-card::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;border-radius:var(--radius-lg) var(--radius-lg) 0 0}
+.decision-card.critical::before{background:linear-gradient(90deg,var(--rose-500),var(--rose-600))}
+.decision-card.high::before{background:linear-gradient(90deg,var(--amber-500),var(--amber-600))}
+.decision-card.strategic::before{background:linear-gradient(90deg,var(--indigo-500),var(--indigo-600))}
+.decision-card.security::before{background:linear-gradient(90deg,var(--teal-500),var(--teal-600))}
+
+.decision-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px}
+.decision-num{font-family:'Inter','Noto Sans JP',sans-serif;font-size:.75rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;padding:4px 12px;border-radius:100px}
+.critical .decision-num{background:var(--rose-50);color:var(--rose-600)}
+.high .decision-num{background:var(--amber-50);color:var(--amber-600)}
+.strategic .decision-num{background:var(--indigo-50);color:var(--indigo-600)}
+.security .decision-num{background:var(--teal-50);color:var(--teal-600)}
+.decision-title{font-size:1.125rem;font-weight:700;color:var(--slate-900);margin-bottom:12px}
+.decision-body{font-size:.9375rem;color:var(--slate-700);line-height:2}
+.decision-body p{margin-bottom:12px}
+.decision-body ul{margin:8px 0 16px}
+.decision-body ul li{padding-left:24px;position:relative;margin-bottom:6px;line-height:1.9;font-size:.9375rem;color:var(--slate-700)}
+.decision-body ul li::before{content:'';position:absolute;left:6px;top:12px;width:5px;height:5px;border-radius:50%;background:var(--indigo-500)}
+.decision-who{display:flex;align-items:center;gap:8px;margin-top:16px;padding-top:12px;border-top:1px solid var(--gray-100)}
+.decision-who-label{font-size:.75rem;font-weight:600;color:var(--gray-400);letter-spacing:.03em}
+.decision-who-name{font-size:.8125rem;font-weight:600;color:var(--slate-700)}
+.decision-deadline{font-size:.8125rem;font-weight:600;color:var(--rose-600);margin-left:auto}
+
+/* ===== Score Board ===== */
+.score-board{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin:32px 0}
+.score-item{background:var(--gray-50);border:1px solid var(--gray-200);border-radius:var(--radius);padding:20px;text-align:center}
+.score-value{font-family:'Inter','Noto Sans JP',sans-serif;font-size:2rem;font-weight:700;line-height:1.2}
+.score-value.red{color:var(--rose-600)}
+.score-value.amber{color:var(--amber-600)}
+.score-value.green{color:var(--emerald-600)}
+.score-label{font-size:.75rem;color:var(--gray-500);margin-top:4px;font-weight:500}
+
+@media(max-width:640px){
+  .score-board{grid-template-columns:1fr}
+}
+
+/* ===== Sprint Table ===== */
+.sprint-table{width:100%;border-collapse:collapse;margin:24px 0;font-size:.875rem}
+.sprint-table th{background:var(--slate-800);color:var(--white);padding:12px 16px;text-align:left;font-weight:600;font-size:.8125rem}
+.sprint-table td{padding:12px 16px;border-bottom:1px solid var(--gray-200);vertical-align:top}
+.sprint-table tr:nth-child(even){background:var(--gray-50)}
+.sprint-table .week-label{font-weight:700;color:var(--indigo-600);white-space:nowrap}
+.sprint-table .gate{background:var(--rose-50);font-weight:600;color:var(--rose-600)}
+
+@media(max-width:768px){
+  .sprint-table{font-size:.8125rem}
+  .sprint-table th,.sprint-table td{padding:8px 12px}
+}
+
+/* ===== Gate Box ===== */
+.gate-box{background:linear-gradient(135deg,var(--rose-50),var(--amber-50));border:2px solid var(--rose-200);border-radius:var(--radius-lg);padding:32px;margin:40px 0;text-align:center}
+.gate-box h3{font-size:1.25rem;font-weight:700;color:var(--rose-600);margin-bottom:16px}
+.gate-box p{font-size:.9375rem;color:var(--slate-700);line-height:2;margin-bottom:8px}
+.gate-box .gate-condition{font-size:1.0625rem;font-weight:700;color:var(--slate-900);margin:16px 0}
+
+/* ===== Retreat Line ===== */
+.retreat-box{background:var(--gray-50);border:1px solid var(--gray-300);border-radius:var(--radius-lg);padding:28px 32px;margin:32px 0}
+.retreat-box h3{font-size:1.0625rem;font-weight:700;color:var(--slate-800);margin-bottom:16px}
+.retreat-box ul li{padding-left:24px;position:relative;margin-bottom:8px;font-size:.9375rem;color:var(--slate-700);line-height:1.9}
+.retreat-box ul li::before{content:'';position:absolute;left:6px;top:12px;width:5px;height:5px;border-radius:50%;background:var(--rose-500)}
+
+/* ===== Footer ===== */
+.footer{background:var(--slate-900);color:rgba(255,255,255,.5);padding:64px 0 32px;border-top:1px solid rgba(255,255,255,.06)}
+.footer-grid{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:40px;margin-bottom:48px}
+.footer-brand{font-size:1.125rem;font-weight:700;color:var(--white);margin-bottom:8px}
+.footer-brand .logo-ai{color:var(--indigo-500)}
+.footer-tagline{font-size:.8125rem;line-height:1.8;margin-bottom:20px}
+.footer-email{font-size:.8125rem;color:var(--indigo-500);transition:color .2s}
+.footer-email:hover{color:var(--indigo-400)}
+.footer h4{font-size:.75rem;font-weight:600;color:rgba(255,255,255,.7);margin-bottom:16px;letter-spacing:.05em;text-transform:uppercase}
+.footer ul li{margin-bottom:8px}
+.footer ul a{font-size:.8125rem;transition:color .2s}
+.footer ul a:hover{color:var(--white)}
+.footer-bottom{border-top:1px solid rgba(255,255,255,.06);padding-top:24px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;font-size:.75rem}
+
+@media(max-width:768px){
+  .footer-grid{grid-template-columns:1fr 1fr;gap:32px}
+  .decision-card{padding:20px 24px}
+}
+@media(max-width:480px){
+  .footer-grid{grid-template-columns:1fr}
+}
+
+/* ===== Scroll Reveal ===== */
+.reveal{opacity:0;transform:translateY(20px);transition:opacity .5s ease,transform .5s ease}
+.reveal.visible{opacity:1;transform:none}
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<header class="header" id="header">
+  <div class="container header-inner">
+    <a href="/" class="logo">
+      ミセバン<span class="logo-ai">AI</span>
+    </a>
+    <nav class="nav">
+      <a href="/#setup">導入方法</a>
+      <a href="/#features">機能</a>
+      <a href="/#pricing">料金</a>
+      <a href="/cameras.html">対応カメラ</a>
+      <a href="/blog/">ブログ</a>
+      <a href="/#cta" class="btn btn-primary btn-sm nav-cta">無料で始める</a>
+    </nav>
+    <button class="mobile-toggle" id="mobileToggle" aria-label="メニューを開く">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</header>
+
+<!-- Mobile Menu -->
+<div class="mobile-menu" id="mobileMenu">
+  <button class="mobile-close" id="mobileClose" aria-label="メニューを閉じる">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+  </button>
+  <a href="/#setup">導入方法</a>
+  <a href="/#features">機能</a>
+  <a href="/#pricing">料金</a>
+  <a href="/cameras.html">対応カメラ</a>
+  <a href="/blog/">ブログ</a>
+  <a href="/#cta" class="btn btn-primary">無料で始める</a>
+</div>
+
+<!-- Article Hero -->
+<section class="article-hero">
+  <div class="container">
+    <div class="article-hero-content">
+      <div class="article-hero-badge">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+        リリース判定
+      </div>
+      <h1>リリース判定サマリー — 10のアクションと6週スプリント</h1>
+      <div class="article-hero-meta">
+        <time datetime="2026-02-23">2026.02.23</time>
+        <span>|</span>
+        <span>ミセバンAI チーム</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Article Body -->
+<article class="article-body">
+
+<a href="/blog/" class="back-link">
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+  ブログ一覧へ戻る
+</a>
+
+<div class="intro-box">
+  <p><a href="./008-release-meeting.html" style="color:var(--indigo-600);font-weight:600">前回の記事</a>で、6名のAIエージェントが「リリースに何が必要か」を独り言付きで議論した。</p>
+  <p>本記事では、その議論を<strong>10のアクションアイテム</strong>に集約し、<strong>6週間のスプリント計画</strong>と<strong>Go/No-Go ゲート</strong>を定義する。</p>
+</div>
+
+
+<!-- Score Board -->
+<div class="score-board reveal">
+  <div class="score-item">
+    <div class="score-value red">No-Go</div>
+    <div class="score-label">現時点のリリース判定</div>
+  </div>
+  <div class="score-item">
+    <div class="score-value amber">6週間</div>
+    <div class="score-label">クローズドβまでの最短期間</div>
+  </div>
+  <div class="score-item">
+    <div class="score-value green">¥83万</div>
+    <div class="score-label">リリースまでの概算コスト</div>
+  </div>
+</div>
+
+
+<h2>全員一致の結論</h2>
+
+<blockquote>
+  <p>「現状は"技術デモ"であり"プロダクト"ではない。ユーザーがサインアップして、来客数を確認し、お金を払うまでの動線が一つも存在しない。」 — CEO 田中</p>
+</blockquote>
+
+<p>しかし全員が「やるべきことは明確で、6週間あればクローズドβに到達できる」という点でも一致している。</p>
+
+
+<h2>10のアクションアイテム</h2>
+
+<!-- Action 1 -->
+<div class="decision-card critical reveal">
+  <div class="decision-header">
+    <span class="decision-num">Action #1 / Critical</span>
+  </div>
+  <div class="decision-title">顧客インタビュー 5件を実施する</div>
+  <div class="decision-body">
+    <p>コードを1行も書く前に、店舗オーナーの声を聞く。「来客データに月額¥4,980の価値を感じるか」を直接確認する。</p>
+    <ul>
+      <li>非誘導質問で聞く（「来客数が分かったら嬉しいですか?」ではなく「経営で一番困っていることは?」）</li>
+      <li>成功基準: 5件中3件以上が来客データに言及 → GO</li>
+      <li>3段階リクルート: 知人紹介 → 商店街 → Webスクレイピング</li>
+    </ul>
+    <div class="decision-who">
+      <span class="decision-who-label">担当:</span>
+      <span class="decision-who-name">CEO / 創業者</span>
+      <span class="decision-deadline">Week 1</span>
+    </div>
+  </div>
+</div>
+
+<!-- Action 2 -->
+<div class="decision-card critical reveal">
+  <div class="decision-header">
+    <span class="decision-num">Action #2 / Critical</span>
+  </div>
+  <div class="decision-title">合同会社（LLC）を設立する</div>
+  <div class="decision-body">
+    <p>Stripe決済、法人銀行口座、個人情報取扱事業者としての信用、すべての前提条件。</p>
+    <ul>
+      <li>合同会社を選択（設立費 ¥7.5-12.5万、1-2週間で完了）</li>
+      <li>PMF確認後に株式会社への組織変更を検討（約¥10万、2-3週間）</li>
+      <li>法人銀行口座は GMOあおぞらネット銀行で最短1週間</li>
+    </ul>
+    <div class="decision-who">
+      <span class="decision-who-label">担当:</span>
+      <span class="decision-who-name">CFO / 創業者</span>
+      <span class="decision-deadline">Week 1-2</span>
+    </div>
+  </div>
+</div>
+
+<!-- Action 3 -->
+<div class="decision-card critical reveal">
+  <div class="decision-header">
+    <span class="decision-num">Action #3 / Critical</span>
+  </div>
+  <div class="decision-title">NMS ゼロ除算バグを修正する</div>
+  <div class="decision-body">
+    <p>AI推論のNon-Maximum Suppression（NMS）処理で、バウンディングボックスの面積が0になった場合にゼロ除算が発生する可能性がある。</p>
+    <ul>
+      <li><code>crates/ai/src/lib.rs</code> の IoU 計算にガード条件を追加</li>
+      <li>面積が0の場合は IoU = 0 として扱う</li>
+      <li>テストケースを追加して再発防止</li>
+    </ul>
+    <div class="decision-who">
+      <span class="decision-who-label">担当:</span>
+      <span class="decision-who-name">CTO / エンジニア</span>
+      <span class="decision-deadline">今週中</span>
+    </div>
+  </div>
+</div>
+
+<!-- Action 4 -->
+<div class="decision-card high reveal">
+  <div class="decision-header">
+    <span class="decision-num">Action #4 / High</span>
+  </div>
+  <div class="decision-title">データベース + 認証基盤を構築する</div>
+  <div class="decision-body">
+    <p>プロダクトの根幹。データを保存する場所と、ユーザーを識別する仕組みがない。</p>
+    <ul>
+      <li>PostgreSQL + TimescaleDB（来客数の時系列データ最適化）</li>
+      <li>Supabase Auth（メール + LINE OAuth）</li>
+      <li>テーブル設計: stores, cameras, visitor_counts, users</li>
+      <li>API エンドポイント: CRUD + 来客数集計</li>
+    </ul>
+    <div class="decision-who">
+      <span class="decision-who-label">担当:</span>
+      <span class="decision-who-name">CTO / エンジニア</span>
+      <span class="decision-deadline">Week 2</span>
+    </div>
+  </div>
+</div>
+
+<!-- Action 5 -->
+<div class="decision-card high reveal">
+  <div class="decision-header">
+    <span class="decision-num">Action #5 / High</span>
+  </div>
+  <div class="decision-title">エッジ推論アーキテクチャを実装する</div>
+  <div class="decision-body">
+    <p>「映像をクラウドに送らない」がプライバシー戦略の根幹。エッジで推論→統計データのみ送信。</p>
+    <ul>
+      <li>エッジ: カメラ映像 → ONNX推論 → 来客カウント → 映像即時破棄（zeroize）</li>
+      <li>クラウド: 統計データのみ受信 → PostgreSQL に保存</li>
+      <li>通信: TLS暗号化 + API認証トークン</li>
+    </ul>
+    <div class="decision-who">
+      <span class="decision-who-label">担当:</span>
+      <span class="decision-who-name">CTO / エンジニア</span>
+      <span class="decision-deadline">Week 3</span>
+    </div>
+  </div>
+</div>
+
+<!-- Action 6 -->
+<div class="decision-card high reveal">
+  <div class="decision-header">
+    <span class="decision-num">Action #6 / High</span>
+  </div>
+  <div class="decision-title">ダッシュボード（MVP 8画面）を構築する</div>
+  <div class="decision-body">
+    <p>店舗オーナーが実際に操作する画面。PWA（Progressive Web App）として構築し、ネイティブアプリ不要にする。</p>
+    <ul>
+      <li>ログイン（LINE OAuth）</li>
+      <li>店舗登録 → カメラ追加 → ライブプレビュー</li>
+      <li>ダッシュボード（来客数グラフ + 時間帯ヒートマップ）</li>
+      <li>履歴 → 設定 → アカウント</li>
+      <li>技術: Next.js + Recharts + SSE リアルタイム更新</li>
+    </ul>
+    <div class="decision-who">
+      <span class="decision-who-label">担当:</span>
+      <span class="decision-who-name">CPO / エンジニア</span>
+      <span class="decision-deadline">Week 4</span>
+    </div>
+  </div>
+</div>
+
+<!-- Action 7 -->
+<div class="decision-card security reveal">
+  <div class="decision-header">
+    <span class="decision-num">Action #7 / Security</span>
+  </div>
+  <div class="decision-title">9つのP0セキュリティ項目を修正する</div>
+  <div class="decision-body">
+    <p>API認証なし、RTSPクレデンシャル平文保存、保存時暗号化なし — 現状は脆弱性だらけ。</p>
+    <ul>
+      <li><strong>即時</strong>: API認証（JWT）、RTSPクレデンシャル暗号化（zeroize crate）</li>
+      <li><strong>1週間以内</strong>: 監査ログ、レート制限、CORS設定</li>
+      <li><strong>リリースまで</strong>: 映像データ保持ポリシー、インシデント対応計画</li>
+      <li>ONNXモデルのハッシュ検証（改ざん防止）</li>
+    </ul>
+    <div class="decision-who">
+      <span class="decision-who-label">担当:</span>
+      <span class="decision-who-name">QA/Security</span>
+      <span class="decision-deadline">Week 2-5</span>
+    </div>
+  </div>
+</div>
+
+<!-- Action 8 -->
+<div class="decision-card strategic reveal">
+  <div class="decision-header">
+    <span class="decision-num">Action #8 / Strategic</span>
+  </div>
+  <div class="decision-title">Stripe 決済 + インボイス対応を構築する</div>
+  <div class="decision-body">
+    <p>法人設立 → 銀行口座 → Stripe審査 → 決済開始。最短6週間のクリティカルパス。</p>
+    <ul>
+      <li>Stripe Billing: サブスクリプション管理</li>
+      <li>Webhook: 支払い成功/失敗の処理</li>
+      <li>適格請求書発行事業者登録（インボイス制度）</li>
+      <li>無料トライアル → 有料プランの導線</li>
+    </ul>
+    <div class="decision-who">
+      <span class="decision-who-label">担当:</span>
+      <span class="decision-who-name">CFO + CTO</span>
+      <span class="decision-deadline">Week 5</span>
+    </div>
+  </div>
+</div>
+
+<!-- Action 9 -->
+<div class="decision-card strategic reveal">
+  <div class="decision-header">
+    <span class="decision-num">Action #9 / Strategic</span>
+  </div>
+  <div class="decision-title">ライセンスを AGPLv3 に変更する</div>
+  <div class="decision-body">
+    <p>MIT ライセンスでは競合にコード丸ごとコピーされるリスクがある。AGPLv3 なら SaaS 提供者にもソースコード公開義務が生じ、単純コピーでの競合を防止できる。</p>
+    <ul>
+      <li>「オープンソースへのコミットメント」は維持しつつ、ビジネスを守る</li>
+      <li>BSL（3年後にオープンソース化）も選択肢として検討</li>
+      <li>変更前に既存コントリビューターへの通知（現状は自分だけ）</li>
+    </ul>
+    <div class="decision-who">
+      <span class="decision-who-label">担当:</span>
+      <span class="decision-who-name">CFO / 創業者</span>
+      <span class="decision-deadline">Week 1</span>
+    </div>
+  </div>
+</div>
+
+<!-- Action 10 -->
+<div class="decision-card strategic reveal">
+  <div class="decision-header">
+    <span class="decision-num">Action #10 / Strategic</span>
+  </div>
+  <div class="decision-title">LINE通知 Bot を実装する</div>
+  <div class="decision-body">
+    <p>ダッシュボードを毎日開く店舗オーナーは少ない。LINEで日次サマリーと異常検知を通知し、習慣化を促す。</p>
+    <ul>
+      <li>日次サマリー: 昨日の来客数、前週比、ピーク時間帯</li>
+      <li>異常検知: 来客数が通常の2倍以上 or 半分以下の場合に即時通知</li>
+      <li>LINE Messaging API + Webhook</li>
+    </ul>
+    <div class="decision-who">
+      <span class="decision-who-label">担当:</span>
+      <span class="decision-who-name">CPO / エンジニア</span>
+      <span class="decision-deadline">Week 5</span>
+    </div>
+  </div>
+</div>
+
+
+<h2>6週スプリント計画</h2>
+
+<table class="sprint-table reveal">
+  <thead>
+    <tr>
+      <th>期間</th>
+      <th>テーマ</th>
+      <th>アウトプット</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td class="week-label">Week 1</td>
+      <td>顧客発見 + 法人設立</td>
+      <td>インタビュー5件完了、合同会社設立手続き開始、ライセンス変更</td>
+    </tr>
+    <tr class="gate">
+      <td></td>
+      <td colspan="2">GATE: 5件中3件以上が来客データに興味 → GO / それ以外 → ピボット検討</td>
+    </tr>
+    <tr>
+      <td class="week-label">Week 2</td>
+      <td>基盤構築</td>
+      <td>PostgreSQL + Auth + API基本エンドポイント + Docker</td>
+    </tr>
+    <tr>
+      <td class="week-label">Week 3</td>
+      <td>推論パイプライン</td>
+      <td>エッジ推論→クラウドAPI通信、スマホカメラ対応</td>
+    </tr>
+    <tr>
+      <td class="week-label">Week 4</td>
+      <td>ダッシュボード</td>
+      <td>Next.js PWA 8画面、SSEリアルタイム、モバイル対応</td>
+    </tr>
+    <tr>
+      <td class="week-label">Week 5</td>
+      <td>決済 + 通知 + セキュリティ</td>
+      <td>Stripe連携、LINE Bot、セキュリティ修正、E2Eテスト</td>
+    </tr>
+    <tr>
+      <td class="week-label">Week 6</td>
+      <td>クローズドβ</td>
+      <td>3-5店舗にβ版提供、フィードバック収集、バグフィックス</td>
+    </tr>
+    <tr class="gate">
+      <td></td>
+      <td colspan="2">GATE: β店舗の2/3以上が継続利用 → パブリックリリース準備開始</td>
+    </tr>
+  </tbody>
+</table>
+
+
+<!-- Go/No-Go Gate -->
+<div class="gate-box reveal">
+  <h3>Go/No-Go ゲート</h3>
+  <p>Week 1 終了時に以下を判定する：</p>
+  <div class="gate-condition">
+    「5件の店舗インタビューで、3件以上が来客数データに月額¥4,980の価値を感じるか？」
+  </div>
+  <p><strong>YES → 6週スプリント開始</strong>（Week 2からコーディング）</p>
+  <p><strong>NO → ピボット検討会議を開催</strong>（防犯特化 / 店員行動分析 / 商品棚分析）</p>
+</div>
+
+
+<h2>MVP 定義</h2>
+
+<blockquote>
+  <p>「1人の店舗オーナーが、昨日の来客数を確認でき、月額¥4,980を払う。」</p>
+</blockquote>
+
+<p>これ以上でもこれ以下でもない。この1文が実現できればMVPは完成。</p>
+
+
+<h2>撤退ライン</h2>
+
+<div class="retreat-box reveal">
+  <h3>以下のいずれかに該当した場合、ピボットまたは撤退を検討する</h3>
+  <ul>
+    <li>Week 1: インタビュー5件中3件以上が来客データに興味を示さない</li>
+    <li>Week 6: β版を3店舗に提供して、1店舗も有料化の意向を示さない</li>
+    <li>ランウェイ: 残り資金が2ヶ月分を下回った時点でバーンレートを再評価</li>
+    <li>法務: 個人情報保護委員会から是正勧告を受けた場合は即座にサービス停止</li>
+  </ul>
+</div>
+
+
+<h2>次のステップ</h2>
+
+<p>この記事を書き終えた時点で、やるべきことは1つだけ。</p>
+
+<blockquote>
+  <p>店舗オーナーに電話する。</p>
+</blockquote>
+
+<p>コードを書くのは、その後だ。</p>
+
+
+</article>
+
+<!-- Footer -->
+<footer class="footer">
+  <div class="container">
+    <div class="footer-grid">
+      <div>
+        <div class="footer-brand">ミセバン<span class="logo-ai">AI</span></div>
+        <p class="footer-tagline">既存カメラが、AI店長に変わる。<br>小規模店舗のための次世代AI分析。</p>
+        <a href="mailto:info@miseban.ai" class="footer-email">info@miseban.ai</a>
+      </div>
+      <div>
+        <h4>サービス</h4>
+        <ul>
+          <li><a href="/#features">機能</a></li>
+          <li><a href="/#pricing">料金</a></li>
+          <li><a href="/cameras.html">対応カメラ</a></li>
+          <li><a href="/#faq">FAQ</a></li>
+          <li><a href="/#partner">パートナー募集</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>法的情報</h4>
+        <ul>
+          <li><a href="#">利用規約</a></li>
+          <li><a href="#">プライバシーポリシー</a></li>
+          <li><a href="#">特定商取引法に基づく表記</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>お問い合わせ</h4>
+        <ul>
+          <li><a href="mailto:info@miseban.ai">一般のお問い合わせ</a></li>
+          <li><a href="mailto:partner@miseban.ai">パートナー窓口</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>&copy; 2026 MisebanAI. All rights reserved.</p>
+    </div>
+  </div>
+</footer>
+
+<script>
+/* ===== Mobile menu ===== */
+(function(){
+  var toggle = document.getElementById('mobileToggle');
+  var menu = document.getElementById('mobileMenu');
+  var close = document.getElementById('mobileClose');
+  var links = menu.querySelectorAll('a');
+  function open(){menu.classList.add('open');document.body.style.overflow='hidden'}
+  function shut(){menu.classList.remove('open');document.body.style.overflow=''}
+  toggle.addEventListener('click', open);
+  close.addEventListener('click', shut);
+  for(var i=0;i<links.length;i++) links[i].addEventListener('click', shut);
+})();
+
+/* ===== Scroll reveal ===== */
+(function(){
+  var els = document.querySelectorAll('.reveal');
+  if(!('IntersectionObserver' in window)){
+    els.forEach(function(el){el.classList.add('visible')});
+    return;
+  }
+  var observer = new IntersectionObserver(function(entries){
+    entries.forEach(function(e){
+      if(e.isIntersecting){
+        e.target.classList.add('visible');
+        observer.unobserve(e.target);
+      }
+    });
+  },{threshold:0.1});
+  els.forEach(function(el){observer.observe(el)});
+})();
+</script>
+
+</body>
+</html>

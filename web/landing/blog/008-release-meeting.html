@@ -1,0 +1,945 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>リリース準備会議の全記録 — 6エージェントの独り言まで完全公開｜ミセバンAI Blog</title>
+<meta name="description" content="ミセバンAIのリリースに何が必要か？CEO・CTO・CPO・CFO・PM・QAセキュリティの6エージェントが本音と独り言（内心）を交えて徹底議論した全記録。">
+<meta name="keywords" content="リリース準備,AI会議,内心,独り言,エージェント,ミセバンAI,スタートアップ,プロダクトローンチ">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://miseban.ai/blog/008-release-meeting">
+
+<!-- OGP -->
+<meta property="og:title" content="リリース準備会議の全記録 — 6エージェントの独り言まで完全公開｜ミセバンAI Blog">
+<meta property="og:description" content="リリースに何が必要か？6エージェントの本音と独り言を交えた徹底議論の全記録。">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://miseban.ai/blog/008-release-meeting">
+<meta property="og:image" content="https://miseban.ai/ogp.png">
+<meta property="og:site_name" content="ミセバンAI">
+<meta property="og:locale" content="ja_JP">
+<meta property="article:published_time" content="2026-02-23">
+<meta property="article:author" content="ミセバンAI チーム">
+<meta property="article:tag" content="リリース準備">
+<meta property="article:tag" content="AI会議">
+
+<!-- Twitter Card -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="リリース準備会議の全記録 — 6エージェントの独り言まで完全公開">
+<meta name="twitter:description" content="リリースに何が必要か？6エージェントの本音と独り言を交えた徹底議論の全記録。">
+<meta name="twitter:image" content="https://miseban.ai/ogp.png">
+
+<!-- Favicon -->
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%234f46e5'/><text x='50%25' y='54%25' dominant-baseline='middle' text-anchor='middle' fill='white' font-size='18' font-weight='bold' font-family='sans-serif'>M</text></svg>">
+
+<!-- Google Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<style>
+/* ===== Reset & Custom Properties ===== */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --white:#ffffff;
+  --gray-50:#f8fafc;
+  --gray-100:#f1f5f9;
+  --gray-200:#e2e8f0;
+  --gray-300:#cbd5e1;
+  --gray-400:#94a3b8;
+  --gray-500:#64748b;
+  --slate-600:#475569;
+  --slate-700:#334155;
+  --slate-800:#1e293b;
+  --slate-900:#0f172a;
+  --indigo-50:#eef2ff;
+  --indigo-100:#e0e7ff;
+  --indigo-500:#6366f1;
+  --indigo-600:#4f46e5;
+  --indigo-700:#4338ca;
+  --indigo-900:#312e81;
+  --indigo-950:#1e1b4b;
+  --emerald-50:#ecfdf5;
+  --emerald-400:#34d399;
+  --emerald-500:#10b981;
+  --emerald-600:#059669;
+  --amber-50:#fffbeb;
+  --amber-500:#f59e0b;
+  --amber-600:#d97706;
+  --rose-50:#fff1f2;
+  --rose-500:#f43f5e;
+  --rose-600:#e11d48;
+  --sky-50:#f0f9ff;
+  --sky-500:#0ea5e9;
+  --sky-600:#0284c7;
+  --purple-50:#faf5ff;
+  --purple-500:#a855f7;
+  --purple-600:#9333ea;
+  --teal-50:#f0fdfa;
+  --teal-500:#14b8a6;
+  --teal-600:#0d9488;
+  --radius-sm:8px;
+  --radius:12px;
+  --radius-lg:16px;
+  --radius-xl:24px;
+  --shadow-sm:0 1px 3px rgba(0,0,0,.1),0 1px 2px rgba(0,0,0,.06);
+  --shadow-md:0 4px 6px -1px rgba(0,0,0,.1),0 2px 4px -2px rgba(0,0,0,.1);
+  --shadow-lg:0 10px 15px -3px rgba(0,0,0,.1),0 4px 6px -4px rgba(0,0,0,.1);
+}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+body{font-family:'Noto Sans JP','Inter',system-ui,-apple-system,sans-serif;color:var(--slate-900);background:var(--white);line-height:1.8;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+img{max-width:100%;height:auto;display:block}
+a{text-decoration:none;color:inherit;transition:color .2s}
+ul,ol{list-style:none}
+.container{max-width:1200px;margin:0 auto;padding:0 24px}
+.nums{font-family:'Inter','Noto Sans JP',sans-serif}
+
+/* ===== Buttons ===== */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;font-family:inherit;font-size:.9375rem;font-weight:600;padding:14px 28px;border-radius:100px;border:none;cursor:pointer;transition:all .2s ease;white-space:nowrap;line-height:1.4}
+.btn-primary{background:var(--indigo-600);color:var(--white);box-shadow:0 1px 2px rgba(79,70,229,.3),0 4px 12px rgba(79,70,229,.2)}
+.btn-primary:hover{background:var(--indigo-700);transform:translateY(-1px);box-shadow:0 2px 4px rgba(79,70,229,.3),0 8px 20px rgba(79,70,229,.25)}
+.btn-sm{padding:10px 20px;font-size:.875rem}
+
+/* ===== Header ===== */
+.header{position:fixed;top:0;left:0;width:100%;z-index:1000;transition:all .3s ease;background:rgba(255,255,255,.92);backdrop-filter:blur(16px) saturate(180%);-webkit-backdrop-filter:blur(16px) saturate(180%);box-shadow:0 1px 3px rgba(0,0,0,.06),0 1px 2px rgba(0,0,0,.04);border-bottom:1px solid rgba(0,0,0,.04)}
+.header-inner{display:flex;align-items:center;justify-content:space-between;height:72px}
+.logo{display:flex;align-items:center;gap:2px;font-size:1.25rem;font-weight:700;color:var(--slate-900)}
+.logo-ai{color:var(--indigo-600);font-weight:700}
+.nav{display:flex;align-items:center;gap:32px}
+.nav a{font-size:.875rem;font-weight:500;color:var(--slate-600);transition:color .2s}
+.nav a:hover{color:var(--slate-900)}
+.nav-cta{margin-left:8px}
+.mobile-toggle{display:none;background:none;border:none;cursor:pointer;padding:8px}
+.mobile-toggle span{display:block;width:22px;height:2px;background:var(--slate-900);margin:5px 0;border-radius:1px;transition:.3s}
+.mobile-menu{display:none;position:fixed;inset:0;background:var(--white);z-index:999;flex-direction:column;align-items:center;justify-content:center;gap:28px}
+.mobile-menu.open{display:flex}
+.mobile-menu a{font-size:1.125rem;color:var(--slate-900);font-weight:500}
+.mobile-close{position:absolute;top:24px;right:24px;background:none;border:none;color:var(--slate-600);font-size:1.5rem;cursor:pointer;width:40px;height:40px;display:flex;align-items:center;justify-content:center;border-radius:50%;transition:background .2s}
+.mobile-close:hover{background:var(--gray-100)}
+
+@media(max-width:768px){
+  .nav{display:none}
+  .mobile-toggle{display:block}
+}
+
+/* ===== Article Hero ===== */
+.article-hero{background:linear-gradient(165deg,var(--slate-900) 0%,#1a1647 50%,var(--indigo-950) 100%);padding:140px 0 72px;color:var(--white);position:relative;overflow:hidden}
+.article-hero::before{content:'';position:absolute;top:0;left:0;right:0;bottom:0;background:radial-gradient(ellipse 80% 50% at 50% -20%,rgba(99,102,241,.15),transparent),radial-gradient(ellipse 60% 40% at 80% 60%,rgba(16,185,129,.06),transparent);pointer-events:none}
+.article-hero-content{position:relative;z-index:1;max-width:800px;margin:0 auto;text-align:center}
+.article-hero-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.1);padding:7px 18px;border-radius:100px;font-size:.8125rem;font-weight:500;color:rgba(255,255,255,.8);margin-bottom:24px;backdrop-filter:blur(8px)}
+.article-hero h1{font-size:clamp(1.75rem,4.5vw,2.5rem);font-weight:700;line-height:1.4;margin-bottom:20px;letter-spacing:-.02em}
+.article-hero-meta{display:flex;align-items:center;justify-content:center;gap:16px;font-size:.875rem;color:rgba(255,255,255,.5)}
+
+/* ===== Article Body ===== */
+.article-body{max-width:800px;margin:0 auto;padding:64px 24px 96px}
+.article-body h2{font-size:1.5rem;font-weight:700;color:var(--slate-900);margin:56px 0 24px;padding-bottom:12px;border-bottom:2px solid var(--indigo-100);letter-spacing:-.01em}
+.article-body h3{font-size:1.1875rem;font-weight:700;color:var(--slate-800);margin:40px 0 16px}
+.article-body p{font-size:.9375rem;color:var(--slate-700);line-height:2;margin-bottom:20px}
+.article-body ul,.article-body ol{margin:0 0 24px 0;padding-left:0}
+.article-body ul li,.article-body ol li{font-size:.9375rem;color:var(--slate-700);line-height:2;padding-left:24px;position:relative;margin-bottom:8px}
+.article-body ul li::before{content:'';position:absolute;left:6px;top:13px;width:6px;height:6px;border-radius:50%;background:var(--indigo-500)}
+.article-body ol{counter-reset:ol-counter}
+.article-body ol li{counter-increment:ol-counter}
+.article-body ol li::before{content:counter(ol-counter)'.';position:absolute;left:0;font-weight:700;color:var(--indigo-600);font-size:.875rem}
+.article-body strong{font-weight:700;color:var(--slate-900)}
+.article-body blockquote{border-left:4px solid var(--indigo-500);background:var(--indigo-50);padding:20px 24px;margin:24px 0;border-radius:0 var(--radius) var(--radius) 0}
+.article-body blockquote p{color:var(--indigo-900);margin-bottom:0;font-style:italic}
+.article-body code{font-family:'JetBrains Mono','Noto Sans JP',monospace;background:var(--gray-100);padding:2px 8px;border-radius:4px;font-size:.85em;color:var(--indigo-700)}
+.article-body pre{background:var(--slate-900);color:#e2e8f0;padding:24px;border-radius:var(--radius);margin:24px 0;overflow-x:auto;line-height:1.7}
+.article-body pre code{background:none;padding:0;color:inherit;font-size:.8125rem}
+
+/* ===== Speaker Card ===== */
+.speaker-card{background:var(--white);border:1px solid var(--gray-200);border-radius:var(--radius-lg);padding:32px;margin:32px 0;position:relative}
+.speaker-card::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;border-radius:var(--radius-lg) var(--radius-lg) 0 0}
+.speaker-card.ceo::before{background:linear-gradient(90deg,var(--indigo-500),var(--indigo-600))}
+.speaker-card.cfo::before{background:linear-gradient(90deg,var(--emerald-500),var(--emerald-600))}
+.speaker-card.cto::before{background:linear-gradient(90deg,var(--sky-500),var(--sky-600))}
+.speaker-card.cpo::before{background:linear-gradient(90deg,var(--purple-500),var(--purple-600))}
+.speaker-card.pm::before{background:linear-gradient(90deg,var(--amber-500),var(--amber-600))}
+.speaker-card.security::before{background:linear-gradient(90deg,var(--teal-500),var(--teal-600))}
+
+.speaker-header{display:flex;align-items:center;gap:16px;margin-bottom:20px}
+.speaker-avatar{width:52px;height:52px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.25rem;font-weight:700;color:var(--white);flex-shrink:0}
+.ceo .speaker-avatar{background:var(--indigo-600)}
+.cfo .speaker-avatar{background:var(--emerald-600)}
+.cto .speaker-avatar{background:var(--sky-600)}
+.cpo .speaker-avatar{background:var(--purple-600)}
+.pm .speaker-avatar{background:var(--amber-600)}
+.security .speaker-avatar{background:var(--teal-600)}
+.speaker-name{font-size:1.0625rem;font-weight:700;color:var(--slate-900)}
+.speaker-role{font-size:.8125rem;color:var(--gray-500);margin-top:2px}
+
+.speaker-card .speech{font-size:.9375rem;color:var(--slate-700);line-height:2}
+.speaker-card .speech p{margin-bottom:16px}
+.speaker-card .speech p:last-child{margin-bottom:0}
+.speaker-card .speech strong{color:var(--slate-900)}
+.speaker-card .speech ul{margin:12px 0;padding-left:0}
+.speaker-card .speech ul li{padding-left:24px;position:relative;margin-bottom:6px;line-height:1.9}
+.speaker-card .speech ul li::before{content:'';position:absolute;left:6px;top:12px;width:5px;height:5px;border-radius:50%}
+.ceo .speech ul li::before{background:var(--indigo-500)}
+.cfo .speech ul li::before{background:var(--emerald-500)}
+.cto .speech ul li::before{background:var(--sky-500)}
+.cpo .speech ul li::before{background:var(--purple-500)}
+.pm .speech ul li::before{background:var(--amber-500)}
+.security .speech ul li::before{background:var(--teal-500)}
+
+/* ===== Inner Monologue ===== */
+.inner-monologue{background:var(--gray-50);border-left:3px solid var(--gray-300);padding:12px 16px;margin:12px 0;border-radius:0 var(--radius-sm) var(--radius-sm) 0;font-style:italic;color:var(--gray-500);font-size:.875rem;line-height:1.8}
+.inner-monologue::before{content:'💭 内心';display:block;font-size:.75rem;font-weight:700;font-style:normal;color:var(--gray-400);margin-bottom:4px;letter-spacing:.05em;text-transform:uppercase}
+
+.verdict-box{display:flex;align-items:center;gap:12px;padding:16px 20px;border-radius:var(--radius);margin-top:20px;font-size:.875rem;font-weight:600}
+.verdict-go{background:var(--emerald-50);color:var(--emerald-600);border:1px solid rgba(5,150,105,.15)}
+.verdict-caution{background:var(--amber-50);color:var(--amber-600);border:1px solid rgba(217,119,6,.15)}
+.verdict-risk{background:var(--rose-50);color:var(--rose-600);border:1px solid rgba(225,29,72,.15)}
+
+/* ===== Intro Box ===== */
+.intro-box{background:linear-gradient(135deg,var(--indigo-50),var(--purple-50));border:1px solid var(--indigo-100);border-radius:var(--radius-lg);padding:32px;margin:32px 0}
+.intro-box p{font-size:.9375rem;color:var(--slate-700);line-height:2;margin-bottom:12px}
+.intro-box p:last-child{margin-bottom:0}
+
+/* ===== TOC ===== */
+.toc{background:var(--gray-50);border:1px solid var(--gray-200);border-radius:var(--radius-lg);padding:28px 32px;margin:32px 0}
+.toc-title{font-size:.875rem;font-weight:700;color:var(--slate-900);margin-bottom:16px;text-transform:uppercase;letter-spacing:.05em}
+.toc ol{counter-reset:toc-counter;margin:0;padding:0}
+.toc ol li{counter-increment:toc-counter;padding-left:28px;position:relative;margin-bottom:8px}
+.toc ol li::before{content:counter(toc-counter)'.';position:absolute;left:0;font-weight:700;color:var(--indigo-600);font-size:.8125rem}
+.toc ol li a{font-size:.875rem;color:var(--slate-600);transition:color .2s}
+.toc ol li a:hover{color:var(--indigo-600)}
+
+/* ===== Back to blog ===== */
+.back-link{display:inline-flex;align-items:center;gap:8px;font-size:.875rem;font-weight:600;color:var(--indigo-600);margin-bottom:32px;transition:all .2s}
+.back-link:hover{color:var(--indigo-700);gap:10px}
+
+/* ===== Priority Table ===== */
+.priority-table{width:100%;border-collapse:collapse;margin:24px 0;font-size:.875rem}
+.priority-table th{background:var(--slate-800);color:var(--white);padding:12px 16px;text-align:left;font-weight:600;font-size:.8125rem}
+.priority-table td{padding:12px 16px;border-bottom:1px solid var(--gray-200)}
+.priority-table tr:nth-child(even){background:var(--gray-50)}
+.priority-table .p0{color:var(--rose-600);font-weight:700}
+.priority-table .p1{color:var(--amber-600);font-weight:700}
+.priority-table .p2{color:var(--sky-600);font-weight:600}
+
+/* ===== Risk Badge ===== */
+.risk-badge{display:inline-block;padding:2px 10px;border-radius:100px;font-size:.75rem;font-weight:600}
+.risk-high{background:var(--rose-50);color:var(--rose-600)}
+.risk-medium{background:var(--amber-50);color:var(--amber-600)}
+.risk-low{background:var(--emerald-50);color:var(--emerald-600)}
+
+/* ===== Footer ===== */
+.footer{background:var(--slate-900);color:rgba(255,255,255,.5);padding:64px 0 32px;border-top:1px solid rgba(255,255,255,.06)}
+.footer-grid{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:40px;margin-bottom:48px}
+.footer-brand{font-size:1.125rem;font-weight:700;color:var(--white);margin-bottom:8px}
+.footer-brand .logo-ai{color:var(--indigo-500)}
+.footer-tagline{font-size:.8125rem;line-height:1.8;margin-bottom:20px}
+.footer-email{font-size:.8125rem;color:var(--indigo-500);transition:color .2s}
+.footer-email:hover{color:var(--indigo-400)}
+.footer h4{font-size:.75rem;font-weight:600;color:rgba(255,255,255,.7);margin-bottom:16px;letter-spacing:.05em;text-transform:uppercase}
+.footer ul li{margin-bottom:8px}
+.footer ul a{font-size:.8125rem;transition:color .2s}
+.footer ul a:hover{color:var(--white)}
+.footer-bottom{border-top:1px solid rgba(255,255,255,.06);padding-top:24px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;font-size:.75rem}
+
+@media(max-width:768px){
+  .footer-grid{grid-template-columns:1fr 1fr;gap:32px}
+  .speaker-card{padding:24px}
+  .priority-table{font-size:.8125rem}
+  .priority-table th,.priority-table td{padding:8px 12px}
+}
+@media(max-width:480px){
+  .footer-grid{grid-template-columns:1fr}
+}
+
+/* ===== Scroll Reveal ===== */
+.reveal{opacity:0;transform:translateY(20px);transition:opacity .5s ease,transform .5s ease}
+.reveal.visible{opacity:1;transform:none}
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<header class="header" id="header">
+  <div class="container header-inner">
+    <a href="/" class="logo">
+      ミセバン<span class="logo-ai">AI</span>
+    </a>
+    <nav class="nav">
+      <a href="/#setup">導入方法</a>
+      <a href="/#features">機能</a>
+      <a href="/#pricing">料金</a>
+      <a href="/cameras.html">対応カメラ</a>
+      <a href="/blog/">ブログ</a>
+      <a href="/#cta" class="btn btn-primary btn-sm nav-cta">無料で始める</a>
+    </nav>
+    <button class="mobile-toggle" id="mobileToggle" aria-label="メニューを開く">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</header>
+
+<!-- Mobile Menu -->
+<div class="mobile-menu" id="mobileMenu">
+  <button class="mobile-close" id="mobileClose" aria-label="メニューを閉じる">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+  </button>
+  <a href="/#setup">導入方法</a>
+  <a href="/#features">機能</a>
+  <a href="/#pricing">料金</a>
+  <a href="/cameras.html">対応カメラ</a>
+  <a href="/blog/">ブログ</a>
+  <a href="/#cta" class="btn btn-primary">無料で始める</a>
+</div>
+
+<!-- Article Hero -->
+<section class="article-hero">
+  <div class="container">
+    <div class="article-hero-content">
+      <div class="article-hero-badge">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        リリース準備会議
+      </div>
+      <h1>リリース準備会議の全記録 — 6エージェントの独り言まで完全公開</h1>
+      <div class="article-hero-meta">
+        <time datetime="2026-02-23">2026.02.23</time>
+        <span>|</span>
+        <span>ミセバンAI チーム</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Article Body -->
+<article class="article-body">
+
+<a href="/blog/" class="back-link">
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+  ブログ一覧へ戻る
+</a>
+
+<div class="intro-box">
+  <p><strong>第2回AI経営会議</strong> — 前回の会議で7つの戦略を即日実行した。次のテーマは「で、いつリリースできるの？」。</p>
+  <p>今回は6名のAIエージェントを並列起動し、それぞれに<strong>独り言（内心）</strong>まで書き出させた。忖度なし・建前なし、頭の中で考えていることまで完全公開する。</p>
+  <p>結論から言うと、<strong>「今のままではリリースできない」</strong>。全員一致だった。</p>
+</div>
+
+<div class="toc">
+  <div class="toc-title">目次</div>
+  <ol>
+    <li><a href="#ceo">CEO 田中 — Go/No-Go 判定とリスク全体像</a></li>
+    <li><a href="#cto">CTO 山本 — 技術的ブロッカーと優先度マトリクス</a></li>
+    <li><a href="#cpo">CPO 中村 — UX/プロダクトの致命的ギャップ</a></li>
+    <li><a href="#cfo">CFO 鈴木 — 法人設立・資金・ライセンス</a></li>
+    <li><a href="#pm">PM 伊藤 — 6週スプリント計画とリスクレジスター</a></li>
+    <li><a href="#security">QA/Security 小林 — セキュリティ脆弱性の全洗い出し</a></li>
+    <li><a href="#summary">全体サマリー</a></li>
+  </ol>
+</div>
+
+
+<!-- ==================== CEO ==================== -->
+<h2 id="ceo">1. CEO 田中 — Go/No-Go 判定</h2>
+
+<div class="speaker-card ceo reveal">
+  <div class="speaker-header">
+    <div class="speaker-avatar">田</div>
+    <div>
+      <div class="speaker-name">田中 誠一（CEO）</div>
+      <div class="speaker-role">全体リスク評価 &amp; Go/No-Go 判定</div>
+    </div>
+  </div>
+  <div class="speech">
+
+    <div class="inner-monologue">
+      正直に言って、今のミセバンAIは「技術デモ」であって「プロダクト」ではない。LPは美しいが、その裏にあるのはモックとコンパイルが通るだけのRustコードだ。ユーザーがサインアップしてからお金を払うまでの動線が一つも存在しない。これでリリースと言ったら笑われる。
+    </div>
+
+    <p>皆さん、率直に言います。<strong>現時点でのGo/No-Go判定は「No-Go」</strong>です。</p>
+
+    <p>Day 1でLPを立ち上げ、Day 2で7つの戦略を実行した。スピード感は素晴らしい。しかし、プロダクトとして「お客様がお金を払って使える状態」にはまだ遠い。</p>
+
+    <div class="inner-monologue">
+      一番怖いのは法的リスクだ。カメラ映像を扱うサービスで個人情報保護法を雑に扱ったら、一発でニュースになる。プライバシーポリシーのテンプレートは作ったが、法務レビューも受けていない。法人格すらない状態で個人情報取扱事業者になれるのか？ここは CFO に確認しないと。
+    </div>
+
+    <p>リリースまでに必要な要素を整理します：</p>
+
+    <ul>
+      <li><strong>法人設立</strong> — 個人事業主のままでは決済サービス（Stripe）の審査が通らない。最低でも合同会社が必要</li>
+      <li><strong>顧客インタビュー</strong> — 実施件数0件。「顧客が本当に欲しいもの」を確認せずに作り込むのは自殺行為</li>
+      <li><strong>エッジ推論アーキテクチャ</strong> — 生の映像をクラウドに送るのはプライバシー的にアウト。エッジで推論→統計データのみ送信の設計が必須</li>
+      <li><strong>決済フロー</strong> — Stripe連携、サブスクリプション管理、インボイス対応</li>
+      <li><strong>ダッシュボード</strong> — 店舗オーナーが実際に見る管理画面が存在しない</li>
+    </ul>
+
+    <div class="inner-monologue">
+      10週かかるか…。いや、2人チームなら8週が現実的なラインか。ただし、最初の2週は顧客インタビューに充てるべきだ。コードを書く前に「作るべきものが正しいか」を検証しないと、8週かけて誰も使わないものを作ることになる。過去に何度も見てきたパターンだ。
+    </div>
+
+    <p><strong>私の提案する10週タイムライン</strong>：</p>
+
+    <ul>
+      <li>Week 1-2: 顧客インタビュー5件 + 法人設立手続き</li>
+      <li>Week 3-4: DB設計 + 認証 + エッジ推論パイプライン</li>
+      <li>Week 5-6: ダッシュボード + API + 通知</li>
+      <li>Week 7-8: 決済 + テスト + セキュリティ監査</li>
+      <li>Week 9-10: クローズドβ（3-5店舗）</li>
+    </ul>
+
+    <p>最低コストは<strong>約85万円</strong>（法人設立7.5万 + Fly.io/Supabase月額5万×8 + ドメイン/証明書2万 + 予備費37.5万）。</p>
+
+    <div class="inner-monologue">
+      一番大事な指標は「Week 2終了時点で、5件中3件以上の店舗オーナーが来客データに興味を示すか」だ。ここで No が出たらピボットしなければならない。でも、正直に言えばカメラ映像から来客数を知りたい店舗オーナーは絶対にいる。問題は「¥4,980/月を払うか」だ。
+    </div>
+
+    <div class="verdict-box verdict-caution">
+      判定: CONDITIONAL GO — 顧客インタビュー5件で3件以上のニーズ確認を条件にGo。確認できなければピボット。
+    </div>
+  </div>
+</div>
+
+
+<!-- ==================== CTO ==================== -->
+<h2 id="cto">2. CTO 山本 — 技術的ブロッカー</h2>
+
+<div class="speaker-card cto reveal">
+  <div class="speaker-header">
+    <div class="speaker-avatar">山</div>
+    <div>
+      <div class="speaker-name">山本 健太（CTO）</div>
+      <div class="speaker-role">技術ブロッカー &amp; 優先度マトリクス</div>
+    </div>
+  </div>
+  <div class="speech">
+
+    <div class="inner-monologue">
+      コードベースを全部読んだ。正直に言うと「よくできたスケルトン」だ。ai crateのONNX推論は動く。agent crateのRTSPフレーム取得も動く。だが、データベースがない。認証がない。APIは何も返さない。これは「プロダクト」ではなく「技術PoC」だ。
+    </div>
+
+    <p>技術的ブロッカーを優先度別に整理しました。</p>
+
+    <h3>P0 — これがないとリリース不可能</h3>
+
+    <table class="priority-table">
+      <thead>
+        <tr><th>項目</th><th>現状</th><th>必要な作業</th><th>工数</th></tr>
+      </thead>
+      <tbody>
+        <tr><td class="p0">データベース</td><td>なし</td><td>PostgreSQL + TimescaleDB。店舗/カメラ/来客数の時系列データ</td><td>3日</td></tr>
+        <tr><td class="p0">認証</td><td>なし</td><td>Supabase Auth（メール + LINE OAuth）</td><td>2日</td></tr>
+        <tr><td class="p0">コンテナ化</td><td>Fly.io にnginxのみ</td><td>API サーバーのDockerize + マルチステージビルド</td><td>2日</td></tr>
+        <tr><td class="p0">モデルバンドル</td><td>YOLOv8n ONNX未同梱</td><td>S3にモデル配置 + 起動時ダウンロード or Docker内同梱</td><td>1日</td></tr>
+      </tbody>
+    </table>
+
+    <div class="inner-monologue">
+      TimescaleDBを選ぶか、普通のPostgreSQLで十分か悩む。正直、最初の100店舗まではPostgreSQLの通常テーブルで問題ない。時系列拡張は後からでも入れられる。Over-engineeringの罠にハマらないようにしないと。…いや、でも来客数データは典型的な時系列だ。最初からTimescaleDBを入れておくほうが後のマイグレーションコストを考えると安い。
+    </div>
+
+    <h3>P1 — βテストに必要</h3>
+
+    <table class="priority-table">
+      <thead>
+        <tr><th>項目</th><th>詳細</th><th>工数</th></tr>
+      </thead>
+      <tbody>
+        <tr><td class="p1">ダッシュボード</td><td>Next.js + Recharts。来客数グラフ、時間帯ヒートマップ、比較レポート</td><td>5日</td></tr>
+        <tr><td class="p1">リアルタイム更新</td><td>SSE（Server-Sent Events）で来客数をリアルタイム表示</td><td>2日</td></tr>
+        <tr><td class="p1">エッジ→クラウド通信</td><td>エージェントから集計データのみAPI送信（映像は送らない）</td><td>3日</td></tr>
+      </tbody>
+    </table>
+
+    <h3>P2 — パブリックリリースに必要</h3>
+
+    <table class="priority-table">
+      <thead>
+        <tr><th>項目</th><th>詳細</th><th>工数</th></tr>
+      </thead>
+      <tbody>
+        <tr><td class="p2">決済（Stripe）</td><td>サブスクリプション、Webhook、インボイス</td><td>3日</td></tr>
+        <tr><td class="p2">通知</td><td>LINE通知（異常検知、日次サマリー）</td><td>2日</td></tr>
+        <tr><td class="p2">CI/CD強化</td><td>テストカバレッジ、E2Eテスト、ステージング環境</td><td>3日</td></tr>
+      </tbody>
+    </table>
+
+    <div class="inner-monologue">
+      NMS（Non-Maximum Suppression）のバグが気になる。IoU計算でバウンディングボックスの面積が0になったときにゼロ除算が起きる可能性がある。テストでは通っているが、本番の映像で小さすぎるバウンディングボックスが来たら…。これは P0 のセキュリティバグとして直すべきだ。
+    </div>
+
+    <p><strong>2人のエンジニアで4週間</strong>が現実的な見積もりです。1人がバックエンド（DB + API + エッジ通信）、もう1人がフロントエンド（ダッシュボード + 認証UI）を担当する形です。</p>
+
+    <div class="inner-monologue">
+      ぶっちゃけ、1人でもできる。ただし6-7週かかる。2人なら4週。Claude Codeがあるから実質1.5人力くらいか。AIコーディングアシスタントの存在が見積もりに影響するの、まだ感覚がつかめない。
+    </div>
+
+    <div class="verdict-box verdict-caution">
+      判定: P0を2週間で片付ければβテスト可能。ただしNMSのゼロ除算バグは即時修正が必要。
+    </div>
+  </div>
+</div>
+
+
+<!-- ==================== CPO ==================== -->
+<h2 id="cpo">3. CPO 中村 — UX/プロダクトの致命的ギャップ</h2>
+
+<div class="speaker-card cpo reveal">
+  <div class="speaker-header">
+    <div class="speaker-avatar">中</div>
+    <div>
+      <div class="speaker-name">中村 美咲（CPO）</div>
+      <div class="speaker-role">ユーザー体験 &amp; プロダクトギャップ分析</div>
+    </div>
+  </div>
+  <div class="speech">
+
+    <div class="inner-monologue">
+      ユーザージャーニーを頭の中で歩いてみた。LPを見る→「よさそう」→サインアップしようとする→…ログインボタンがない。仮に会員登録できたとしても→カメラをどう接続するの？→ダッシュボードどこ？→何も見えない。→解約（というか使い始めてすらいない）。致命的なギャップが6つある。
+    </div>
+
+    <p>ユーザージャーニーに<strong>6つの致命的なギャップ</strong>があります。</p>
+
+    <ul>
+      <li><strong>Gap 1: サインアップ</strong> — ログイン/新規登録の画面がない。LPの「無料で始める」ボタンのリンク先が存在しない</li>
+      <li><strong>Gap 2: オンボーディング</strong> — 登録後に何をすればいいか分からない。店舗情報の登録フローがない</li>
+      <li><strong>Gap 3: カメラ接続</strong> — IPカメラのRTSP URLを入力する画面がない。スマホカメラモードの実装もない</li>
+      <li><strong>Gap 4: ダッシュボード</strong> — 来客数を確認する画面が存在しない</li>
+      <li><strong>Gap 5: 通知</strong> — 来客数が急増/急減したときの通知手段がない</li>
+      <li><strong>Gap 6: 決済</strong> — 無料トライアルから有料プランへの導線がない</li>
+    </ul>
+
+    <div class="inner-monologue">
+      6つ全部を同時に作ろうとしたら破綻する。MVP的に考えると、最小限の体験は「LINE でログイン → 店舗名入れる → スマホのカメラをかざす → リアルタイムで来客カウントが見える → LINEに通知が来る」。これだけでいい。決済は後。
+    </div>
+
+    <p><strong>MVPの定義を提案します</strong>：</p>
+
+    <blockquote>
+      <p>「1人の店舗オーナーが、LINEでログインし、店舗名を入力し、スマホカメラで来客カウントを確認し、LINEで日次レポートを受け取る」</p>
+    </blockquote>
+
+    <p>必要最小限の画面は<strong>8画面</strong>です：</p>
+
+    <ol>
+      <li>ログイン（LINE OAuth）</li>
+      <li>店舗登録（店舗名 + 業種）</li>
+      <li>カメラ追加（スマホカメラ or RTSP URL入力）</li>
+      <li>ライブプレビュー（カメラ映像 + 来客カウントオーバーレイ）</li>
+      <li>ダッシュボード（今日の来客数 + 時間帯グラフ）</li>
+      <li>履歴（日別・週別の比較）</li>
+      <li>設定（通知ON/OFF、営業時間）</li>
+      <li>アカウント（プラン確認、解約）</li>
+    </ol>
+
+    <div class="inner-monologue">
+      PWA（Progressive Web App）にすべきだ。ネイティブアプリを作る余裕はないし、App Storeの審査に1-2週取られるのは致命的。PWAならURLを共有するだけでインストールできる。カメラアクセスもWeb APIで問題ない。ただ、iOS SafariのPWAサポートがまだ微妙なのが不安材料…。
+    </div>
+
+    <p><strong>技術選定はPWA一択</strong>です。Next.js + PWA で、ネイティブアプリ不要。ブラウザからカメラアクセスし、エッジ推論（WebAssembly版ONNX Runtime）で来客カウントするのが理想形ですが、MVPではサーバーサイド推論でOKです。</p>
+
+    <h3>MVPスプリント提案: 2週間</h3>
+
+    <p>Sprint 1（Week 1）で P0 の7チケットを消化：</p>
+
+    <ul>
+      <li>Supabase Auth + LINE OAuth セットアップ</li>
+      <li>店舗テーブル設計 + CRUD API</li>
+      <li>カメラ登録フロー</li>
+      <li>来客カウント API（エッジ→クラウド）</li>
+      <li>ダッシュボード画面（今日の来客数 + グラフ）</li>
+      <li>LINE通知 Bot（日次サマリー）</li>
+      <li>プレビュー画面（スマホカメラ）</li>
+    </ul>
+
+    <div class="verdict-box verdict-risk">
+      判定: 6つの致命的ギャップ。ユーザーは「何もできない」状態。MVP定義を明確にし、2週間スプリントで最小体験を構築すべき。
+    </div>
+  </div>
+</div>
+
+
+<!-- ==================== CFO ==================== -->
+<h2 id="cfo">4. CFO 鈴木 — 法人設立・資金・ライセンス</h2>
+
+<div class="speaker-card cfo reveal">
+  <div class="speaker-header">
+    <div class="speaker-avatar">鈴</div>
+    <div>
+      <div class="speaker-name">鈴木 隆史（CFO）</div>
+      <div class="speaker-role">法務・財務・ライセンス戦略</div>
+    </div>
+  </div>
+  <div class="speech">
+
+    <div class="inner-monologue">
+      法人格がない。これは決済だけの問題じゃない。個人情報保護法の「個人情報取扱事業者」として適切な体制を持っていることを示す必要がある。個人事業主でも法的には可能だが、BtoBで店舗オーナーに提案するときに「代表: 個人」では信用されない。法人は必須だ。
+    </div>
+
+    <p>3つの即断が必要な論点があります。</p>
+
+    <h3>論点1: 法人形態</h3>
+
+    <p><strong>合同会社（LLC）を推奨</strong>します。理由：</p>
+
+    <ul>
+      <li>設立費用: 約7.5〜12.5万円（株式会社の21.5〜29.5万円と比較）</li>
+      <li>定款認証不要 = 1-2週間で設立完了</li>
+      <li>合同会社→株式会社への組織変更は後からでも可能</li>
+      <li>スタートアップの初期段階では株式会社のメリット（資金調達、株式付与）はまだ不要</li>
+    </ul>
+
+    <div class="inner-monologue">
+      VC調達を視野に入れるなら最初から株式会社にすべきだが、ミセバンAIのフェーズではまだ早い。まず PMF を確認してからでいい。合同会社で十分。組織変更の費用は約10万円で、登記変更に2-3週間。PMF確認後に変更しても遅くない。
+    </div>
+
+    <h3>論点2: Stripeまでの最短ルート</h3>
+
+    <p>Stripe の決済を受けるまでの最低限のステップ：</p>
+
+    <ol>
+      <li>法人設立（1-2週間）</li>
+      <li>法人銀行口座開設（2-3週間 ※最短でGMOあおぞら1週間）</li>
+      <li>Stripe アカウント作成 + 審査（3-5営業日）</li>
+      <li>適格請求書発行事業者登録（インボイス制度対応）</li>
+    </ol>
+
+    <p><strong>最短6週間</strong>で初回決済が可能になります。</p>
+
+    <div class="inner-monologue">
+      6週間…。βテスト中は決済なしで運用し、その間に法人設立と口座開設を並行で進めるのが現実的だ。βテストで無料で使ってもらい、価値を実感してもらってから「有料プランへの移行」を案内する流れ。ただし、無料βから有料への転換率は一般的に10-30%。5店舗βなら1-2店舗が有料化する計算。
+    </div>
+
+    <h3>論点3: ランウェイ</h3>
+
+    <table class="priority-table">
+      <thead>
+        <tr><th>費目</th><th>月額</th><th>備考</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Fly.io</td><td>¥3,000</td><td>Pro plan</td></tr>
+        <tr><td>Supabase</td><td>¥3,800</td><td>Pro plan ($25)</td></tr>
+        <tr><td>ドメイン/SSL</td><td>¥500</td><td>年額按分</td></tr>
+        <tr><td>その他SaaS</td><td>¥2,000</td><td>メール、監視等</td></tr>
+      </tbody>
+    </table>
+
+    <p>月間固定費: 約<strong>¥9,300</strong>。法人設立費込みで初期投資約17万円、5ヶ月のランウェイで合計<strong>約83万円</strong>が必要。</p>
+
+    <div class="inner-monologue">
+      ブレークイーブン（損益分岐）は何店舗か。月間固定費¥9,300に対して、Starterプラン¥4,980の粗利が80%（=¥3,984）だとすると、3店舗でランニングコストはカバーできる。ただし開発の人件費を入れると話は変わる。フルタイム1人の機会費用を月40万と見ると、損益分岐は月額売上約50万→約65店舗。…遠いな。しかし代理店モデルで月10件ペースなら7ヶ月目で到達する。
+    </div>
+
+    <h3>論点4: ライセンス</h3>
+
+    <p><strong>MITライセンスのリスク</strong>を指摘します。現在のリポジトリはMITライセンスですが、競合に完全コピーされるリスクがあります。</p>
+
+    <ul>
+      <li><strong>選択肢A</strong>: プライベートリポジトリに変更（最もシンプル）</li>
+      <li><strong>選択肢B</strong>: BSL（Business Source License）に変更 — 3年後にオープンソース化、商用利用は有料</li>
+      <li><strong>選択肢C</strong>: AGPLv3 — SaaS提供者にもソースコード公開義務（競合を牽制）</li>
+    </ul>
+
+    <div class="inner-monologue">
+      「オープンソースへのコミットメント」をブログ001で謳ってしまっている。これをひっくり返すのは信用問題だ。ただ、ビジネスとして成立させるには完全オープンソースは厳しい。AGPLv3がバランス的には一番良いか。SaaS提供者にソースコード公開義務があるので、単純コピーでのSaaS競合は防げる。
+    </div>
+
+    <div class="verdict-box verdict-risk">
+      判定: 法人設立が全ての前提条件。今週中に合同会社設立を開始すべき。Stripe決済まで最短6週間。
+    </div>
+  </div>
+</div>
+
+
+<!-- ==================== PM ==================== -->
+<h2 id="pm">5. PM 伊藤 — 6週スプリント計画</h2>
+
+<div class="speaker-card pm reveal">
+  <div class="speaker-header">
+    <div class="speaker-avatar">伊</div>
+    <div>
+      <div class="speaker-name">伊藤 修平（PM）</div>
+      <div class="speaker-role">ローンチ計画 &amp; リスクレジスター</div>
+    </div>
+  </div>
+  <div class="speech">
+
+    <div class="inner-monologue">
+      全員の意見を整理する。CEO「10週」CTO「4週+2人」CPO「2週スプリント」CFO「6週で決済」。バラバラだ。でも共通しているのは「Week 1はコードを書くな、顧客と話せ」ということ。これは珍しく全員一致している。
+    </div>
+
+    <p>各メンバーの意見を統合した<strong>6週間のスプリント計画</strong>を提案します。</p>
+
+    <h3>Week 1: 顧客発見 + 法人設立</h3>
+    <ul>
+      <li>店舗オーナー3-5名にインタビュー（目標: 3/5が来客データに興味）</li>
+      <li>合同会社設立手続き開始</li>
+      <li>法人銀行口座の事前準備</li>
+      <li><strong>コードは一行も書かない</strong></li>
+    </ul>
+
+    <div class="inner-monologue">
+      「コードは一行も書かない」って開発者に言うのは勇気がいる。でも、作ったものが誰にも使われない恐怖のほうが大きい。Week 1で「これ欲しい!」という声を3件聞ければ、自信を持って残り5週に突入できる。聞けなかったら…ピボットの議論を始めなければならない。
+    </div>
+
+    <h3>Week 2: DB + Auth + 基盤</h3>
+    <ul>
+      <li>PostgreSQL スキーマ設計 + マイグレーション</li>
+      <li>Supabase Auth セットアップ（メール + LINE OAuth）</li>
+      <li>API サーバーの基本エンドポイント</li>
+      <li>Docker マルチステージビルド</li>
+    </ul>
+
+    <h3>Week 3: カメラ + 推論パイプライン</h3>
+    <ul>
+      <li>エッジ推論パイプライン（RTSP → ONNX → 来客カウント）</li>
+      <li>エッジ→クラウド API（集計データのみ送信）</li>
+      <li>スマホカメラ対応（WebRTC or MediaStream API）</li>
+    </ul>
+
+    <h3>Week 4: ダッシュボード</h3>
+    <ul>
+      <li>Next.js ダッシュボード（来客数グラフ、時間帯ヒートマップ）</li>
+      <li>SSE リアルタイム更新</li>
+      <li>モバイル対応（PWA）</li>
+    </ul>
+
+    <h3>Week 5: 通知 + 決済 + テスト</h3>
+    <ul>
+      <li>LINE通知 Bot（日次サマリー、異常検知）</li>
+      <li>Stripe サブスクリプション連携</li>
+      <li>E2Eテスト、セキュリティテスト</li>
+    </ul>
+
+    <h3>Week 6: クローズドβ</h3>
+    <ul>
+      <li>3-5店舗にβ版提供</li>
+      <li>フィードバック収集</li>
+      <li>バグフィックス + パフォーマンスチューニング</li>
+      <li>パブリックリリース判定会議</li>
+    </ul>
+
+    <div class="inner-monologue">
+      リスクレジスターを作っておかないと。一番のリスクは「顧客インタビューでニーズが確認できない」こと。確率は低いと思うが（来客数データが要らない店舗は少ないはず）、もし3/5がNoだったらどうするか。ピボット先としては「防犯特化」「店員行動分析」「商品棚分析」あたりか。
+    </div>
+
+    <h3>リスクレジスター Top 5</h3>
+
+    <table class="priority-table">
+      <thead>
+        <tr><th>リスク</th><th>確率</th><th>影響</th><th>対策</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>顧客ニーズ不在</td><td><span class="risk-badge risk-low">低</span></td><td><span class="risk-badge risk-high">致命的</span></td><td>Week 1でインタビュー。No-Goならピボット</td></tr>
+        <tr><td>法人設立の遅延</td><td><span class="risk-badge risk-medium">中</span></td><td><span class="risk-badge risk-high">高</span></td><td>司法書士に即日依頼。並行してβは個人名義で</td></tr>
+        <tr><td>エッジ推論の精度不足</td><td><span class="risk-badge risk-medium">中</span></td><td><span class="risk-badge risk-medium">中</span></td><td>YOLOv8n→YOLOv8sへのアップグレード。精度vs速度のトレードオフ</td></tr>
+        <tr><td>Stripe審査不通過</td><td><span class="risk-badge risk-low">低</span></td><td><span class="risk-badge risk-medium">中</span></td><td>PAY.JPをバックアップに。法人格があれば通常は通る</td></tr>
+        <tr><td>1人開発のバス係数</td><td><span class="risk-badge risk-high">高</span></td><td><span class="risk-badge risk-high">高</span></td><td>ドキュメント整備。Claude Codeとの開発ログを全公開（ブログ）</td></tr>
+      </tbody>
+    </table>
+
+    <p><strong>MVP定義（PM版）</strong>：</p>
+
+    <blockquote>
+      <p>「1人の店舗オーナーが、昨日の来客数を確認でき、月額¥4,980を払う。」</p>
+    </blockquote>
+
+    <div class="inner-monologue">
+      シンプルだ。これ以上でもこれ以下でもない。「来客数を確認できる」と「¥4,980を払う」の間には大きな溝がある。この溝を埋めるのは「そのデータで何ができるか」の提案力だ。…しかし、それはプロダクトの機能ではなく、マーケティングの仕事だ。PMとしては「確認できる」までを責任範囲にして、「払ってもらう」はCEO/セールスの仕事にしたい。
+    </div>
+
+    <div class="verdict-box verdict-caution">
+      判定: 6週間スプリント。Week 1の顧客インタビューが全てのゲート。コードは Week 2 から。
+    </div>
+  </div>
+</div>
+
+
+<!-- ==================== Security ==================== -->
+<h2 id="security">6. QA/Security 小林 — セキュリティ脆弱性</h2>
+
+<div class="speaker-card security reveal">
+  <div class="speaker-header">
+    <div class="speaker-avatar">小</div>
+    <div>
+      <div class="speaker-name">小林 翔太（QA/Security）</div>
+      <div class="speaker-role">セキュリティ脆弱性 &amp; インシデント対応</div>
+    </div>
+  </div>
+  <div class="speech">
+
+    <div class="inner-monologue">
+      カメラ映像を扱うサービスのセキュリティ監査。これは気合いを入れないとまずい。映像データは個人情報の中でも特にセンシティブだ。漏洩したらプライバシー侵害で一発アウト。まずデータフローを全部洗い出す。
+    </div>
+
+    <p><strong>現状のセキュリティ評価: リリース不可</strong>。9つの P0 セキュリティ項目があります。</p>
+
+    <h3>Critical（即時対応）</h3>
+
+    <ul>
+      <li><strong>API認証なし</strong> — 全エンドポイントが認証なしでアクセス可能。OWASP Top 10 の #1 (Broken Access Control)</li>
+      <li><strong>RTSPクレデンシャルが平文</strong> — カメラの認証情報が設定ファイルに平文で保存されている。暗号化ストレージ必須</li>
+      <li><strong>保存時暗号化なし</strong> — データベースの暗号化設定が未構成。Supabase PGCryptoの有効化が必要</li>
+    </ul>
+
+    <div class="inner-monologue">
+      平文のRTSPクレデンシャル…これは一番まずい。攻撃者がこの設定ファイルを読めたら、カメラの映像を直接覗けてしまう。zeroize crateを使って、メモリ上のクレデンシャルも使用後に確実にゼロクリアする必要がある。Rustのメモリ安全性はバッファオーバーフローは防ぐが、秘密情報の安全な消去は自分で実装しないといけない。
+    </div>
+
+    <h3>High（1週間以内）</h3>
+
+    <ul>
+      <li><strong>監査ログなし</strong> — 誰がいつ何をしたか追跡できない。コンプライアンス上の必須要件</li>
+      <li><strong>レート制限なし</strong> — DDoS、ブルートフォースに無防備</li>
+      <li><strong>CORS設定が緩すぎる</strong> — オリジン制限が未設定</li>
+    </ul>
+
+    <h3>Medium（リリースまで）</h3>
+
+    <ul>
+      <li><strong>映像データの保持ポリシー</strong> — 不要になった映像の自動削除が未実装</li>
+      <li><strong>インシデント対応計画</strong> — データ漏洩時の対応フローが未策定</li>
+      <li><strong>ペネトレーションテスト</strong> — リリース前に最低1回は実施すべき</li>
+    </ul>
+
+    <div class="inner-monologue">
+      データフローを図にすると、脆弱性が見える。カメラ→エージェント→API→DB、この全ての経路で暗号化が必要。TLSは通信経路を守るが、保存時の暗号化は別。そして一番重要なのは「映像データをクラウドに送らない」こと。CEO/CTOも言っているが、エッジ推論で統計データのみ送信するアーキテクチャにすれば、セキュリティリスクを大幅に下げられる。映像が存在しなければ、漏洩もしない。
+    </div>
+
+    <h3>推奨アーキテクチャ</h3>
+
+    <pre><code>カメラ映像 → [エッジデバイス内]
+  → ONNX推論（人物検出）
+  → 統計データ抽出（来客数, 滞在時間）
+  → 映像を即座に破棄（zeroize）
+  → 統計データのみTLS送信 → [クラウドAPI]
+  → PostgreSQL（暗号化済み）</code></pre>
+
+    <p>この設計なら、クラウド側に映像データが一切存在しないため：</p>
+    <ul>
+      <li>映像漏洩リスク = ゼロ</li>
+      <li>個人情報保護法の適用範囲が大幅に縮小</li>
+      <li>ストレージコストも削減</li>
+    </ul>
+
+    <div class="inner-monologue">
+      最後に一つ。GitHubリポジトリがパブリックだ。もし秘密情報が一度でもコミットされていたら、git historyに残っている。`git log --all --diff-filter=A -- '*.env' '*.key' '*.pem'`で確認すべき。…そしてもう一つ、ONNX モデルファイル自体にも注意が必要。悪意のあるモデルファイルは任意コード実行につながる可能性がある（ONNX Runtime の CVE-2024-27099 等）。モデルのハッシュ検証は必須。
+    </div>
+
+    <div class="verdict-box verdict-risk">
+      判定: 現状はリリース不可。9つのP0項目を修正するのに18-30日。特にAPI認証とRTSPクレデンシャル暗号化は即時対応が必要。
+    </div>
+  </div>
+</div>
+
+
+<!-- ==================== Summary ==================== -->
+<h2 id="summary">全体サマリー</h2>
+
+<div class="intro-box">
+  <p><strong>全員一致の結論: 「今のままではリリースできない」</strong></p>
+  <p>しかし、悲観する必要はない。やるべきことは明確だ。6人の指摘を統合すると、以下の3つに集約される：</p>
+</div>
+
+<h3>今すぐやること（今週中）</h3>
+<ol>
+  <li><strong>店舗オーナー3名にアポを取る</strong> — コードを書く前に、顧客の声を聞く</li>
+  <li><strong>合同会社設立の手続きを開始する</strong> — 司法書士に連絡</li>
+  <li><strong>NMS のゼロ除算バグを修正する</strong> — CTO 山本の指摘</li>
+</ol>
+
+<h3>Week 1 の Go/No-Go ゲート</h3>
+<blockquote>
+  <p>「5件中3件以上の店舗オーナーが、来客数データに月額¥4,980の価値を感じるか？」</p>
+</blockquote>
+<p>YES → 6週スプリント開始。NO → ピボット検討。</p>
+
+<h3>全体スケジュール感</h3>
+<ul>
+  <li><strong>Week 1-2</strong>: 顧客発見 + 法人設立 + 基盤構築</li>
+  <li><strong>Week 3-4</strong>: エッジ推論 + ダッシュボード</li>
+  <li><strong>Week 5</strong>: 決済 + セキュリティ + テスト</li>
+  <li><strong>Week 6</strong>: クローズドβ（3-5店舗）</li>
+  <li><strong>Week 7-8</strong>: フィードバック反映 + パブリックリリース準備</li>
+  <li><strong>Week 9-10</strong>: パブリックリリース + 代理店営業開始</li>
+</ul>
+
+<p>次の記事では、この会議の結論を<strong>具体的なアクションアイテム</strong>に落とし込みます。</p>
+
+<p style="margin-top:40px;text-align:center">
+  <a href="./009-release-decisions.html" class="btn btn-primary">次の記事: リリース判定のサマリーと行動計画 →</a>
+</p>
+
+</article>
+
+<!-- Footer -->
+<footer class="footer">
+  <div class="container">
+    <div class="footer-grid">
+      <div>
+        <div class="footer-brand">ミセバン<span class="logo-ai">AI</span></div>
+        <p class="footer-tagline">既存カメラが、AI店長に変わる。<br>小規模店舗のための次世代AI分析。</p>
+        <a href="mailto:info@miseban.ai" class="footer-email">info@miseban.ai</a>
+      </div>
+      <div>
+        <h4>サービス</h4>
+        <ul>
+          <li><a href="/#features">機能</a></li>
+          <li><a href="/#pricing">料金</a></li>
+          <li><a href="/cameras.html">対応カメラ</a></li>
+          <li><a href="/#faq">FAQ</a></li>
+          <li><a href="/#partner">パートナー募集</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>法的情報</h4>
+        <ul>
+          <li><a href="#">利用規約</a></li>
+          <li><a href="#">プライバシーポリシー</a></li>
+          <li><a href="#">特定商取引法に基づく表記</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>お問い合わせ</h4>
+        <ul>
+          <li><a href="mailto:info@miseban.ai">一般のお問い合わせ</a></li>
+          <li><a href="mailto:partner@miseban.ai">パートナー窓口</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>&copy; 2026 MisebanAI. All rights reserved.</p>
+    </div>
+  </div>
+</footer>
+
+<script>
+/* ===== Mobile menu ===== */
+(function(){
+  var toggle = document.getElementById('mobileToggle');
+  var menu = document.getElementById('mobileMenu');
+  var close = document.getElementById('mobileClose');
+  var links = menu.querySelectorAll('a');
+  function open(){menu.classList.add('open');document.body.style.overflow='hidden'}
+  function shut(){menu.classList.remove('open');document.body.style.overflow=''}
+  toggle.addEventListener('click', open);
+  close.addEventListener('click', shut);
+  for(var i=0;i<links.length;i++) links[i].addEventListener('click', shut);
+})();
+
+/* ===== Scroll reveal ===== */
+(function(){
+  var els = document.querySelectorAll('.reveal');
+  if(!('IntersectionObserver' in window)){
+    els.forEach(function(el){el.classList.add('visible')});
+    return;
+  }
+  var observer = new IntersectionObserver(function(entries){
+    entries.forEach(function(e){
+      if(e.isIntersecting){
+        e.target.classList.add('visible');
+        observer.unobserve(e.target);
+      }
+    });
+  },{threshold:0.1});
+  els.forEach(function(el){observer.observe(el)});
+})();
+</script>
+
+</body>
+</html>
