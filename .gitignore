@@ -1,0 +1,27 @@
+# Build artifacts
+/target/
+debug/
+*.pdb
+
+# Cargo lock is committed for binaries but can be ignored for libraries.
+# Since this workspace contains binaries, we keep Cargo.lock.
+
+# IDE / editor
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Environment / secrets
+.env
+.env.*
+*.key
+*.pem
+
+# Logs
+*.log
