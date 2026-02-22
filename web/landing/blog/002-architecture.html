@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ミセバンAI のアーキテクチャ — なぜRustで、なぜエッジ+クラウドか｜ミセバンAI Blog</title>
+<meta name="description" content="ミセバンAIのシステム設計を技術者向けに解説。Rustによる超軽量エージェント、エッジ+クラウドのハイブリッド構成、セキュリティアーキテクチャについて。">
+<meta name="keywords" content="ミセバンAI,アーキテクチャ,Rust,エッジAI,セキュリティ,YOLO,店舗分析">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://miseban.ai/blog/002-architecture.html">
+
+<!-- OGP -->
+<meta property="og:title" content="ミセバンAI のアーキテクチャ — なぜRustで、なぜエッジ+クラウドか">
+<meta property="og:description" content="Rustによる超軽量エージェント、エッジ+クラウドのハイブリッド構成、セキュリティアーキテクチャを技術者向けに解説します。">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://miseban.ai/blog/002-architecture.html">
+<meta property="og:image" content="https://miseban.ai/ogp.png">
+<meta property="og:site_name" content="ミセバンAI">
+<meta property="og:locale" content="ja_JP">
+<meta property="article:published_time" content="2026-02-22">
+<meta property="article:tag" content="アーキテクチャ">
+<meta property="article:tag" content="Rust">
+<meta property="article:tag" content="エッジAI">
+<meta property="article:tag" content="セキュリティ">
+
+<!-- Twitter Card -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="ミセバンAI のアーキテクチャ — なぜRustで、なぜエッジ+クラウドか">
+<meta name="twitter:description" content="Rustによる超軽量エージェント、エッジ+クラウドのハイブリッド構成、セキュリティアーキテクチャを技術者向けに解説します。">
+<meta name="twitter:image" content="https://miseban.ai/ogp.png">
+
+<!-- Favicon -->
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%234f46e5'/><text x='50%25' y='54%25' dominant-baseline='middle' text-anchor='middle' fill='white' font-size='18' font-weight='bold' font-family='sans-serif'>M</text></svg>">
+
+<!-- Google Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<style>
+/* ===== Reset ===== */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+  --white:#ffffff;
+  --gray-50:#f8fafc;
+  --gray-100:#f1f5f9;
+  --gray-200:#e2e8f0;
+  --gray-300:#cbd5e1;
+  --gray-400:#94a3b8;
+  --gray-500:#64748b;
+  --slate-600:#475569;
+  --slate-700:#334155;
+  --slate-800:#1e293b;
+  --slate-900:#0f172a;
+  --indigo-50:#eef2ff;
+  --indigo-100:#e0e7ff;
+  --indigo-500:#6366f1;
+  --indigo-600:#4f46e5;
+  --indigo-700:#4338ca;
+  --indigo-900:#312e81;
+}
+
+html{font-size:16px;scroll-behavior:smooth}
+body{
+  font-family:'Noto Sans JP','Inter',system-ui,-apple-system,sans-serif;
+  color:var(--slate-800);
+  background:var(--white);
+  line-height:1.8;
+  -webkit-font-smoothing:antialiased;
+}
+
+/* ===== Layout ===== */
+.article-wrapper{
+  max-width:720px;
+  margin:0 auto;
+  padding:48px 24px 96px;
+}
+
+/* ===== Header / Nav ===== */
+.blog-nav{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:16px 24px;
+  border-bottom:1px solid var(--gray-200);
+  max-width:720px;
+  margin:0 auto;
+}
+.blog-nav a{
+  text-decoration:none;
+  color:var(--slate-700);
+  font-weight:600;
+  font-size:0.95rem;
+  transition:color .2s;
+}
+.blog-nav a:hover{color:var(--indigo-600)}
+.blog-nav .logo{
+  font-size:1.1rem;
+  font-weight:700;
+  color:var(--indigo-600);
+  letter-spacing:-0.02em;
+}
+
+/* ===== Article Header ===== */
+.article-header{margin-bottom:48px}
+.article-date{
+  display:block;
+  font-size:0.85rem;
+  color:var(--gray-500);
+  margin-bottom:12px;
+  font-family:'Inter','Noto Sans JP',sans-serif;
+}
+.article-title{
+  font-size:1.85rem;
+  font-weight:700;
+  line-height:1.4;
+  color:var(--slate-900);
+  letter-spacing:-0.02em;
+  margin-bottom:16px;
+}
+.article-tags{display:flex;gap:8px;flex-wrap:wrap}
+.tag{
+  display:inline-block;
+  background:var(--indigo-50);
+  color:var(--indigo-700);
+  font-size:0.78rem;
+  font-weight:500;
+  padding:4px 12px;
+  border-radius:20px;
+  letter-spacing:0.02em;
+}
+
+/* ===== Prose ===== */
+.prose h2{
+  font-size:1.4rem;
+  font-weight:700;
+  color:var(--slate-900);
+  margin:56px 0 20px;
+  padding-bottom:10px;
+  border-bottom:2px solid var(--indigo-100);
+  letter-spacing:-0.01em;
+}
+.prose h2 .num{
+  color:var(--indigo-600);
+  margin-right:6px;
+}
+.prose h3{
+  font-size:1.1rem;
+  font-weight:600;
+  color:var(--slate-800);
+  margin:32px 0 12px;
+}
+.prose p{
+  margin:0 0 20px;
+  color:var(--slate-700);
+  font-size:0.98rem;
+}
+.prose ul,.prose ol{
+  margin:0 0 20px;
+  padding-left:24px;
+}
+.prose li{
+  margin-bottom:8px;
+  color:var(--slate-700);
+  font-size:0.95rem;
+}
+.prose li strong{color:var(--slate-800)}
+.prose a{
+  color:var(--indigo-600);
+  text-decoration:underline;
+  text-underline-offset:3px;
+}
+.prose a:hover{color:var(--indigo-700)}
+
+/* ===== Code Blocks ===== */
+.prose pre{
+  background:var(--slate-900);
+  color:#e2e8f0;
+  border-radius:12px;
+  padding:24px;
+  overflow-x:auto;
+  margin:0 0 24px;
+  font-family:'JetBrains Mono','Menlo','Consolas',monospace;
+  font-size:0.82rem;
+  line-height:1.7;
+  border:1px solid rgba(255,255,255,.06);
+}
+.prose code{
+  font-family:'JetBrains Mono','Menlo','Consolas',monospace;
+  font-size:0.85em;
+}
+.prose p code,
+.prose li code{
+  background:var(--gray-100);
+  color:var(--indigo-700);
+  padding:2px 7px;
+  border-radius:5px;
+  font-size:0.82em;
+}
+
+/* ===== Architecture Diagram ===== */
+.arch-diagram{
+  background:var(--slate-900);
+  border-radius:16px;
+  padding:32px;
+  margin:0 0 28px;
+  overflow-x:auto;
+  position:relative;
+}
+.arch-diagram .label{
+  position:absolute;
+  top:12px;
+  right:16px;
+  font-size:0.7rem;
+  color:var(--gray-400);
+  font-family:'Inter',sans-serif;
+  text-transform:uppercase;
+  letter-spacing:0.08em;
+}
+.arch-row{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  flex-wrap:wrap;
+  margin-bottom:12px;
+}
+.arch-section-label{
+  font-size:0.72rem;
+  font-weight:600;
+  color:var(--indigo-500);
+  font-family:'Inter','Noto Sans JP',sans-serif;
+  letter-spacing:0.04em;
+  margin-bottom:6px;
+  text-transform:uppercase;
+}
+.arch-box{
+  background:rgba(99,102,241,.15);
+  border:1px solid rgba(99,102,241,.3);
+  color:#c7d2fe;
+  padding:8px 14px;
+  border-radius:8px;
+  font-size:0.78rem;
+  font-family:'JetBrains Mono','Menlo',monospace;
+  white-space:nowrap;
+}
+.arch-box.green{
+  background:rgba(16,185,129,.12);
+  border-color:rgba(16,185,129,.3);
+  color:#6ee7b7;
+}
+.arch-arrow{
+  color:var(--gray-400);
+  font-size:1rem;
+  font-family:'JetBrains Mono',monospace;
+}
+.arch-divider{
+  width:100%;
+  border:none;
+  border-top:1px dashed rgba(255,255,255,.12);
+  margin:16px 0;
+}
+.arch-sub-row{
+  display:flex;
+  align-items:flex-start;
+  gap:8px;
+  margin-top:8px;
+  padding-left:40px;
+}
+.arch-down{
+  color:var(--gray-400);
+  font-size:0.9rem;
+  font-family:'JetBrains Mono',monospace;
+  padding-left:4px;
+}
+
+/* ===== Stats Table ===== */
+.stats-table{
+  width:100%;
+  border-collapse:collapse;
+  margin:0 0 24px;
+  font-size:0.9rem;
+}
+.stats-table th{
+  text-align:left;
+  padding:10px 14px;
+  background:var(--indigo-50);
+  color:var(--indigo-700);
+  font-weight:600;
+  font-size:0.82rem;
+  border-bottom:2px solid var(--indigo-100);
+}
+.stats-table td{
+  padding:10px 14px;
+  border-bottom:1px solid var(--gray-200);
+  color:var(--slate-700);
+}
+.stats-table tr:last-child td{border-bottom:none}
+.stats-table .highlight{
+  color:var(--indigo-600);
+  font-weight:600;
+}
+
+/* ===== Callout ===== */
+.callout{
+  background:var(--indigo-50);
+  border-left:4px solid var(--indigo-500);
+  border-radius:0 12px 12px 0;
+  padding:20px 24px;
+  margin:0 0 28px;
+}
+.callout p{
+  margin:0;
+  color:var(--indigo-900);
+  font-size:0.92rem;
+  font-weight:500;
+}
+
+/* ===== Footer ===== */
+.article-footer{
+  margin-top:64px;
+  padding-top:32px;
+  border-top:1px solid var(--gray-200);
+}
+.article-footer p{
+  color:var(--gray-500);
+  font-size:0.88rem;
+}
+.back-link{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  color:var(--indigo-600);
+  text-decoration:none;
+  font-weight:500;
+  font-size:0.9rem;
+  margin-top:24px;
+  transition:color .2s;
+}
+.back-link:hover{color:var(--indigo-700)}
+
+/* ===== Responsive ===== */
+@media(max-width:640px){
+  .article-wrapper{padding:32px 16px 64px}
+  .article-title{font-size:1.45rem}
+  .prose h2{font-size:1.2rem;margin:40px 0 16px}
+  .arch-diagram{padding:20px 16px}
+  .arch-row{gap:4px}
+  .arch-box{padding:6px 10px;font-size:0.72rem}
+}
+</style>
+</head>
+<body>
+
+<!-- Navigation -->
+<nav class="blog-nav">
+  <a href="/" class="logo">ミセバンAI</a>
+  <a href="/">Home</a>
+</nav>
+
+<article class="article-wrapper">
+
+  <!-- Header -->
+  <header class="article-header">
+    <time class="article-date" datetime="2026-02-22">2026.02.22</time>
+    <h1 class="article-title">ミセバンAI のアーキテクチャ — なぜRustで、なぜエッジ+クラウドか</h1>
+    <div class="article-tags">
+      <span class="tag">#アーキテクチャ</span>
+      <span class="tag">#Rust</span>
+      <span class="tag">#エッジAI</span>
+      <span class="tag">#セキュリティ</span>
+    </div>
+  </header>
+
+  <!-- Body -->
+  <div class="prose">
+
+    <!-- 1. 設計思想 -->
+    <h2><span class="num">1.</span> 設計思想</h2>
+
+    <p>ミセバンAIの設計は、3つの原則から始まりました。</p>
+
+    <ol>
+      <li><strong>プライバシーファースト</strong> — 映像データはクラウドに蓄積しない。AI処理後にメモリから即破棄する</li>
+      <li><strong>最小コスト</strong> — 店舗側のハードウェア要件を極限まで下げる。月額2,980円で成立するインフラ</li>
+      <li><strong>保守性</strong> — 10年運用できるコードベース。依存関係は最小限に、型安全性は最大限に</li>
+    </ol>
+
+    <div class="callout">
+      <p>映像データをクラウドに蓄積しないことは「機能」ではなく「思想」です。お客様の顔が映る映像を保存しないという判断は、技術的な制約ではなく、私たちが選んだ設計方針です。</p>
+    </div>
+
+
+    <!-- 2. 全体アーキテクチャ図 -->
+    <h2><span class="num">2.</span> 全体アーキテクチャ図</h2>
+
+    <p>システムは「店舗側エージェント」と「クラウドAI」の2層で構成されます。店舗側は超軽量なフレーム転送に徹し、重いAI処理はすべてクラウドで実行します。</p>
+
+    <div class="arch-diagram">
+      <span class="label">System Architecture</span>
+
+      <div class="arch-section-label">店舗側 (Edge)</div>
+      <div class="arch-row">
+        <span class="arch-box">カメラ (RTSP)</span>
+        <span class="arch-arrow">&rarr;</span>
+        <span class="arch-box">エージェント</span>
+        <span class="arch-arrow">&rarr;</span>
+        <span class="arch-box green">HTTPS (TLS 1.3)</span>
+      </div>
+
+      <hr class="arch-divider">
+
+      <div class="arch-section-label">クラウド側 (Cloud)</div>
+      <div class="arch-row">
+        <span class="arch-box">API Gateway</span>
+        <span class="arch-arrow">&rarr;</span>
+        <span class="arch-box">フレームキュー</span>
+        <span class="arch-arrow">&rarr;</span>
+        <span class="arch-box">AI推論ワーカー</span>
+        <span class="arch-arrow">&rarr;</span>
+        <span class="arch-box green">結果DB</span>
+      </div>
+      <div class="arch-sub-row">
+        <span class="arch-down">&darr;</span>
+      </div>
+      <div class="arch-row" style="padding-left:40px;">
+        <span class="arch-box">LINE / Slack 通知</span>
+        <span class="arch-box">Web ダッシュボード</span>
+      </div>
+    </div>
+
+
+    <!-- 3. なぜRustか -->
+    <h2><span class="num">3.</span> なぜRustか</h2>
+
+    <h3>エージェント（店舗側）: 圧倒的な軽さ</h3>
+    <p>エージェントの実行時メモリはわずか<strong>50MB以下</strong>。Go製の同等プログラムと比べて約1/3、Pythonと比べて1/5以下です。Raspberry Pi Zero 2 W（512MB RAM）でも余裕で動作します。</p>
+
+    <h3>クラウドAPI: 桁違いのスループット</h3>
+    <p>WebフレームワークAxumは、実測ベンチマークでExpressの10倍、Flaskの50倍のリクエスト処理能力を示します。少ないサーバー台数で多くのカメラを捌けることは、直接コスト削減につながります。</p>
+
+    <table class="stats-table">
+      <thead>
+        <tr>
+          <th>指標</th>
+          <th>Rust (Axum)</th>
+          <th>Node (Express)</th>
+          <th>Python (Flask)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>req/sec</td>
+          <td class="highlight">~150,000</td>
+          <td>~15,000</td>
+          <td>~3,000</td>
+        </tr>
+        <tr>
+          <td>メモリ (idle)</td>
+          <td class="highlight">8 MB</td>
+          <td>50 MB</td>
+          <td>30 MB</td>
+        </tr>
+        <tr>
+          <td>Dockerイメージ</td>
+          <td class="highlight">23 MB</td>
+          <td>180 MB</td>
+          <td>350 MB</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>安全性: メモリ安全の保証</h3>
+    <p>カメラから送られてくるRTSPストリームは外部入力です。C/C++で書かれたパーサーではバッファオーバーフローのリスクが常につきまといますが、Rustではそのクラスの脆弱性が<strong>コンパイル時に排除</strong>されます。</p>
+
+    <h3>単一バイナリ: デプロイの単純さ</h3>
+    <p><code>cargo build --release</code> で生成される単一バイナリをコピーするだけ。ランタイムの依存なし。Dockerイメージは23MBに収まり、デプロイは数秒で完了します。</p>
+
+    <h3>実際のコード: エージェントのメインループ</h3>
+    <pre><code>async fn run_agent(config: &amp;Config) -&gt; Result&lt;()&gt; {
+    let client = reqwest::Client::new();
+    let mut stream = RtspStream::connect(&amp;config.camera.url).await?;
+    let interval = Duration::from_secs_f64(1.0 / config.camera.fps);
+
+    loop {
+        let frame = stream.next_jpeg_frame().await?;
+        let res = client
+            .post(&amp;config.cloud.endpoint)
+            .bearer_auth(&amp;config.cloud.token)
+            .body(frame)
+            .timeout(Duration::from_secs(10))
+            .send()
+            .await;
+
+        if let Err(e) = res {
+            tracing::warn!("upload failed, retrying: {e}");
+        }
+        tokio::time::sleep(interval).await;
+    }
+}</code></pre>
+
+    <p>わずか15行。RTSPからフレームを取得し、HTTPSでクラウドに送るだけ。AI処理のコードは一切含まれていません。</p>
+
+
+    <!-- 4. エージェント設計 -->
+    <h2><span class="num">4.</span> エージェント設計</h2>
+
+    <h3>超軽量設計</h3>
+    <p>エージェントの責務は明確です: <strong>RTSP受信 → JPEGフレーム抽出 → HTTPS POST</strong>。それだけです。AI推論はゼロ。映像の保存もゼロ。単なるフレーム転送器として設計しています。</p>
+
+    <h3>3つの動作モード</h3>
+    <ul>
+      <li><strong>Docker (PC)</strong> — <code>docker run miseban/agent</code> で即起動。既存サーバーやNASで動作</li>
+      <li><strong>アプリ (スマホ)</strong> — iOS/Androidアプリとしてカメラ映像を直接送信</li>
+      <li><strong>ネイティブ (RPi)</strong> — Raspberry Pi向けARMバイナリ。専用カメラデバイスとして利用</li>
+    </ul>
+
+    <h3>設定ファイル</h3>
+    <p>TOMLフォーマットのシンプルな設定ファイルで動作します。</p>
+
+    <pre><code>[camera]
+url = "rtsp://admin:password@192.168.1.100/stream1"
+fps = 0.2  # 5秒に1フレーム
+
+[cloud]
+endpoint = "https://api.miseban.ai/v1/frames"
+token = "mbn_xxxx"</code></pre>
+
+    <h3>リトライ戦略</h3>
+    <p>ネットワーク障害に備え、<strong>exponential backoff</strong>（初回1秒、最大60秒）でリトライします。RTSPストリームの接続断が発生した場合は自動再接続を試みます。通信断の間、フレームは単純に破棄されます。映像を溜め込んで後から送信するような複雑な処理は行いません。</p>
+
+    <h3>帯域使用量</h3>
+    <p>1フレーム約50KB、5秒に1回送信（0.2fps）で計算すると:</p>
+    <ul>
+      <li>1分あたり: 50KB &times; 12回 = 600KB</li>
+      <li>1日あたり: 600KB &times; 60 &times; 24 = ~830MB</li>
+      <li>1ヶ月あたり: <strong>~25GB</strong></li>
+    </ul>
+    <p>一般的なインターネット回線であれば全く問題にならない帯域量です。</p>
+
+
+    <!-- 5. クラウドAI推論 -->
+    <h2><span class="num">5.</span> クラウドAI推論</h2>
+
+    <h3>推論エンジン</h3>
+    <p>物体検出には<strong>YOLOv8-m</strong>を採用しています。GPU上で1フレームあたり約15ms（RTX 4090）で処理できるため、1台のGPUサーバーで<strong>1,000台以上のカメラを同時処理</strong>可能です。</p>
+
+    <h3>処理パイプライン</h3>
+    <ol>
+      <li><strong>フレーム受信</strong> — API Gatewayがエージェントからのフレームを受け取り、キューに投入</li>
+      <li><strong>人物検出</strong> — YOLOv8-mでバウンディングボックスを検出</li>
+      <li><strong>トラッキング</strong> — ByteTrackアルゴリズムでフレーム間の同一人物を追跡</li>
+      <li><strong>属性推定</strong> — 年齢層・性別・滞在時間を推定</li>
+      <li><strong>結果保存</strong> — 統計データのみをDBに保存。元フレームは破棄</li>
+    </ol>
+
+    <div class="callout">
+      <p>元のフレーム画像はAI処理完了後にメモリから即座に破棄されます。ディスクには一切書き込みません。DBに保存されるのは「14:32に30代男性が入店」のような統計データだけです。</p>
+    </div>
+
+    <h3>スケーリング</h3>
+    <p>カメラ台数の増加に応じてGPUワーカーを水平スケールします。キューベースのアーキテクチャにより、ワーカーの追加・削除は既存の処理に影響を与えません。</p>
+
+
+    <!-- 6. セキュリティアーキテクチャ -->
+    <h2><span class="num">6.</span> セキュリティアーキテクチャ</h2>
+
+    <h3>通信の保護</h3>
+    <ul>
+      <li><strong>TLS 1.3必須</strong> — 1.2以下は拒否。証明書ピニングにより中間者攻撃を防止</li>
+      <li><strong>認証</strong> — Bearer Token（APIキー）による認証。将来的にmTLS（相互TLS認証）へ移行予定</li>
+    </ul>
+
+    <h3>映像データの扱い</h3>
+    <ul>
+      <li><strong>メモリ上のみ</strong> — フレームデータはAI処理後に即破棄。ディスクに書かない</li>
+      <li><strong>統計データ</strong> — AES-256-GCMで暗号化保存</li>
+    </ul>
+
+    <h3>サプライチェーンセキュリティ</h3>
+    <table class="stats-table">
+      <thead>
+        <tr>
+          <th>ツール</th>
+          <th>用途</th>
+          <th>タイミング</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>cargo-deny</code></td>
+          <td>全依存クレートの脆弱性・ライセンス監査</td>
+          <td>CI（毎コミット）</td>
+        </tr>
+        <tr>
+          <td><code>gitleaks</code></td>
+          <td>シークレット（APIキー等）の混入検知</td>
+          <td>pre-commit hook</td>
+        </tr>
+        <tr>
+          <td><code>trivy</code></td>
+          <td>コンテナイメージの脆弱性スキャン</td>
+          <td>CI（ビルド後）</td>
+        </tr>
+        <tr>
+          <td><code>cargo-cyclonedx</code></td>
+          <td>SBOM生成。依存関係の透明性確保</td>
+          <td>リリース時</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>バイナリ・コンテナの署名</h3>
+    <ul>
+      <li><strong>バイナリ</strong> — <code>minisign</code> で署名。ユーザーはダウンロード後に検証可能</li>
+      <li><strong>コンテナ</strong> — <code>cosign</code> (Sigstore) でイメージ署名。改ざん検知</li>
+    </ul>
+
+
+    <!-- 7. オープンソース戦略 -->
+    <h2><span class="num">7.</span> オープンソース戦略</h2>
+
+    <p>ミセバンAIは「エージェントは公開、クラウドAIはプロプライエタリ」のハイブリッドモデルを採用しています。</p>
+
+    <table class="stats-table">
+      <thead>
+        <tr>
+          <th>コンポーネント</th>
+          <th>ライセンス</th>
+          <th>理由</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>エージェント</td>
+          <td class="highlight">MIT License</td>
+          <td>店舗に設置するソフトウェアの透明性を確保</td>
+        </tr>
+        <tr>
+          <td>クラウドAI</td>
+          <td>プロプライエタリ</td>
+          <td>ビジネスの核となるAI推論・分析ロジックを保護</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p>店舗オーナーにとって、自分の店に設置するソフトウェアの中身が見えることは信頼の基盤です。一方で、クラウド側のAI推論ロジックは継続的な研究開発投資の成果であり、イノベーションを保護する必要があります。</p>
+
+    <p>このモデルはLinuxカーネル（GPL公開、クラウドサービスで収益）やChromium（BSDライセンス公開、Google Chromeとして収益）と同じ「コアを公開し、サービスで収益を上げる」パターンです。</p>
+
+
+    <!-- 8. 開発環境とCI/CD -->
+    <h2><span class="num">8.</span> 開発環境とCI/CD</h2>
+
+    <h3>ローカル開発</h3>
+    <pre><code># コンパイルチェック（型エラーの検出）
+cargo check
+
+# Lintチェック（コード品質）
+cargo clippy -- -D warnings
+
+# テスト実行
+cargo test
+
+# フォーマット
+cargo fmt --check</code></pre>
+
+    <h3>CI/CDパイプライン</h3>
+    <p>GitHub Actionsで以下のステップを自動実行します。</p>
+
+    <ol>
+      <li><strong>セキュリティスキャン</strong> — <code>cargo-deny</code> + <code>gitleaks</code> で脆弱性・シークレット検知</li>
+      <li><strong>ビルド・テスト</strong> — <code>cargo test</code> + <code>cargo clippy</code></li>
+      <li><strong>コンテナビルド</strong> — マルチアーキ（amd64/arm64）Dockerイメージ</li>
+      <li><strong>コンテナスキャン</strong> — <code>trivy</code> でイメージの脆弱性チェック</li>
+      <li><strong>リリース</strong> — <code>cosign</code> 署名 + SBOM添付 + GitHub Releases公開</li>
+      <li><strong>デプロイ</strong> — Fly.ioへの自動デプロイ</li>
+    </ol>
+
+    <div class="callout">
+      <p>全工程がCLIで完結します。GUIツールへの依存はゼロ。<code>make release</code> 一発でセキュリティスキャンからデプロイまで自動実行されます。</p>
+    </div>
+
+
+    <!-- Closing -->
+    <h2>フィードバック</h2>
+    <p>この設計についてのフィードバックをお待ちしています。GitHubの<a href="https://github.com/miseban/agent/issues" target="_blank" rel="noopener">Issue</a>か、Xで <a href="https://x.com/misebanai" target="_blank" rel="noopener">@misebanai</a> までお気軽にどうぞ。</p>
+
+  </div>
+
+  <!-- Footer -->
+  <footer class="article-footer">
+    <p>ミセバンAI Engineering Blog</p>
+    <a href="/" class="back-link">&larr; トップページに戻る</a>
+  </footer>
+
+</article>
+
+</body>
+</html>

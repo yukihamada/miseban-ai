@@ -2,6 +2,7 @@ FROM nginx:alpine
 
 COPY web/landing/index.html /usr/share/nginx/html/index.html
 COPY web/landing/cameras.html /usr/share/nginx/html/cameras.html
+COPY web/landing/blog/ /usr/share/nginx/html/blog/
 COPY nginx.conf /etc/nginx/nginx.conf
 
 EXPOSE 8080

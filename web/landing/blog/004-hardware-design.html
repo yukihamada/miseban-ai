@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>カメラの設計日誌 — ¥14,800で「全部入り」を作る｜ミセバンAI Blog</title>
+<meta name="description" content="ミセバンAI専用カメラの設計日誌。Raspberry Pi Zero 2 WベースでBOM ¥9,200、販売価格¥14,800を目指すエッジAIカメラの設計プロセスを公開。">
+<meta name="keywords" content="ハードウェア,設計日誌,RaspberryPi,エッジAI,ミセバンAI,自社カメラ,BOM,IoT">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://miseban.ai/blog/004-hardware-design">
+
+<!-- OGP -->
+<meta property="og:title" content="カメラの設計日誌 — ¥14,800で「全部入り」を作る｜ミセバンAI Blog">
+<meta property="og:description" content="ミセバンAI専用カメラの設計日誌。RPi Zero 2 WベースでBOM ¥9,200、販売価格¥14,800を目指すエッジAIカメラの設計プロセスを公開。">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://miseban.ai/blog/004-hardware-design">
+<meta property="og:image" content="https://miseban.ai/ogp.png">
+<meta property="og:site_name" content="ミセバンAI">
+<meta property="og:locale" content="ja_JP">
+<meta property="article:published_time" content="2026-02-22">
+<meta property="article:author" content="ミセバンAI チーム">
+<meta property="article:tag" content="ハードウェア">
+<meta property="article:tag" content="設計日誌">
+<meta property="article:tag" content="RaspberryPi">
+<meta property="article:tag" content="エッジAI">
+
+<!-- Twitter Card -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="カメラの設計日誌 — ¥14,800で「全部入り」を作る｜ミセバンAI Blog">
+<meta name="twitter:description" content="ミセバンAI専用カメラの設計日誌。RPi Zero 2 WベースでBOM ¥9,200、販売価格¥14,800を目指す。">
+<meta name="twitter:image" content="https://miseban.ai/ogp.png">
+
+<!-- Favicon -->
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%234f46e5'/><text x='50%25' y='54%25' dominant-baseline='middle' text-anchor='middle' fill='white' font-size='18' font-weight='bold' font-family='sans-serif'>M</text></svg>">
+
+<!-- Google Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<style>
+/* ===== Reset & Custom Properties ===== */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --white:#ffffff;
+  --gray-50:#f8fafc;
+  --gray-100:#f1f5f9;
+  --gray-200:#e2e8f0;
+  --gray-300:#cbd5e1;
+  --gray-400:#94a3b8;
+  --gray-500:#64748b;
+  --slate-600:#475569;
+  --slate-700:#334155;
+  --slate-800:#1e293b;
+  --slate-900:#0f172a;
+  --indigo-50:#eef2ff;
+  --indigo-100:#e0e7ff;
+  --indigo-500:#6366f1;
+  --indigo-600:#4f46e5;
+  --indigo-700:#4338ca;
+  --indigo-900:#312e81;
+  --indigo-950:#1e1b4b;
+  --emerald-50:#ecfdf5;
+  --emerald-400:#34d399;
+  --emerald-500:#10b981;
+  --emerald-600:#059669;
+  --amber-50:#fffbeb;
+  --amber-600:#d97706;
+  --red-50:#fef2f2;
+  --red-600:#dc2626;
+  --radius-sm:8px;
+  --radius:12px;
+  --radius-lg:16px;
+  --radius-xl:24px;
+  --shadow-xs:0 1px 2px rgba(0,0,0,.05);
+  --shadow-sm:0 1px 3px rgba(0,0,0,.1),0 1px 2px rgba(0,0,0,.06);
+  --shadow-md:0 4px 6px -1px rgba(0,0,0,.1),0 2px 4px -2px rgba(0,0,0,.1);
+  --shadow-lg:0 10px 15px -3px rgba(0,0,0,.1),0 4px 6px -4px rgba(0,0,0,.1);
+}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+body{font-family:'Noto Sans JP','Inter',system-ui,-apple-system,sans-serif;color:var(--slate-900);background:var(--white);line-height:1.8;overflow-x:hidden;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
+img{max-width:100%;height:auto;display:block}
+a{text-decoration:none;color:inherit;transition:color .2s}
+
+/* ===== Header ===== */
+.header{position:fixed;top:0;left:0;width:100%;z-index:1000;background:rgba(255,255,255,.92);backdrop-filter:blur(16px) saturate(180%);-webkit-backdrop-filter:blur(16px) saturate(180%);box-shadow:0 1px 3px rgba(0,0,0,.06);border-bottom:1px solid rgba(0,0,0,.04)}
+.header-inner{display:flex;align-items:center;justify-content:space-between;height:64px;max-width:1200px;margin:0 auto;padding:0 24px}
+.logo{display:flex;align-items:center;gap:2px;font-size:1.125rem;font-weight:700;color:var(--slate-900)}
+.logo-ai{color:var(--indigo-600);font-weight:700}
+.nav{display:flex;align-items:center;gap:24px}
+.nav a{font-size:.875rem;font-weight:500;color:var(--slate-600);transition:color .2s}
+.nav a:hover{color:var(--slate-900)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;font-family:inherit;font-size:.875rem;font-weight:600;padding:10px 20px;border-radius:100px;border:none;cursor:pointer;transition:all .2s ease;white-space:nowrap;line-height:1.4}
+.btn-primary{background:var(--indigo-600);color:var(--white);box-shadow:0 1px 2px rgba(79,70,229,.3)}
+.btn-primary:hover{background:var(--indigo-700);transform:translateY(-1px)}
+
+@media(max-width:768px){
+  .nav{display:none}
+}
+
+/* ===== Article Layout ===== */
+.article-hero{background:linear-gradient(165deg,var(--slate-900) 0%,#1a1647 50%,var(--indigo-950) 100%);padding:120px 0 64px;color:var(--white);position:relative;overflow:hidden}
+.article-hero::before{content:'';position:absolute;top:0;left:0;right:0;bottom:0;background:radial-gradient(ellipse 80% 50% at 50% -20%,rgba(99,102,241,.15),transparent);pointer-events:none}
+.article-hero-inner{position:relative;z-index:1;max-width:720px;margin:0 auto;padding:0 24px}
+.article-breadcrumb{display:flex;align-items:center;gap:8px;font-size:.8125rem;color:rgba(255,255,255,.5);margin-bottom:24px}
+.article-breadcrumb a{color:rgba(255,255,255,.6);transition:color .2s}
+.article-breadcrumb a:hover{color:rgba(255,255,255,.9)}
+.article-breadcrumb span{color:rgba(255,255,255,.3)}
+.article-tags{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px}
+.article-tag{display:inline-block;font-size:.75rem;font-weight:600;padding:4px 12px;border-radius:100px;background:rgba(255,255,255,.1);color:rgba(255,255,255,.8);border:1px solid rgba(255,255,255,.1)}
+.article-hero h1{font-size:clamp(1.5rem,4vw,2.25rem);font-weight:700;line-height:1.4;margin-bottom:20px;letter-spacing:-.01em}
+.article-meta{display:flex;align-items:center;gap:16px;font-size:.8125rem;color:rgba(255,255,255,.5)}
+.article-meta-item{display:flex;align-items:center;gap:6px}
+
+.article-body{max-width:720px;margin:0 auto;padding:64px 24px 100px}
+
+/* ===== Prose ===== */
+.prose h2{font-size:1.5rem;font-weight:700;margin:56px 0 20px;padding-bottom:12px;border-bottom:2px solid var(--gray-200);color:var(--slate-900);line-height:1.4}
+.prose h2:first-child{margin-top:0}
+.prose h3{font-size:1.125rem;font-weight:700;margin:40px 0 12px;color:var(--slate-800)}
+.prose p{font-size:1rem;color:var(--slate-700);line-height:1.9;margin-bottom:20px}
+.prose ul,.prose ol{margin:0 0 24px 0;padding-left:24px}
+.prose ul{list-style:disc}
+.prose ol{list-style:decimal}
+.prose li{font-size:1rem;color:var(--slate-700);line-height:1.8;margin-bottom:8px}
+.prose li::marker{color:var(--indigo-500)}
+.prose strong{font-weight:700;color:var(--slate-900)}
+.prose a{color:var(--indigo-600);text-decoration:underline;text-underline-offset:2px}
+.prose a:hover{color:var(--indigo-700)}
+
+/* ===== Callout Boxes ===== */
+.callout{border-radius:var(--radius);padding:20px 24px;margin:24px 0 32px;border-left:4px solid}
+.callout-blue{background:var(--indigo-50);border-color:var(--indigo-500)}
+.callout-green{background:var(--emerald-50);border-color:var(--emerald-500)}
+.callout-amber{background:var(--amber-50);border-color:var(--amber-600)}
+.callout-red{background:var(--red-50);border-color:var(--red-600)}
+.callout-title{font-size:.875rem;font-weight:700;margin-bottom:8px;display:flex;align-items:center;gap:8px}
+.callout-blue .callout-title{color:var(--indigo-700)}
+.callout-green .callout-title{color:var(--emerald-600)}
+.callout-amber .callout-title{color:var(--amber-600)}
+.callout-red .callout-title{color:var(--red-600)}
+.callout p{font-size:.9375rem;margin-bottom:0;color:var(--slate-700)}
+
+/* ===== Table ===== */
+.table-wrap{overflow-x:auto;margin:24px 0 32px;border-radius:var(--radius);border:1px solid var(--gray-200)}
+.table-wrap table{width:100%;border-collapse:collapse;font-size:.9375rem}
+.table-wrap th{background:var(--gray-50);font-weight:700;text-align:left;padding:12px 16px;border-bottom:2px solid var(--gray-200);color:var(--slate-800);font-size:.8125rem;letter-spacing:.02em;white-space:nowrap}
+.table-wrap td{padding:12px 16px;border-bottom:1px solid var(--gray-100);color:var(--slate-700);vertical-align:top}
+.table-wrap tr:last-child td{border-bottom:none}
+.table-wrap tr.table-total{background:var(--indigo-50)}
+.table-wrap tr.table-total td{font-weight:700;color:var(--indigo-700);border-top:2px solid var(--indigo-200)}
+.table-wrap tr.table-note td{background:var(--gray-50);font-size:.8125rem;color:var(--slate-600);font-style:italic}
+
+/* ===== Code Block ===== */
+.code-block{background:var(--slate-900);border-radius:var(--radius);margin:24px 0 32px;overflow:hidden}
+.code-block-header{display:flex;align-items:center;justify-content:space-between;padding:12px 20px;background:rgba(255,255,255,.05);border-bottom:1px solid rgba(255,255,255,.08)}
+.code-block-lang{font-size:.75rem;font-weight:600;color:var(--indigo-400);letter-spacing:.05em;text-transform:uppercase}
+.code-block pre{padding:20px;overflow-x:auto;font-family:'JetBrains Mono',monospace;font-size:.8125rem;line-height:1.8;color:#e2e8f0;margin:0}
+.code-block .comment{color:#64748b}
+.code-block .highlight{color:#34d399}
+.code-block .keyword{color:#818cf8}
+.code-block .string{color:#fbbf24}
+
+/* ===== Margin Note ===== */
+.margin-calc{background:var(--gray-50);border-radius:var(--radius);padding:20px 24px;margin:24px 0 32px;text-align:center}
+.margin-calc-value{font-size:2rem;font-weight:700;color:var(--indigo-600);font-family:'Inter','Noto Sans JP',sans-serif}
+.margin-calc-label{font-size:.875rem;color:var(--slate-600);margin-top:4px}
+.margin-calc-formula{font-size:.8125rem;color:var(--gray-400);margin-top:8px;font-family:'JetBrains Mono',monospace}
+
+/* ===== Roadmap ===== */
+.roadmap{margin:32px 0;position:relative}
+.roadmap::before{content:'';position:absolute;top:0;bottom:0;left:19px;width:2px;background:var(--gray-200)}
+.roadmap-item{display:flex;gap:20px;margin-bottom:24px;position:relative}
+.roadmap-dot{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.875rem;font-weight:700;flex-shrink:0;z-index:1;border:3px solid var(--white)}
+.roadmap-dot-active{background:var(--indigo-600);color:var(--white);box-shadow:0 0 0 4px var(--indigo-100)}
+.roadmap-dot-future{background:var(--gray-200);color:var(--slate-600)}
+.roadmap-content{padding:8px 0}
+.roadmap-content h4{font-size:1rem;font-weight:700;color:var(--slate-900);margin-bottom:4px}
+.roadmap-content p{font-size:.875rem;color:var(--slate-600);margin:0}
+.roadmap-content .roadmap-timing{font-size:.75rem;font-weight:600;color:var(--indigo-600);margin-bottom:4px}
+
+/* ===== Decision Box ===== */
+.decision-box{background:linear-gradient(135deg,var(--indigo-50),#f5f3ff);border:2px solid var(--indigo-200);border-radius:var(--radius-lg);padding:32px;margin:32px 0}
+.decision-box h3{font-size:1.25rem;font-weight:700;color:var(--indigo-900);margin-bottom:16px;display:flex;align-items:center;gap:10px}
+.decision-box ul{list-style:none;padding:0;margin:0}
+.decision-box li{padding:10px 0;font-size:1rem;color:var(--slate-700);border-bottom:1px solid rgba(99,102,241,.1);display:flex;align-items:flex-start;gap:12px;line-height:1.7}
+.decision-box li:last-child{border-bottom:none}
+.decision-box li::before{content:'';display:inline-block;width:20px;height:20px;flex-shrink:0;margin-top:4px;background:var(--indigo-600);border-radius:50%;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='white'%3E%3Cpath fill-rule='evenodd' d='M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z' clip-rule='evenodd'/%3E%3C/svg%3E");background-size:14px;background-repeat:no-repeat;background-position:center}
+
+/* ===== Spec Grid ===== */
+.spec-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin:24px 0 32px}
+.spec-card{background:var(--gray-50);border:1px solid var(--gray-200);border-radius:var(--radius);padding:20px;text-align:center}
+.spec-card-icon{font-size:1.5rem;margin-bottom:8px}
+.spec-card-value{font-size:1.125rem;font-weight:700;color:var(--slate-900);margin-bottom:2px}
+.spec-card-label{font-size:.75rem;color:var(--slate-600)}
+
+/* ===== Case Design ===== */
+.case-design{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin:24px 0 32px}
+.case-visual{background:var(--gray-50);border:1px solid var(--gray-200);border-radius:var(--radius-lg);padding:40px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px}
+.case-cylinder{width:100px;height:120px;background:linear-gradient(180deg,#e2e8f0,#cbd5e1);border-radius:50px/20px;position:relative;box-shadow:0 8px 24px rgba(0,0,0,.1)}
+.case-cylinder::before{content:'';position:absolute;top:0;left:0;right:0;height:40px;background:linear-gradient(180deg,#f1f5f9,#e2e8f0);border-radius:50px/20px}
+.case-cylinder::after{content:'';position:absolute;top:12px;left:50%;transform:translateX(-50%);width:40px;height:40px;background:linear-gradient(135deg,#334155,#1e293b);border-radius:50%;box-shadow:inset 0 2px 4px rgba(0,0,0,.3)}
+.case-dims{font-size:.75rem;color:var(--gray-400);font-family:'JetBrains Mono',monospace}
+.case-specs{display:flex;flex-direction:column;gap:12px}
+.case-spec-item{display:flex;align-items:flex-start;gap:12px;padding:12px 16px;background:var(--white);border:1px solid var(--gray-200);border-radius:var(--radius-sm)}
+.case-spec-icon{font-size:1.125rem;flex-shrink:0;margin-top:2px}
+.case-spec-text h4{font-size:.875rem;font-weight:700;color:var(--slate-900);margin-bottom:2px}
+.case-spec-text p{font-size:.8125rem;color:var(--slate-600);margin:0;line-height:1.6}
+
+/* ===== Footer ===== */
+.article-footer{border-top:1px solid var(--gray-200);margin-top:64px;padding-top:32px}
+.article-footer-inner{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px}
+.article-footer-back{font-size:.875rem;font-weight:600;color:var(--indigo-600);display:flex;align-items:center;gap:6px}
+.article-footer-back:hover{color:var(--indigo-700)}
+.article-footer-share{display:flex;align-items:center;gap:12px}
+.article-footer-share span{font-size:.8125rem;color:var(--gray-400)}
+.share-btn{width:36px;height:36px;border-radius:50%;background:var(--gray-100);display:flex;align-items:center;justify-content:center;transition:all .2s;color:var(--slate-600)}
+.share-btn:hover{background:var(--indigo-100);color:var(--indigo-600)}
+
+/* ===== Site Footer ===== */
+.site-footer{background:var(--slate-900);color:rgba(255,255,255,.5);padding:40px 0;text-align:center;font-size:.8125rem}
+.site-footer a{color:rgba(255,255,255,.7);transition:color .2s}
+.site-footer a:hover{color:var(--white)}
+
+/* ===== Responsive ===== */
+@media(max-width:640px){
+  .article-hero{padding:100px 0 48px}
+  .article-hero h1{font-size:1.375rem}
+  .article-body{padding:40px 20px 80px}
+  .prose h2{font-size:1.25rem;margin-top:40px}
+  .case-design{grid-template-columns:1fr}
+  .spec-grid{grid-template-columns:repeat(2,1fr)}
+  .margin-calc-value{font-size:1.5rem}
+}
+</style>
+</head>
+<body>
+
+<!-- ===== Header ===== -->
+<header class="header">
+  <div class="header-inner">
+    <a href="/" class="logo">ミセバン<span class="logo-ai">AI</span></a>
+    <nav class="nav">
+      <a href="/">ホーム</a>
+      <a href="/cameras">対応カメラ</a>
+      <a href="/blog/004-hardware-design" style="color:var(--slate-900);font-weight:600">ブログ</a>
+      <a href="/#pricing">料金</a>
+      <a href="/#contact" class="btn btn-primary">お問い合わせ</a>
+    </nav>
+  </div>
+</header>
+
+<!-- ===== Article Hero ===== -->
+<section class="article-hero">
+  <div class="article-hero-inner">
+    <nav class="article-breadcrumb">
+      <a href="/">ホーム</a>
+      <span>/</span>
+      <a href="/blog">ブログ</a>
+      <span>/</span>
+      <span>設計日誌 #004</span>
+    </nav>
+    <div class="article-tags">
+      <span class="article-tag">#ハードウェア</span>
+      <span class="article-tag">#設計日誌</span>
+      <span class="article-tag">#RaspberryPi</span>
+      <span class="article-tag">#エッジAI</span>
+    </div>
+    <h1>ミセバンAI カメラの設計日誌 &mdash; &yen;14,800で「全部入り」を作る</h1>
+    <div class="article-meta">
+      <div class="article-meta-item">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+        2026.02.22
+      </div>
+      <div class="article-meta-item">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+        8 min read
+      </div>
+      <div class="article-meta-item">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        ミセバンAI チーム
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== Article Body ===== -->
+<article class="article-body prose">
+
+  <!-- 1. なぜ自社カメラを作るのか -->
+  <h2>1. なぜ自社カメラを作るのか</h2>
+
+  <p>ミセバンAIの現在の導入方法は、PC・スマホ・Raspberry Piにエージェントをインストールする形です。エンジニアにとっては何も難しくありません。しかし、私たちの本当のターゲットは<strong>店舗オーナー</strong>です。</p>
+
+  <div class="callout callout-amber">
+    <div class="callout-title">現状の課題</div>
+    <p>PC/スマホ/RPiにエージェントをインストール。技術者には簡単だが、店舗オーナーには「インストール」という言葉だけでハードルが上がる。</p>
+  </div>
+
+  <p>理想は明確です。<strong>箱から出して、Wi-Fiに繋ぐだけ。5分で完了。ITリテラシーはゼロでOK。</strong></p>
+
+  <p>つまり、自社カメラを作る目的はハードウェアの売上ではありません。これは<strong>「究極の導入体験」のための投資</strong>です。ハードウェアは手段であり、目的は「技術的障壁をゼロにすること」。ここを履き違えると、いたずらに高スペックを追いかけてしまいます。</p>
+
+  <!-- 2. 設計要件 -->
+  <h2>2. 設計要件</h2>
+
+  <p>導入体験を最優先にしつつ、実用に耐えるスペックを定義しました。</p>
+
+  <div class="spec-grid">
+    <div class="spec-card">
+      <div class="spec-card-icon">
+        <svg width="28" height="28" fill="none" stroke="var(--indigo-600)" stroke-width="2" viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+      </div>
+      <div class="spec-card-value">2K以上</div>
+      <div class="spec-card-label">解像度（人物検出精度確保）</div>
+    </div>
+    <div class="spec-card">
+      <div class="spec-card-icon">
+        <svg width="28" height="28" fill="none" stroke="var(--indigo-600)" stroke-width="2" viewBox="0 0 24 24"><path d="M5 12.55a11 11 0 0114.08 0M1.42 9a16 16 0 0121.16 0"/><path d="M8.53 16.11a6 6 0 016.95 0"/><circle cx="12" cy="20" r="1"/></svg>
+      </div>
+      <div class="spec-card-value">WiFi + PoE</div>
+      <div class="spec-card-label">店舗のネットワーク環境に対応</div>
+    </div>
+    <div class="spec-card">
+      <div class="spec-card-icon">
+        <svg width="28" height="28" fill="none" stroke="var(--indigo-600)" stroke-width="2" viewBox="0 0 24 24"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="M12 6v6l4 2"/></svg>
+      </div>
+      <div class="spec-card-value">IP66</div>
+      <div class="spec-card-label">防水（屋外対応）</div>
+    </div>
+    <div class="spec-card">
+      <div class="spec-card-icon">
+        <svg width="28" height="28" fill="none" stroke="var(--indigo-600)" stroke-width="2" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M9 9h6v6H9z"/></svg>
+      </div>
+      <div class="spec-card-value">エージェント内蔵</div>
+      <div class="spec-card-label">追加デバイス不要</div>
+    </div>
+    <div class="spec-card">
+      <div class="spec-card-icon">
+        <svg width="28" height="28" fill="none" stroke="var(--indigo-600)" stroke-width="2" viewBox="0 0 24 24"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+      </div>
+      <div class="spec-card-value">&yen;14,800以下</div>
+      <div class="spec-card-label">想定販売価格</div>
+    </div>
+    <div class="spec-card">
+      <div class="spec-card-icon">
+        <svg width="28" height="28" fill="none" stroke="var(--indigo-600)" stroke-width="2" viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+      </div>
+      <div class="spec-card-value">5W以下</div>
+      <div class="spec-card-label">消費電力</div>
+    </div>
+  </div>
+
+  <!-- 3. BOM -->
+  <h2>3. BOM（部品表）検討</h2>
+
+  <p>&yen;14,800という目標価格から逆算して、BOM（Bill of Materials）を設計しました。100台ロットを前提にした単価です。</p>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>部品</th>
+          <th>候補</th>
+          <th style="text-align:right">単価（100台ロット）</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>SoC</td>
+          <td>Raspberry Pi Zero 2 W</td>
+          <td style="text-align:right">~&yen;2,200</td>
+        </tr>
+        <tr>
+          <td>カメラモジュール</td>
+          <td>RPi Camera Module 3 (2K)</td>
+          <td style="text-align:right">~&yen;3,500</td>
+        </tr>
+        <tr>
+          <td>microSD 16GB</td>
+          <td>産業用 (SLC)</td>
+          <td style="text-align:right">~&yen;800</td>
+        </tr>
+        <tr>
+          <td>電源回路</td>
+          <td>PoE HAT Mini + USB-C</td>
+          <td style="text-align:right">~&yen;1,500</td>
+        </tr>
+        <tr>
+          <td>ケース</td>
+          <td>ABS射出成形（金型費別）</td>
+          <td style="text-align:right">~&yen;500</td>
+        </tr>
+        <tr>
+          <td>WiFiアンテナ</td>
+          <td>内蔵セラミック</td>
+          <td style="text-align:right">~&yen;200</td>
+        </tr>
+        <tr>
+          <td>基板</td>
+          <td>カスタムPCB（2層）</td>
+          <td style="text-align:right">~&yen;300</td>
+        </tr>
+        <tr>
+          <td>ケーブル・コネクタ</td>
+          <td>FPC + USB-C</td>
+          <td style="text-align:right">~&yen;200</td>
+        </tr>
+        <tr class="table-total">
+          <td><strong>BOM合計</strong></td>
+          <td></td>
+          <td style="text-align:right"><strong>~&yen;9,200</strong></td>
+        </tr>
+        <tr class="table-note">
+          <td>金型費（初回のみ）</td>
+          <td>ABS金型</td>
+          <td style="text-align:right">&yen;200,000 - 300,000</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="margin-calc">
+    <div class="margin-calc-value">37.8%</div>
+    <div class="margin-calc-label">粗利率</div>
+    <div class="margin-calc-formula">&yen;14,800 - &yen;9,200 = &yen;5,600/台</div>
+  </div>
+
+  <!-- 4. 代替案 -->
+  <h2>4. 代替案: RPi 5 + Hailo AI HAT</h2>
+
+  <p>「せっかくカメラを作るなら、ローカルでAI推論もできるようにしたい」。その誘惑は大きい。しかし、コストを計算すると現実が見えてきます。</p>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>部品</th>
+          <th style="text-align:right">単価</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>RPi 5 (4GB)</td>
+          <td style="text-align:right">&yen;8,000</td>
+        </tr>
+        <tr>
+          <td>Hailo-8L AI HAT</td>
+          <td style="text-align:right">&yen;10,500</td>
+        </tr>
+        <tr>
+          <td>Camera Module 3</td>
+          <td style="text-align:right">&yen;3,500</td>
+        </tr>
+        <tr class="table-total">
+          <td><strong>BOM合計</strong></td>
+          <td style="text-align:right"><strong>&yen;22,000+</strong></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>販売価格は&yen;39,800以上が必要になります。店舗オーナーが「試しに1台」と気軽に購入できる価格帯ではありません。</p>
+
+  <div class="callout callout-green">
+    <div class="callout-title">結論</div>
+    <p><strong>ローカルAI推論は不要。クラウドに任せてBOMを抑える。</strong>カメラはあくまで「目」に徹し、「脳」はクラウドに置く。この割り切りが&yen;14,800を実現する鍵です。</p>
+  </div>
+
+  <!-- 5. ケースデザイン -->
+  <h2>5. ケースデザインの方向性</h2>
+
+  <p>「防犯カメラ」の威圧感ではなく、「スマートデバイス」の親しみやすさを目指します。参考にしているのはGoogle Nest Camのミニマルなデザインです。</p>
+
+  <div class="case-design">
+    <div class="case-visual">
+      <div class="case-cylinder"></div>
+      <div class="case-dims">&phi;50mm &times; H60mm</div>
+    </div>
+    <div class="case-specs">
+      <div class="case-spec-item">
+        <div class="case-spec-icon">
+          <svg width="20" height="20" fill="none" stroke="var(--slate-600)" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
+        </div>
+        <div class="case-spec-text">
+          <h4>仕上げ</h4>
+          <p>マットホワイト or マットブラック。指紋が付きにくいシボ加工。</p>
+        </div>
+      </div>
+      <div class="case-spec-item">
+        <div class="case-spec-icon">
+          <svg width="20" height="20" fill="none" stroke="var(--slate-600)" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+        </div>
+        <div class="case-spec-text">
+          <h4>形状</h4>
+          <p>円筒形。直径50mm、高さ60mm程度。コンパクトで目立たない。</p>
+        </div>
+      </div>
+      <div class="case-spec-item">
+        <div class="case-spec-icon">
+          <svg width="20" height="20" fill="none" stroke="var(--slate-600)" stroke-width="2" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        </div>
+        <div class="case-spec-text">
+          <h4>マウント（3way）</h4>
+          <p>マグネット + 3Mテープ + ネジ穴。設置場所を選ばない。</p>
+        </div>
+      </div>
+      <div class="case-spec-item">
+        <div class="case-spec-icon">
+          <svg width="20" height="20" fill="none" stroke="var(--slate-600)" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>
+        </div>
+        <div class="case-spec-text">
+          <h4>ステータスLED</h4>
+          <p>1つだけ。通電=白、接続済=緑、エラー=赤。シンプルに。</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 6. ソフトウェアスタック -->
+  <h2>6. ソフトウェアスタック</h2>
+
+  <p>ハードウェアは「箱」に過ぎません。本当の価値はソフトウェアにあります。</p>
+
+  <div class="code-block">
+    <div class="code-block-header">
+      <span class="code-block-lang">Architecture</span>
+    </div>
+    <pre><span class="highlight">Raspberry Pi OS Lite (Bookworm)</span>
+  <span class="comment">└──</span> systemd service
+       <span class="comment">└──</span> <span class="keyword">miseban-agent</span> <span class="comment">(Rust binary, ~5MB)</span>
+            <span class="comment">├──</span> libcamera <span class="comment">→ JPEG取得</span>
+            <span class="comment">├──</span> HTTPS POST <span class="comment">→ クラウドAPI</span>
+            <span class="comment">└──</span> mDNS <span class="comment">→ 初期設定用WebUI</span></pre>
+  </div>
+
+  <h3>初回セットアップ</h3>
+  <p>スマホでWi-Fi設定画面にアクセスする<strong>Captive Portal方式</strong>を採用。カメラの電源を入れると専用のWi-Fiアクセスポイントが立ち上がり、スマホで接続するだけで設定画面が開きます。アプリのインストールすら不要です。</p>
+
+  <h3>OTA更新</h3>
+  <p>バックグラウンドで自動ダウンロード。再起動時に適用。ユーザーの操作は一切不要。常に最新のエージェントが動作します。</p>
+
+  <h3>Watchdog</h3>
+  <p>ハードウェアWDT（ウォッチドッグタイマー）を有効化。万が一エージェントがフリーズしても、自動的に再起動して復旧します。24時間365日の無人運用を前提とした設計です。</p>
+
+  <!-- 7. 製造パートナー -->
+  <h2>7. 製造パートナーの選択肢</h2>
+
+  <p>100台からの小ロット製造を前提に、いくつかの選択肢を検討しています。</p>
+
+  <ul>
+    <li><strong>深圳ODM（PCBWay, JLCPCB等）</strong> &mdash; 小ロット100台から対応可能。PCB製造・SMT実装・ケース射出成形まで一貫して発注できる。コスト最安。</li>
+    <li><strong>国内受託製造（スイッチサイエンス等）</strong> &mdash; 品質管理が確実。ただしコストは深圳の1.5-2倍。</li>
+    <li><strong>Kickstarter / Makuake でプレオーダー</strong> &mdash; 製造費を先に確保する戦略。需要検証とマーケティングを同時に実行できる。</li>
+  </ul>
+
+  <div class="callout callout-blue">
+    <div class="callout-title">メモ</div>
+    <p>最初の100台はPCBWayで製造し、品質が安定したら国内パートナーにも発注先を分散させる方針。リスク分散は重要。</p>
+  </div>
+
+  <!-- 8. ロードマップ -->
+  <h2>8. ロードマップ</h2>
+
+  <div class="roadmap">
+    <div class="roadmap-item">
+      <div class="roadmap-dot roadmap-dot-active">1</div>
+      <div class="roadmap-content">
+        <div class="roadmap-timing">Phase 1 &mdash; 現在</div>
+        <h4>ソフトウェアのみ</h4>
+        <p>PC/スマホで導入。まずはソフトウェアで需要と機能を検証する。</p>
+      </div>
+    </div>
+    <div class="roadmap-item">
+      <div class="roadmap-dot roadmap-dot-future">2</div>
+      <div class="roadmap-content">
+        <div class="roadmap-timing">Phase 2 &mdash; 3ヶ月後</div>
+        <h4>組み立てキット販売</h4>
+        <p>RPi Zero 2 W + カメラモジュールの組み立てキットを販売開始。技術に興味のある層にリーチ。</p>
+      </div>
+    </div>
+    <div class="roadmap-item">
+      <div class="roadmap-dot roadmap-dot-future">3</div>
+      <div class="roadmap-content">
+        <div class="roadmap-timing">Phase 3 &mdash; 6ヶ月後</div>
+        <h4>完成品リリース（v1）</h4>
+        <p>カスタムケース入りの完成品「ミセバンAI カメラ v1」。箱から出して繋ぐだけ。</p>
+      </div>
+    </div>
+    <div class="roadmap-item">
+      <div class="roadmap-dot roadmap-dot-future">4</div>
+      <div class="roadmap-content">
+        <div class="roadmap-timing">Phase 4 &mdash; 12ヶ月後</div>
+        <h4>量産モデル（v2）</h4>
+        <p>カスタム基板の量産モデル「ミセバンAI カメラ v2」。コスト最適化と信頼性向上。</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- 9. 今日の決断 -->
+  <h2>9. 今日の決断</h2>
+
+  <div class="decision-box">
+    <h3>
+      <svg width="24" height="24" fill="none" stroke="var(--indigo-600)" stroke-width="2" viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+      本日の意思決定
+    </h3>
+    <ul>
+      <li>まずは<strong>ソフトウェアで需要を検証する</strong>。ハードウェア先行投資のリスクは取らない。</li>
+      <li>ハードウェアは<strong>需要が確認できてから着手</strong>する。ただし、設計は今から始めておく。</li>
+      <li>需要確認 → 即プロトタイプに入れるように、<strong>BOM・製造パートナー・ケース設計の準備</strong>は並行して進める。</li>
+      <li><strong>3Dプリンターでケースのプロトタイプ</strong>は来週作る予定。手で触れるモックアップがあると判断が変わる。</li>
+    </ul>
+  </div>
+
+  <p>ハードウェアスタートアップの最大の落とし穴は「作りたいものを作る」こと。私たちは「求められているものを作る」。順番を間違えない。</p>
+
+  <p>次回の設計日誌では、3Dプリンターで出力したケースのプロトタイプと、Captive Portal方式のセットアップフローのデモを公開する予定です。</p>
+
+  <!-- Article Footer -->
+  <footer class="article-footer">
+    <div class="article-footer-inner">
+      <a href="/" class="article-footer-back">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+        ホームに戻る
+      </a>
+      <div class="article-footer-share">
+        <span>Share</span>
+        <a href="https://twitter.com/intent/tweet?url=https://miseban.ai/blog/004-hardware-design&text=%E3%83%9F%E3%82%BB%E3%83%90%E3%83%B3AI+%E3%82%AB%E3%83%A1%E3%83%A9%E3%81%AE%E8%A8%AD%E8%A8%88%E6%97%A5%E8%AA%8C" target="_blank" rel="noopener" class="share-btn" aria-label="Xで共有">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+        </a>
+        <a href="https://www.facebook.com/sharer/sharer.php?u=https://miseban.ai/blog/004-hardware-design" target="_blank" rel="noopener" class="share-btn" aria-label="Facebookで共有">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+        </a>
+      </div>
+    </div>
+  </footer>
+
+</article>
+
+<!-- ===== Site Footer ===== -->
+<footer class="site-footer">
+  <div style="max-width:1200px;margin:0 auto;padding:0 24px">
+    <p>&copy; 2026 ミセバンAI &mdash; <a href="/">ホーム</a> &middot; <a href="/cameras">対応カメラ</a> &middot; <a href="/#pricing">料金</a> &middot; <a href="/#contact">お問い合わせ</a></p>
+  </div>
+</footer>
+
+</body>
+</html>
