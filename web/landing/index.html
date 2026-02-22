@@ -24,6 +24,22 @@
 <meta name="twitter:description" content="工事不要・初期費用¥0。既存カメラが来客分析・防犯・AIアドバイスの司令塔に。月額¥2,980〜。">
 <meta name="twitter:image" content="https://miseban.ai/ogp.png">
 
+<!-- Google Analytics 4 -->
+<!-- Replace GA_MEASUREMENT_ID with your GA4 ID -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-XXXXXXXXXX');
+</script>
+
+<!-- Google Ads Conversion Tracking -->
+<!-- Replace AW-XXXXXXXXX with your Google Ads account ID -->
+<script>
+  gtag('config', 'AW-XXXXXXXXX');
+</script>
+
 <!-- Favicon placeholder -->
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏪</text></svg>">
 
@@ -300,13 +316,17 @@ ul{list-style:none}
 .cta-box{max-width:640px;margin:0 auto;background:var(--white);border:1px solid var(--gray-200);border-radius:var(--radius-xl);padding:56px 48px;box-shadow:var(--shadow-lg)}
 .cta-box h2{font-size:clamp(1.5rem,4vw,2rem);font-weight:900;margin-bottom:12px}
 .cta-box p{font-size:1rem;color:var(--text-secondary);margin-bottom:32px}
-.cta-form{display:flex;gap:12px;max-width:480px;margin:0 auto}
+.cta-form{display:flex;flex-direction:column;gap:12px;max-width:480px;margin:0 auto}
+.cta-form-row{display:flex;gap:12px}
 .cta-input{flex:1;padding:14px 20px;border:1px solid var(--gray-300);border-radius:100px;font-family:inherit;font-size:.9375rem;outline:none;transition:border-color .2s}
 .cta-input:focus{border-color:var(--blue);box-shadow:0 0 0 4px var(--blue-glow)}
+.cta-select{flex:1;padding:14px 20px;border:1px solid var(--gray-300);border-radius:100px;font-family:inherit;font-size:.9375rem;outline:none;transition:border-color .2s;background:var(--white);color:var(--text-primary);-webkit-appearance:none;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2394a3b8' d='M6 8L1 3h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 16px center;padding-right:40px}
+.cta-select:focus{border-color:var(--blue);box-shadow:0 0 0 4px var(--blue-glow)}
 .cta-note{font-size:.75rem;color:var(--text-secondary);margin-top:16px}
 
 @media(max-width:640px){
   .cta-form{flex-direction:column}
+  .cta-form-row{flex-direction:column}
   .cta-box{padding:40px 24px}
 }
 
@@ -963,9 +983,23 @@ ul{list-style:none}
     <div class="cta-box reveal">
       <h2>まずは<span class="text-gradient">無料</span>で始めてみませんか？</h2>
       <p>クレジットカード不要。5分で設置完了。いつでも解約OK。</p>
-      <form class="cta-form" action="https://formspree.io/f/your-form-id" method="POST">
+      <!-- Replace FORM_ID with your Formspree form ID -->
+      <form class="cta-form" id="waitlistForm" action="https://formspree.io/f/FORM_ID" method="POST">
+        <input type="hidden" name="_subject" value="ミセバンAI 新規登録">
         <input type="email" name="email" class="cta-input" placeholder="メールアドレス" required aria-label="メールアドレス">
-        <button type="submit" class="btn btn-primary">無料で始める</button>
+        <div class="cta-form-row">
+          <input type="text" name="store_name" class="cta-input" placeholder="店舗名（任意）" aria-label="店舗名">
+          <select name="store_type" class="cta-select" aria-label="業種">
+            <option value="" disabled selected>業種を選択</option>
+            <option value="飲食店">飲食店</option>
+            <option value="小売店">小売店</option>
+            <option value="美容院・サロン">美容院・サロン</option>
+            <option value="クリニック">クリニック</option>
+            <option value="その他">その他</option>
+          </select>
+        </div>
+        <!-- UTM hidden fields are dynamically injected by JS -->
+        <button type="submit" class="btn btn-primary" style="width:100%">無料で始める</button>
       </form>
       <p class="cta-note">※ 先行登録いただいた方には、正式リリース時に優先的にご案内いたします。</p>
     </div>
@@ -1139,6 +1173,38 @@ ul{list-style:none}
         window.scrollTo({top:top, behavior:'smooth'});
       }
     });
+  });
+})();
+
+/* ===== UTM parameter capture ===== */
+(function(){
+  var form = document.getElementById('waitlistForm');
+  if(!form) return;
+  var params = new URLSearchParams(window.location.search);
+  var utmKeys = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content'];
+  utmKeys.forEach(function(key){
+    var val = params.get(key);
+    if(val){
+      var hidden = document.createElement('input');
+      hidden.type = 'hidden';
+      hidden.name = key;
+      hidden.value = val;
+      form.appendChild(hidden);
+    }
+  });
+})();
+
+/* ===== Waitlist form: GA4 event + Google Ads conversion on submit ===== */
+(function(){
+  var form = document.getElementById('waitlistForm');
+  if(!form) return;
+  form.addEventListener('submit', function(){
+    if(typeof gtag === 'function'){
+      // GA4 lead event
+      gtag('event', 'generate_lead', {event_category: 'waitlist'});
+      // Google Ads conversion — Replace AW-XXXXXXXXX/CONVERSION_LABEL with your values
+      gtag('event', 'conversion', {send_to: 'AW-XXXXXXXXX/CONVERSION_LABEL'});
+    }
   });
 })();
 </script>
