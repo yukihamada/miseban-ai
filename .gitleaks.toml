@@ -1,0 +1,77 @@
+# Gitleaks configuration for MisebanAI
+# https://github.com/gitleaks/gitleaks
+
+title = "MisebanAI Secret Detection"
+
+# Extend the default built-in rules
+[extend]
+useDefault = true
+
+# Global allowlist — paths that should never be scanned
+[allowlist]
+  description = "Global allowlist"
+  paths = [
+    '''target/''',
+    '''Cargo\.lock''',
+    '''\.png$''',
+    '''\.jpg$''',
+    '''\.jpeg$''',
+    '''\.gif$''',
+    '''\.ico$''',
+    '''\.woff2?$''',
+    '''\.ttf$''',
+    '''\.eot$''',
+    '''\.svg$''',
+    '''vendor/''',
+    '''node_modules/''',
+    '''\.git/''',
+  ]
+
+# --- Custom Rules ---
+
+# Detect hardcoded Japanese cloud API keys (AWS-like patterns in JP services)
+[[rules]]
+  id = "japanese-api-key-generic"
+  description = "Generic Japanese API key pattern (e.g., LINE, Yahoo Japan, GMO)"
+  regex = '''(?i)(line_channel_secret|line_channel_token|yahoo_api_key|gmo_api_key|sakura_api_key)\s*[=:]\s*['"]?[A-Za-z0-9+/=]{20,}['"]?'''
+  tags = ["key", "japanese-api"]
+
+[[rules]]
+  id = "line-channel-access-token"
+  description = "LINE Messaging API Channel Access Token"
+  regex = '''(?i)['"]?[A-Za-z0-9+/]{100,}['"]?'''
+  tags = ["key", "line"]
+  [rules.allowlist]
+    description = "Ignore test fixtures and documentation"
+    paths = ['''tests/fixtures/''', '''docs/''', '''\.md$''']
+    regexTarget = "line"
+
+[[rules]]
+  id = "shipandco-api-key"
+  description = "Ship&co API key"
+  regex = '''(?i)(shipandco_api_key|ship_and_co_key|SHIPANDCO_TOKEN)\s*[=:]\s*['"]?[A-Za-z0-9_-]{20,}['"]?'''
+  tags = ["key", "shipping"]
+
+[[rules]]
+  id = "rakuten-api-key"
+  description = "Rakuten API key"
+  regex = '''(?i)(rakuten_app_id|rakuten_api_key|rakuten_secret)\s*[=:]\s*['"]?[A-Za-z0-9_-]{16,}['"]?'''
+  tags = ["key", "japanese-api"]
+
+[[rules]]
+  id = "fly-io-token"
+  description = "Fly.io API token"
+  regex = '''(?i)(FLY_API_TOKEN|FLY_ACCESS_TOKEN)\s*[=:]\s*['"]?[A-Za-z0-9_-]{20,}['"]?'''
+  tags = ["key", "infrastructure"]
+
+[[rules]]
+  id = "private-key-inline"
+  description = "Inline private key material"
+  regex = '''-----BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY-----'''
+  tags = ["key", "private-key"]
+
+[[rules]]
+  id = "minisign-secret-key"
+  description = "Minisign secret key"
+  regex = '''untrusted comment:.*secret key.*\n[A-Za-z0-9+/=]{80,}'''
+  tags = ["key", "signing"]

@@ -1,0 +1,305 @@
+name: CI — Security & Build Pipeline
+
+on:
+  push:
+    branches: [main, develop]
+    tags: ["v*"]
+  pull_request:
+    branches: [main]
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: 1
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+permissions:
+  contents: read
+
+jobs:
+  # ─────────────────────────────────────────────
+  # Job 1: Security Scan
+  # ─────────────────────────────────────────────
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: "1.84.0"
+
+      - name: Cache cargo registry & build
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            ~/.cargo/advisory-db
+            target
+          key: ${{ runner.os }}-cargo-security-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-security-
+
+      # cargo-deny: check advisories and licenses
+      - name: Install cargo-deny
+        run: cargo install cargo-deny --locked
+
+      - name: cargo deny check advisories
+        run: cargo deny check advisories
+
+      - name: cargo deny check licenses
+        run: cargo deny check licenses
+
+      - name: cargo deny check bans
+        run: cargo deny check bans
+
+      - name: cargo deny check sources
+        run: cargo deny check sources
+
+      # Gitleaks: detect secrets in source
+      - name: Run gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_CONFIG: .gitleaks.toml
+
+      # Trivy: filesystem vulnerability scan
+      - name: Run Trivy filesystem scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: "fs"
+          scan-ref: "."
+          format: "sarif"
+          output: "trivy-fs-results.sarif"
+          severity: "CRITICAL,HIGH"
+
+      - name: Upload Trivy SARIF
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: "trivy-fs-results.sarif"
+
+  # ─────────────────────────────────────────────
+  # Job 2: Build and Test
+  # ─────────────────────────────────────────────
+  build-and-test:
+    name: Build & Test (${{ matrix.target }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        target:
+          - x86_64-unknown-linux-gnu
+          - aarch64-unknown-linux-gnu
+        include:
+          - target: x86_64-unknown-linux-gnu
+            cross: false
+          - target: aarch64-unknown-linux-gnu
+            cross: true
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: "1.84.0"
+          components: rustfmt, clippy
+          targets: ${{ matrix.target }}
+
+      - name: Cache cargo registry & build
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ matrix.target }}-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-${{ matrix.target }}-
+
+      # Formatting check (only on native target to avoid duplication)
+      - name: cargo fmt --check
+        if: matrix.target == 'x86_64-unknown-linux-gnu'
+        run: cargo fmt --all -- --check
+
+      # Clippy lint (only on native target)
+      - name: cargo clippy
+        if: matrix.target == 'x86_64-unknown-linux-gnu'
+        run: cargo clippy --all-targets --all-features -- -D warnings
+
+      # Tests (only on native target — cross-compiled targets can't run tests on x86 runner)
+      - name: cargo test
+        if: matrix.cross == false
+        run: cargo test --all-features --workspace
+
+      # Install cross for cross-compilation
+      - name: Install cross
+        if: matrix.cross == true
+        run: cargo install cross --locked
+
+      # Install cargo-auditable for provenance-embedded builds
+      - name: Install cargo-auditable
+        run: cargo install cargo-auditable --locked
+
+      # Build release binary
+      - name: Build release (native)
+        if: matrix.cross == false
+        run: cargo auditable build --release --target ${{ matrix.target }}
+
+      - name: Build release (cross)
+        if: matrix.cross == true
+        run: cross build --release --target ${{ matrix.target }}
+
+      # Upload build artifacts
+      - name: Upload binaries
+        uses: actions/upload-artifact@v4
+        with:
+          name: binaries-${{ matrix.target }}
+          path: |
+            target/${{ matrix.target }}/release/api
+            target/${{ matrix.target }}/release/agent
+          if-no-files-found: warn
+          retention-days: 7
+
+  # ─────────────────────────────────────────────
+  # Job 3: Container Scan
+  # ─────────────────────────────────────────────
+  container-scan:
+    name: Container Scan
+    runs-on: ubuntu-latest
+    needs: build-and-test
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Build the Docker image
+      - name: Build Docker image
+        run: |
+          docker build -f Dockerfile.web -t ${{ env.IMAGE_NAME }}:ci-${{ github.sha }} .
+
+      # Trivy: scan container image for vulnerabilities
+      - name: Trivy image scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: "${{ env.IMAGE_NAME }}:ci-${{ github.sha }}"
+          format: "sarif"
+          output: "trivy-image-results.sarif"
+          severity: "CRITICAL,HIGH"
+
+      - name: Upload Trivy image SARIF
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: "trivy-image-results.sarif"
+
+      # Syft: generate SBOM
+      - name: Install Syft
+        uses: anchore/sbom-action/download-syft@v0
+
+      - name: Generate SBOM
+        run: |
+          syft ${{ env.IMAGE_NAME }}:ci-${{ github.sha }} -o spdx-json > sbom-container.spdx.json
+
+      - name: Upload SBOM
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom-container
+          path: sbom-container.spdx.json
+          retention-days: 30
+
+  # ─────────────────────────────────────────────
+  # Job 4: Release (tags only)
+  # ─────────────────────────────────────────────
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [security-scan, build-and-test, container-scan]
+    permissions:
+      contents: write
+      packages: write
+      id-token: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Download all build artifacts
+      - name: Download x86_64 binaries
+        uses: actions/download-artifact@v4
+        with:
+          name: binaries-x86_64-unknown-linux-gnu
+          path: release/x86_64-unknown-linux-gnu/
+
+      - name: Download aarch64 binaries
+        uses: actions/download-artifact@v4
+        with:
+          name: binaries-aarch64-unknown-linux-gnu
+          path: release/aarch64-unknown-linux-gnu/
+
+      # Package binaries into tarballs
+      - name: Package release artifacts
+        run: |
+          VERSION="${GITHUB_REF#refs/tags/}"
+          mkdir -p dist
+
+          for arch in x86_64-unknown-linux-gnu aarch64-unknown-linux-gnu; do
+            if [ -d "release/${arch}" ]; then
+              chmod +x release/${arch}/* 2>/dev/null || true
+              tar -czf "dist/miseban-ai-${VERSION}-${arch}.tar.gz" -C "release/${arch}" .
+            fi
+          done
+
+      # Generate SHA256 checksums
+      - name: Generate SHA256SUMS
+        run: |
+          cd dist
+          sha256sum *.tar.gz > SHA256SUMS
+
+      # Log in to container registry
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Build and push container image with release tag
+      - name: Build and push release container
+        run: |
+          VERSION="${GITHUB_REF#refs/tags/}"
+          docker build -f Dockerfile.web -t ghcr.io/${{ env.IMAGE_NAME }}:${VERSION} .
+          docker tag ghcr.io/${{ env.IMAGE_NAME }}:${VERSION} ghcr.io/${{ env.IMAGE_NAME }}:latest
+          docker push ghcr.io/${{ env.IMAGE_NAME }}:${VERSION}
+          docker push ghcr.io/${{ env.IMAGE_NAME }}:latest
+
+      # Sign container with cosign (keyless / OIDC)
+      - name: Install cosign
+        uses: sigstore/cosign-installer@v3
+
+      - name: Sign container image
+        run: |
+          VERSION="${GITHUB_REF#refs/tags/}"
+          cosign sign --yes ghcr.io/${{ env.IMAGE_NAME }}:${VERSION}
+
+      # Create GitHub Release
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION="${GITHUB_REF#refs/tags/}"
+          gh release create "${VERSION}" \
+            --title "MisebanAI ${VERSION}" \
+            --generate-notes \
+            dist/*.tar.gz \
+            dist/SHA256SUMS

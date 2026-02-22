@@ -10,3 +10,8 @@ members = [
 [workspace.package]
 version = "0.1.0"
 edition = "2021"
+
+[profile.release]
+strip = "symbols"
+lto = true
+codegen-units = 1
