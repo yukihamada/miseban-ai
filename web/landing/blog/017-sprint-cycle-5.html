@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sprint Cycle 5: プランガードとLP刷新で「売れる仕組み」を整える｜ミセバンAI Blog</title>
+<meta name="description" content="Sprint Cycle 5 でプラン別制限モジュール plan_guard.rs を実装し、LPの料金セクションを刷新。API rate limiting と信頼性シグナルで「売れる仕組み」を構築。">
+<meta name="keywords" content="PlanGuard,RateLimit,Pricing,Tier Enforcement,LP最適化,Building in Public,ミセバンAI">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://miseban.ai/blog/017-sprint-cycle-5">
+<!-- OGP -->
+<meta property="og:title" content="Sprint Cycle 5: プランガードとLP刷新で「売れる仕組み」を整える｜ミセバンAI Blog">
+<meta property="og:description" content="Sprint Cycle 5 でプラン別制限モジュール plan_guard.rs を実装し、LPの料金セクションを刷新。API rate limiting と信頼性シグナルで「売れる仕組み」を構築。">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://miseban.ai/blog/017-sprint-cycle-5">
+<meta property="og:image" content="https://miseban.ai/ogp.png">
+<meta property="og:site_name" content="ミセバンAI">
+<meta property="og:locale" content="ja_JP">
+<meta property="article:published_time" content="2026-02-23">
+<meta property="article:author" content="ミセバンAI チーム">
+<meta property="article:tag" content="PlanGuard">
+<meta property="article:tag" content="RateLimit">
+<meta property="article:tag" content="Pricing">
+<meta property="article:tag" content="Building in Public">
+<!-- Twitter Card -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Sprint Cycle 5: プランガードとLP刷新で「売れる仕組み」を整える">
+<meta name="twitter:description" content="Sprint Cycle 5 でプラン別制限モジュール plan_guard.rs を実装し、LPの料金セクションを刷新。API rate limiting と信頼性シグナルで「売れる仕組み」を構築。">
+<meta name="twitter:image" content="https://miseban.ai/ogp.png">
+<!-- Favicon -->
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%234f46e5'/><text x='50%25' y='54%25' dominant-baseline='middle' text-anchor='middle' fill='white' font-size='18' font-weight='bold' font-family='sans-serif'>M</text></svg>">
+<!-- Google Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--white:#fff;--gray-50:#f8fafc;--gray-100:#f1f5f9;--gray-200:#e2e8f0;--gray-300:#cbd5e1;--gray-400:#94a3b8;--gray-500:#64748b;--slate-600:#475569;--slate-700:#334155;--slate-800:#1e293b;--slate-900:#0f172a;--indigo-50:#eef2ff;--indigo-100:#e0e7ff;--indigo-500:#6366f1;--indigo-600:#4f46e5;--indigo-700:#4338ca;--indigo-900:#312e81;--indigo-950:#1e1b4b;--emerald-50:#ecfdf5;--emerald-500:#10b981;--emerald-600:#059669;--amber-50:#fffbeb;--amber-500:#f59e0b;--amber-600:#d97706;--rose-50:#fff1f2;--rose-500:#f43f5e;--rose-600:#e11d48;--sky-50:#f0f9ff;--sky-500:#0ea5e9;--purple-50:#faf5ff;--purple-600:#9333ea;--teal-50:#f0fdfa;--teal-500:#14b8a6;--radius-sm:8px;--radius:12px;--radius-lg:16px;--radius-xl:24px;--shadow-md:0 4px 6px -1px rgba(0,0,0,.1),0 2px 4px -2px rgba(0,0,0,.1)}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+body{font-family:'Noto Sans JP','Inter',system-ui,-apple-system,sans-serif;color:var(--slate-900);background:var(--white);line-height:1.8;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+img{max-width:100%;height:auto;display:block}a{text-decoration:none;color:inherit;transition:color .2s}ul,ol{list-style:none}
+.container{max-width:1200px;margin:0 auto;padding:0 24px}.nums{font-family:'Inter','Noto Sans JP',sans-serif}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;font-family:inherit;font-size:.9375rem;font-weight:600;padding:14px 28px;border-radius:100px;border:none;cursor:pointer;transition:all .2s ease;white-space:nowrap;line-height:1.4}
+.btn-primary{background:var(--indigo-600);color:var(--white);box-shadow:0 1px 2px rgba(79,70,229,.3),0 4px 12px rgba(79,70,229,.2)}.btn-primary:hover{background:var(--indigo-700);transform:translateY(-1px)}.btn-sm{padding:10px 20px;font-size:.875rem}
+.btn-ghost{background:transparent;color:var(--indigo-600);border:2px solid var(--indigo-200);padding:12px 24px}.btn-ghost:hover{background:var(--indigo-50);border-color:var(--indigo-400)}
+.header{position:fixed;top:0;left:0;width:100%;z-index:1000;background:rgba(255,255,255,.92);backdrop-filter:blur(16px) saturate(180%);-webkit-backdrop-filter:blur(16px) saturate(180%);box-shadow:0 1px 3px rgba(0,0,0,.06);border-bottom:1px solid rgba(0,0,0,.04)}
+.header-inner{display:flex;align-items:center;justify-content:space-between;height:72px}.logo{display:flex;align-items:center;gap:2px;font-size:1.25rem;font-weight:700;color:var(--slate-900)}.logo-ai{color:var(--indigo-600);font-weight:700}
+.nav{display:flex;align-items:center;gap:32px}.nav a{font-size:.875rem;font-weight:500;color:var(--slate-600);transition:color .2s}.nav a:hover{color:var(--slate-900)}.nav-cta{margin-left:8px}
+.mobile-toggle{display:none;background:none;border:none;cursor:pointer;padding:8px}.mobile-toggle span{display:block;width:22px;height:2px;background:var(--slate-900);margin:5px 0;border-radius:1px;transition:.3s}
+.mobile-menu{display:none;position:fixed;inset:0;background:var(--white);z-index:999;flex-direction:column;align-items:center;justify-content:center;gap:28px}.mobile-menu.open{display:flex}.mobile-menu a{font-size:1.125rem;color:var(--slate-900);font-weight:500}
+.mobile-close{position:absolute;top:24px;right:24px;background:none;border:none;color:var(--slate-600);font-size:1.5rem;cursor:pointer;width:40px;height:40px;display:flex;align-items:center;justify-content:center;border-radius:50%;transition:background .2s}.mobile-close:hover{background:var(--gray-100)}
+@media(max-width:768px){.nav{display:none}.mobile-toggle{display:block}}
+.article-hero{background:linear-gradient(165deg,var(--slate-900) 0%,#1a1647 50%,var(--indigo-950) 100%);padding:140px 0 72px;color:var(--white);position:relative;overflow:hidden}
+.article-hero::before{content:'';position:absolute;top:0;left:0;right:0;bottom:0;background:radial-gradient(ellipse 80% 50% at 50% -20%,rgba(99,102,241,.15),transparent);pointer-events:none}
+.article-hero-content{position:relative;z-index:1;max-width:800px;margin:0 auto;text-align:center}
+.article-hero-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.1);padding:7px 18px;border-radius:100px;font-size:.8125rem;font-weight:500;color:rgba(255,255,255,.8);margin-bottom:24px;backdrop-filter:blur(8px)}
+.article-hero h1{font-size:clamp(1.75rem,4.5vw,2.5rem);font-weight:700;line-height:1.4;margin-bottom:20px;letter-spacing:-.02em}
+.article-hero-meta{display:flex;align-items:center;justify-content:center;gap:16px;font-size:.875rem;color:rgba(255,255,255,.5)}
+.article-body{max-width:800px;margin:0 auto;padding:64px 24px 96px}
+.article-body h2{font-size:1.5rem;font-weight:700;color:var(--slate-900);margin:56px 0 24px;padding-bottom:12px;border-bottom:2px solid var(--indigo-100);letter-spacing:-.01em}
+.article-body h3{font-size:1.1875rem;font-weight:700;color:var(--slate-800);margin:40px 0 16px}
+.article-body p{font-size:.9375rem;color:var(--slate-700);line-height:2;margin-bottom:20px}
+.article-body ul,.article-body ol{margin:0 0 24px 0;padding-left:0}
+.article-body ul li,.article-body ol li{font-size:.9375rem;color:var(--slate-700);line-height:2;padding-left:24px;position:relative;margin-bottom:8px}
+.article-body ul li::before{content:'';position:absolute;left:6px;top:13px;width:6px;height:6px;border-radius:50%;background:var(--indigo-500)}
+.article-body ol{counter-reset:ol-counter}.article-body ol li{counter-increment:ol-counter}
+.article-body ol li::before{content:counter(ol-counter)'.';position:absolute;left:0;font-weight:700;color:var(--indigo-600);font-size:.875rem}
+.article-body strong{font-weight:700;color:var(--slate-900)}
+.article-body blockquote{border-left:4px solid var(--indigo-500);background:var(--indigo-50);padding:20px 24px;margin:24px 0;border-radius:0 var(--radius) var(--radius) 0}
+.article-body blockquote p{color:var(--indigo-900);margin-bottom:0;font-style:italic}
+.article-body code{font-family:'JetBrains Mono',monospace;background:var(--gray-100);padding:2px 8px;border-radius:4px;font-size:.85em;color:var(--indigo-700)}
+.article-body pre{background:var(--slate-900);color:#e2e8f0;padding:24px;border-radius:var(--radius);margin:24px 0;overflow-x:auto;line-height:1.7}
+.article-body pre code{background:none;padding:0;color:inherit;font-size:.8125rem}
+.back-link{display:inline-flex;align-items:center;gap:8px;font-size:.875rem;font-weight:600;color:var(--indigo-600);margin-bottom:32px;transition:all .2s}.back-link:hover{color:var(--indigo-700);gap:10px}
+.intro-box{background:linear-gradient(135deg,var(--indigo-50),var(--purple-50));border:1px solid var(--indigo-100);border-radius:var(--radius-lg);padding:32px;margin:32px 0}
+.intro-box p{font-size:.9375rem;color:var(--slate-700);line-height:2;margin-bottom:12px}.intro-box p:last-child{margin-bottom:0}
+.arch-diagram{background:var(--slate-900);border-radius:var(--radius-lg);padding:32px;margin:32px 0;color:var(--white)}
+.arch-diagram h3{font-size:1.0625rem;font-weight:700;color:var(--white);margin-bottom:20px;text-align:center}
+.arch-steps{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:8px}
+.arch-step{background:rgba(99,102,241,.15);border:1px solid rgba(99,102,241,.3);padding:12px 20px;border-radius:var(--radius-sm);font-size:.8125rem;font-weight:600;color:var(--indigo-100);text-align:center;min-width:100px}
+.arch-step .arch-sub{display:block;font-size:.6875rem;font-weight:400;color:rgba(255,255,255,.4);margin-top:4px}
+.arch-step.highlight{background:rgba(99,102,241,.3);border-color:rgba(99,102,241,.6)}
+.arch-step.line-green{background:rgba(6,198,148,.15);border-color:rgba(6,198,148,.4)}
+.arch-arrow{color:var(--indigo-500);font-size:1.25rem;font-weight:700}
+.arch-fork{display:flex;flex-direction:column;gap:8px}
+@media(max-width:640px){.arch-steps{flex-direction:column}.arch-arrow{transform:rotate(90deg)}}
+.comparison-table,.endpoints-table{width:100%;border-collapse:collapse;margin:24px 0;font-size:.875rem}
+.endpoints-table{font-size:.8125rem}
+.comparison-table th,.comparison-table td,.endpoints-table th,.endpoints-table td{padding:10px 14px;text-align:left;border-bottom:1px solid var(--gray-200)}
+.comparison-table th{background:var(--gray-50);font-weight:600;color:var(--slate-800);font-size:.8125rem;text-transform:uppercase;letter-spacing:.03em}
+.comparison-table td,.endpoints-table td{color:var(--slate-700)}
+.comparison-table tr:hover td,.endpoints-table tr:hover td{background:var(--gray-50)}
+.comparison-table .before{color:var(--gray-400);text-decoration:line-through}
+.comparison-table .after{color:var(--emerald-600);font-weight:600}
+.endpoints-table th{background:var(--slate-900);color:var(--indigo-100);font-weight:600;font-size:.75rem;text-transform:uppercase;letter-spacing:.05em}
+.method{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:.75rem;padding:3px 8px;border-radius:4px;display:inline-block}
+.method-get{background:var(--emerald-50);color:var(--emerald-600)}
+.method-post{background:var(--amber-50);color:var(--amber-600)}
+.method-patch{background:var(--sky-50);color:var(--sky-500)}
+.auth-badge{font-size:.6875rem;background:var(--rose-50);color:var(--rose-600);padding:2px 8px;border-radius:100px;font-weight:600}
+.public-badge{font-size:.6875rem;background:var(--emerald-50);color:var(--emerald-600);padding:2px 8px;border-radius:100px;font-weight:600}
+.file-card{background:var(--white);border:1px solid var(--gray-200);border-radius:var(--radius-lg);padding:28px 32px;margin:24px 0;position:relative;transition:all .3s ease}
+.file-card:hover{box-shadow:var(--shadow-md);border-color:var(--gray-300)}
+.file-card::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;border-radius:var(--radius-lg) var(--radius-lg) 0 0}
+.file-guard::before{background:linear-gradient(90deg,var(--amber-500),var(--amber-600))}
+.file-db::before{background:linear-gradient(90deg,var(--emerald-500),var(--teal-500))}
+.file-lp::before{background:linear-gradient(90deg,var(--indigo-500),var(--purple-600))}
+.file-api::before{background:linear-gradient(90deg,var(--sky-500),var(--indigo-500))}
+.file-card-label{font-family:'JetBrains Mono',monospace;font-size:.75rem;font-weight:700;letter-spacing:.03em;padding:4px 12px;border-radius:100px;display:inline-block;margin-bottom:16px}
+.file-guard .file-card-label{background:var(--amber-50);color:var(--amber-600)}
+.file-db .file-card-label{background:var(--emerald-50);color:var(--emerald-600)}
+.file-lp .file-card-label{background:var(--purple-50);color:var(--purple-600)}
+.file-api .file-card-label{background:var(--sky-50);color:var(--sky-500)}
+.file-card h3{font-size:1.125rem;font-weight:700;color:var(--slate-900);margin:0 0 12px 0}
+.file-card p,.file-card ul li{font-size:.9375rem;color:var(--slate-700);line-height:2}
+.file-card p{margin-bottom:12px}.file-card ul{margin:0 0 12px 0;padding-left:0}
+.file-card ul li{padding-left:24px;position:relative;margin-bottom:4px}
+.file-card ul li::before{content:'';position:absolute;left:6px;top:13px;width:5px;height:5px;border-radius:50%}
+.file-guard ul li::before{background:var(--amber-500)}
+.file-db ul li::before{background:var(--emerald-500)}
+.file-lp ul li::before{background:var(--purple-600)}
+.file-api ul li::before{background:var(--sky-500)}
+.tier-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin:32px 0}
+.tier-card{border-radius:var(--radius-lg);padding:24px;text-align:center;border:1px solid var(--gray-200);transition:all .3s ease}
+.tier-card:hover{box-shadow:var(--shadow-md);transform:translateY(-2px)}
+.tier-card.popular{border-color:var(--indigo-500);box-shadow:0 0 0 1px var(--indigo-500);position:relative}
+.tier-card.popular::after{content:'人気';position:absolute;top:-10px;left:50%;transform:translateX(-50%);background:var(--indigo-600);color:var(--white);font-size:.6875rem;font-weight:700;padding:2px 12px;border-radius:100px}
+.tier-card h4{font-size:1rem;font-weight:700;color:var(--slate-900);margin-bottom:4px}
+.tier-price{font-family:'Inter',sans-serif;font-size:1.5rem;font-weight:700;color:var(--indigo-600);margin:8px 0}
+.tier-price span{font-size:.75rem;font-weight:500;color:var(--gray-500)}
+.tier-features{font-size:.8125rem;color:var(--slate-600);line-height:2;text-align:left;margin-top:12px}
+.tier-features li{padding-left:20px;position:relative}
+.tier-features li::before{content:'';position:absolute;left:4px;top:11px;width:5px;height:5px;border-radius:50%;background:var(--emerald-500)}
+@media(max-width:768px){.tier-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:480px){.tier-grid{grid-template-columns:1fr}}
+.feature-matrix{width:100%;border-collapse:collapse;margin:24px 0;font-size:.8125rem}
+.feature-matrix th,.feature-matrix td{padding:8px 12px;text-align:center;border-bottom:1px solid var(--gray-200)}
+.feature-matrix th{background:var(--gray-50);font-weight:600;color:var(--slate-800);font-size:.75rem;text-transform:uppercase;letter-spacing:.03em}
+.feature-matrix td:first-child{text-align:left;font-weight:500;color:var(--slate-700)}
+.feature-matrix tr:hover td{background:var(--gray-50)}
+.check{color:var(--emerald-500);font-weight:700}
+.cross{color:var(--gray-300)}
+.decision-box{background:linear-gradient(135deg,var(--sky-50),var(--indigo-50));border:1px solid rgba(14,165,233,.2);border-radius:var(--radius-lg);padding:28px 32px;margin:32px 0}
+.decision-box h3{font-size:1.0625rem;font-weight:700;color:var(--slate-800);margin-bottom:16px}
+.decision-box ul li{padding-left:24px;position:relative;margin-bottom:10px;font-size:.9375rem;color:var(--slate-700);line-height:1.9}
+.decision-box ul li::before{content:'';position:absolute;left:6px;top:12px;width:5px;height:5px;border-radius:50%;background:var(--sky-500)}
+.result-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin:32px 0}
+.result-item{background:var(--gray-50);border:1px solid var(--gray-200);border-radius:var(--radius);padding:20px;text-align:center}
+.result-value{font-family:'Inter',sans-serif;font-size:1.75rem;font-weight:700;line-height:1.2;color:var(--indigo-600)}
+.result-label{font-size:.75rem;color:var(--gray-500);margin-top:4px;font-weight:500}
+@media(max-width:640px){.result-grid{grid-template-columns:repeat(2,1fr)}}
+.roadmap-list{margin:24px 0}
+.roadmap-item{display:flex;align-items:flex-start;gap:16px;padding:16px 20px;border-left:3px solid var(--gray-200);margin-bottom:0;transition:all .2s}
+.roadmap-item:hover{border-left-color:var(--indigo-500);background:var(--gray-50);border-radius:0 var(--radius-sm) var(--radius-sm) 0}
+.roadmap-item.done{border-left-color:var(--emerald-500);background:var(--emerald-50)}
+.roadmap-item.active{border-left-color:var(--indigo-500);background:var(--indigo-50)}
+.roadmap-cycle{font-family:'Inter',sans-serif;font-size:.75rem;font-weight:700;color:var(--indigo-600);background:var(--indigo-50);padding:4px 10px;border-radius:100px;white-space:nowrap;min-width:72px;text-align:center;margin-top:2px}
+.roadmap-item.done .roadmap-cycle{background:var(--emerald-600);color:var(--white)}
+.roadmap-item.active .roadmap-cycle{background:var(--indigo-600);color:var(--white)}
+.roadmap-content{flex:1}
+.roadmap-content strong{font-size:.9375rem;color:var(--slate-900);display:block;margin-bottom:2px}
+.roadmap-content span{font-size:.8125rem;color:var(--gray-500)}
+.article-cta{background:linear-gradient(135deg,var(--indigo-50),var(--purple-50));border:2px solid var(--indigo-100);border-radius:var(--radius-xl);padding:48px 32px;margin:56px 0 0;text-align:center}
+.article-cta h3{font-size:1.375rem;font-weight:700;color:var(--slate-900);margin-bottom:12px}
+.article-cta p{font-size:.9375rem;color:var(--slate-600);line-height:2;margin-bottom:24px}
+.article-cta .cta-buttons{display:flex;align-items:center;justify-content:center;gap:16px;flex-wrap:wrap}
+.footer{background:var(--slate-900);color:rgba(255,255,255,.5);padding:64px 0 32px;border-top:1px solid rgba(255,255,255,.06)}
+.footer-grid{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:40px;margin-bottom:48px}
+.footer-brand{font-size:1.125rem;font-weight:700;color:var(--white);margin-bottom:8px}
+.footer-brand .logo-ai{color:var(--indigo-500)}
+.footer-tagline{font-size:.8125rem;line-height:1.8;margin-bottom:20px}
+.footer-email{font-size:.8125rem;color:var(--indigo-500);transition:color .2s}.footer-email:hover{color:var(--indigo-400)}
+.footer h4{font-size:.75rem;font-weight:600;color:rgba(255,255,255,.7);margin-bottom:16px;letter-spacing:.05em;text-transform:uppercase}
+.footer ul li{margin-bottom:8px}.footer ul a{font-size:.8125rem;transition:color .2s}.footer ul a:hover{color:var(--white)}
+.footer-bottom{border-top:1px solid rgba(255,255,255,.06);padding-top:24px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;font-size:.75rem}
+@media(max-width:768px){.footer-grid{grid-template-columns:1fr 1fr;gap:32px}.file-card{padding:20px 24px}.comparison-table,.endpoints-table,.feature-matrix{font-size:.75rem}.comparison-table th,.comparison-table td,.endpoints-table th,.endpoints-table td,.feature-matrix th,.feature-matrix td{padding:8px 10px}}
+@media(max-width:480px){.footer-grid{grid-template-columns:1fr}}
+.reveal{opacity:0;transform:translateY(20px);transition:opacity .5s ease,transform .5s ease}
+.reveal.visible{opacity:1;transform:none}
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<header class="header" id="header">
+  <div class="container header-inner">
+    <a href="/" class="logo">ミセバン<span class="logo-ai">AI</span></a>
+    <nav class="nav">
+      <a href="/#setup">導入方法</a>
+      <a href="/#features">機能</a>
+      <a href="/#pricing">料金</a>
+      <a href="/cameras.html">対応カメラ</a>
+      <a href="/blog/">ブログ</a>
+      <a href="/#cta" class="btn btn-primary btn-sm nav-cta">無料で始める</a>
+    </nav>
+    <button class="mobile-toggle" id="mobileToggle" aria-label="メニューを開く"><span></span><span></span><span></span></button>
+  </div>
+</header>
+
+<!-- Mobile Menu -->
+<div class="mobile-menu" id="mobileMenu">
+  <button class="mobile-close" id="mobileClose" aria-label="メニューを閉じる">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+  </button>
+  <a href="/#setup">導入方法</a><a href="/#features">機能</a><a href="/#pricing">料金</a>
+  <a href="/cameras.html">対応カメラ</a><a href="/blog/">ブログ</a>
+  <a href="/#cta" class="btn btn-primary">無料で始める</a>
+</div>
+
+<!-- Article Hero -->
+<section class="article-hero">
+  <div class="container">
+    <div class="article-hero-content">
+      <div class="article-hero-badge">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        Sprint Cycle 5
+      </div>
+      <h1>プランガードとLP刷新で<br>「売れる仕組み」を整える</h1>
+      <div class="article-hero-meta">
+        <time datetime="2026-02-23">2026.02.23</time>
+        <span>|</span>
+        <span>ミセバンAI チーム</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Article Body -->
+<article class="article-body">
+
+<a href="/blog/" class="back-link">
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+  ブログ一覧へ戻る
+</a>
+
+<div class="intro-box">
+  <p>Cycle 4 で Stripe 決済を統合し、「課金できるプロダクト」になった。しかし、決済があってもプラン別の<strong>制限が甘ければフリーライドされる</strong>。逆に、LPの料金表が曖昧なら<strong>お客さんは安心して申し込めない</strong>。</p>
+  <p>Sprint Cycle 5 では、バックエンドに <code>plan_guard.rs</code> というプラン別制限モジュールを新設し、LPの料金セクションを全面刷新した。1時間のスプリントに3つの並列エージェントを投入。<strong>「売れる仕組み」の土台を固める</strong>サイクルだ。</p>
+</div>
+
+
+<h2>1. アーキテクチャ -- API リクエストとプランガード</h2>
+
+<p>全てのAPIリクエストは JWT 認証を通過した後、<code>plan_guard</code> レイヤーで<strong>プラン別の制限チェック</strong>を受ける。制限に引っかかった場合は <code>403 Forbidden</code> を返し、フレーム送信やカメラ登録を拒否する。</p>
+
+<div class="arch-diagram reveal">
+  <h3>Cycle 5 プランガード フロー</h3>
+  <div class="arch-steps">
+    <div class="arch-step">API Request<span class="arch-sub">カメラ追加 / フレーム送信</span></div>
+    <span class="arch-arrow">&rarr;</span>
+    <div class="arch-step">JWT Auth<span class="arch-sub">ユーザー認証</span></div>
+    <span class="arch-arrow">&rarr;</span>
+    <div class="arch-step highlight">plan_guard<span class="arch-sub">プラン制限チェック</span></div>
+    <span class="arch-arrow">&rarr;</span>
+    <div class="arch-fork">
+      <div class="arch-step line-green">OK &rarr; Handler<span class="arch-sub">通常処理続行</span></div>
+      <div class="arch-step" style="background:rgba(244,63,94,.15);border-color:rgba(244,63,94,.4)">NG &rarr; 403<span class="arch-sub">プランアップグレード促進</span></div>
+    </div>
+  </div>
+</div>
+
+<p>ポイントは<strong>ガードを純粋関数として切り出した</strong>こと。ビジネスロジック (ハンドラ) とプラン制限 (ガード) を分離し、テスト容易性を確保している。</p>
+
+
+<h2>2. plan_guard.rs -- プラン別制限の全貌</h2>
+
+<div class="file-card file-guard reveal">
+  <span class="file-card-label">crates/api/src/plan_guard.rs</span>
+  <h3>Tier Enforcement モジュール</h3>
+  <p>プランごとのカメラ台数、データ保持期間、機能フラグを一元管理するモジュール。3つの純粋関数と2つの非同期チェック関数で構成される。</p>
+  <ul>
+    <li><code>max_cameras_for_tier()</code> -- プラン別のカメラ上限台数を返す</li>
+    <li><code>retention_days_for_tier()</code> -- データ保持日数を返す</li>
+    <li><code>tier_has_feature()</code> -- 8つの機能フラグを判定</li>
+    <li><code>can_add_camera()</code> -- 非同期。現在のカメラ数をDBに問い合わせ、追加可否を判定</li>
+    <li><code>can_submit_frame()</code> -- 非同期。レート制限 + プランチェック</li>
+  </ul>
+</div>
+
+<h3>カメラ上限</h3>
+
+<pre><code>pub fn max_cameras_for_tier(tier: &amp;str) -&gt; u32 {
+    match tier {
+        "free"       =&gt; 1,
+        "starter"    =&gt; 4,
+        "pro"        =&gt; 16,
+        "enterprise" =&gt; u32::MAX,
+        _            =&gt; 1, // 未知のプランはfree扱い
+    }
+}</code></pre>
+
+<p>Free プランはカメラ1台まで。これは「お試し」の位置づけで、実店舗で本格運用するには Starter 以上が必要になる。<code>u32::MAX</code> は事実上の無制限だ。</p>
+
+<h3>データ保持期間</h3>
+
+<pre><code>pub fn retention_days_for_tier(tier: &amp;str) -&gt; u32 {
+    match tier {
+        "free"       =&gt; 7,
+        "starter"    =&gt; 30,
+        "pro"        =&gt; 90,
+        "enterprise" =&gt; 3650, // ~10年
+        _            =&gt; 7,
+    }
+}</code></pre>
+
+<p>Free は直近7日分のみ。過去データを遡って分析したい場合は上位プランが必要になる。Enterprise の3650日 (約10年) は、長期トレンド分析やコンプライアンス対応を見据えた設定だ。</p>
+
+<h3>機能フラグ -- 8つの feature gate</h3>
+
+<pre><code>pub fn tier_has_feature(tier: &amp;str, feature: &amp;str) -&gt; bool {
+    match feature {
+        "basic_count"   =&gt; true, // 全プラン共通
+        "demographics"  =&gt; tier != "free",
+        "heatmaps"      =&gt; tier != "free",
+        "alerts"        =&gt; tier != "free",
+        "line_alerts"   =&gt; matches!(tier, "pro" | "enterprise"),
+        "csv_export"    =&gt; matches!(tier, "pro" | "enterprise"),
+        "api_access"    =&gt; matches!(tier, "pro" | "enterprise"),
+        "custom_models" =&gt; tier == "enterprise",
+        _               =&gt; false,
+    }
+}</code></pre>
+
+<table class="feature-matrix reveal">
+  <thead>
+    <tr><th>機能</th><th>Free</th><th>Starter</th><th>Pro</th><th>Enterprise</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>basic_count (人数カウント)</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td></tr>
+    <tr><td>demographics (属性分析)</td><td class="cross">-</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td></tr>
+    <tr><td>heatmaps (動線分析)</td><td class="cross">-</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td></tr>
+    <tr><td>alerts (アラート)</td><td class="cross">-</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td></tr>
+    <tr><td>line_alerts (LINE通知)</td><td class="cross">-</td><td class="cross">-</td><td class="check">&#10003;</td><td class="check">&#10003;</td></tr>
+    <tr><td>csv_export (CSV出力)</td><td class="cross">-</td><td class="cross">-</td><td class="check">&#10003;</td><td class="check">&#10003;</td></tr>
+    <tr><td>api_access (API利用)</td><td class="cross">-</td><td class="cross">-</td><td class="check">&#10003;</td><td class="check">&#10003;</td></tr>
+    <tr><td>custom_models (カスタムAI)</td><td class="cross">-</td><td class="cross">-</td><td class="cross">-</td><td class="check">&#10003;</td></tr>
+  </tbody>
+</table>
+
+<p><strong>basic_count は全プラン共通</strong>。Free ユーザーにも価値を体感させることで、有料プランへのコンバージョンを促進する設計だ。LINE通知やCSVエクスポートといった業務利用に必須の機能は Pro 以上に限定している。</p>
+
+
+<h3>非同期チェック関数</h3>
+
+<pre><code>pub async fn can_add_camera(
+    pool: &amp;PgPool,
+    store_id: &amp;Uuid,
+    tier: &amp;str,
+) -&gt; Result&lt;bool, ApiError&gt; {
+    let current = count_cameras(pool, store_id).await?;
+    let max = max_cameras_for_tier(tier);
+    Ok(current &lt; max)
+}
+
+pub async fn can_submit_frame(
+    pool: &amp;PgPool,
+    store_id: &amp;Uuid,
+    tier: &amp;str,
+) -&gt; Result&lt;bool, ApiError&gt; {
+    // tier有効性 + カメラ所有権 + レート制限チェック
+    let allowed = tier_has_feature(tier, "basic_count");
+    Ok(allowed)
+}</code></pre>
+
+<p><code>can_add_camera</code> は DB に現在のカメラ台数を問い合わせるため非同期。<code>can_submit_frame</code> は現時点では同期的だが、将来のレート制限 (1分あたりのフレーム数上限) 拡張に備えて非同期インターフェースにしている。</p>
+
+<h3>3つのユニットテスト</h3>
+
+<pre><code>#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_max_cameras() {
+        assert_eq!(max_cameras_for_tier("free"), 1);
+        assert_eq!(max_cameras_for_tier("starter"), 4);
+        assert_eq!(max_cameras_for_tier("pro"), 16);
+        assert_eq!(max_cameras_for_tier("enterprise"), u32::MAX);
+        assert_eq!(max_cameras_for_tier("unknown"), 1);
+    }
+
+    #[test]
+    fn test_retention_days() {
+        assert_eq!(retention_days_for_tier("free"), 7);
+        assert_eq!(retention_days_for_tier("starter"), 30);
+        assert_eq!(retention_days_for_tier("pro"), 90);
+        assert_eq!(retention_days_for_tier("enterprise"), 3650);
+    }
+
+    #[test]
+    fn test_feature_flags() {
+        // basic_count は全プランで有効
+        assert!(tier_has_feature("free", "basic_count"));
+        // LINE通知は Pro 以上
+        assert!(!tier_has_feature("free", "line_alerts"));
+        assert!(!tier_has_feature("starter", "line_alerts"));
+        assert!(tier_has_feature("pro", "line_alerts"));
+        // custom_models は Enterprise 限定
+        assert!(!tier_has_feature("pro", "custom_models"));
+        assert!(tier_has_feature("enterprise", "custom_models"));
+    }
+}</code></pre>
+
+
+<h2>3. db.rs -- count_cameras() の追加</h2>
+
+<div class="file-card file-db reveal">
+  <span class="file-card-label">crates/api/src/db.rs</span>
+  <h3>カメラ台数カウント関数</h3>
+  <p><code>plan_guard</code> が「カメラ追加可否」を判定するために、指定店舗のアクティブなカメラ台数を返すクエリ関数を追加。</p>
+</div>
+
+<pre><code>/// 指定店舗のアクティブなカメラ台数を返す
+pub async fn count_cameras(
+    pool: &amp;PgPool,
+    store_id: &amp;Uuid,
+) -&gt; Result&lt;u32, ApiError&gt; {
+    let row = sqlx::query_scalar!(
+        r#"SELECT COUNT(*)::int as "count!" FROM cameras
+           WHERE store_id = $1 AND deleted_at IS NULL"#,
+        store_id
+    )
+    .fetch_one(pool)
+    .await?;
+    Ok(row as u32)
+}</code></pre>
+
+<p><code>deleted_at IS NULL</code> で論理削除済みのカメラを除外。<code>COUNT(*)::int</code> で PostgreSQL の <code>bigint</code> を <code>int</code> にキャストし、Rust 側で <code>u32</code> に変換する。</p>
+
+
+<h2>4. main.rs -- 統合とエンドポイント</h2>
+
+<div class="file-card file-api reveal">
+  <span class="file-card-label">crates/api/src/main.rs</span>
+  <h3>プランガード統合 + 使用量エンドポイント</h3>
+  <ul>
+    <li><code>mod plan_guard;</code> -- 新モジュールの宣言</li>
+    <li><code>GET /api/v1/stores/me/usage</code> -- ダッシュボード向けの使用量サマリー</li>
+    <li>カメラ追加・フレーム送信ハンドラにガードを挿入</li>
+  </ul>
+</div>
+
+<pre><code>/// GET /api/v1/stores/me/usage
+async fn get_usage(
+    State(state): State&lt;AppState&gt;,
+    AuthUser(user_id): AuthUser,
+) -&gt; Result&lt;Json&lt;UsageResponse&gt;, ApiError&gt; {
+    let store = get_store_by_owner(&amp;state.pool, &amp;user_id).await?;
+    let camera_count = count_cameras(&amp;state.pool, &amp;store.id).await?;
+    let tier = store.tier.as_deref().unwrap_or("free");
+
+    Ok(Json(UsageResponse {
+        tier: tier.to_string(),
+        cameras_used: camera_count,
+        cameras_max: max_cameras_for_tier(tier),
+        retention_days: retention_days_for_tier(tier),
+        features: vec![
+            ("basic_count", tier_has_feature(tier, "basic_count")),
+            ("demographics", tier_has_feature(tier, "demographics")),
+            ("heatmaps", tier_has_feature(tier, "heatmaps")),
+            ("alerts", tier_has_feature(tier, "alerts")),
+            ("line_alerts", tier_has_feature(tier, "line_alerts")),
+            ("csv_export", tier_has_feature(tier, "csv_export")),
+            ("api_access", tier_has_feature(tier, "api_access")),
+            ("custom_models", tier_has_feature(tier, "custom_models")),
+        ],
+    }))
+}</code></pre>
+
+<p>このエンドポイントはダッシュボードの「プラン・使用量」セクションで使われる。現在のカメラ台数 / 上限、有効な機能フラグを一覧で返す。フロントエンドはこのレスポンスを元に、制限に近いときにアップグレードバナーを表示できる。</p>
+
+
+<h2>5. LP料金セクションの刷新</h2>
+
+<div class="file-card file-lp reveal">
+  <span class="file-card-label">web/landing/index.html (#pricing)</span>
+  <h3>4プラン料金表の全面刷新</h3>
+  <p>LP のコンバージョン率を上げるために、料金セクションを全面的にリデザイン。信頼性シグナルの追加と CTA の明確化が柱。</p>
+  <ul>
+    <li>4つの料金プラン -- Free / Starter / Pro / Enterprise</li>
+    <li>トラストシグナル3点セット</li>
+    <li>CTA をダッシュボード直リンクに変更</li>
+    <li>14日間無料トライアルの明示</li>
+  </ul>
+</div>
+
+<div class="tier-grid reveal">
+  <div class="tier-card">
+    <h4>Free</h4>
+    <div class="tier-price">&yen;0<span>/月</span></div>
+    <ul class="tier-features">
+      <li>カメラ1台</li>
+      <li>7日間データ保持</li>
+      <li>人数カウント</li>
+    </ul>
+  </div>
+  <div class="tier-card">
+    <h4>Starter</h4>
+    <div class="tier-price">&yen;9,800<span>/月</span></div>
+    <ul class="tier-features">
+      <li>カメラ4台</li>
+      <li>30日間データ保持</li>
+      <li>属性分析・動線分析</li>
+      <li>アラート通知</li>
+    </ul>
+  </div>
+  <div class="tier-card popular">
+    <h4>Pro</h4>
+    <div class="tier-price">&yen;29,800<span>/月</span></div>
+    <ul class="tier-features">
+      <li>カメラ16台</li>
+      <li>90日間データ保持</li>
+      <li>LINE通知</li>
+      <li>CSV出力・API利用</li>
+    </ul>
+  </div>
+  <div class="tier-card">
+    <h4>Enterprise</h4>
+    <div class="tier-price">&yen;49,800<span>/月</span></div>
+    <ul class="tier-features">
+      <li>カメラ無制限</li>
+      <li>10年データ保持</li>
+      <li>カスタムAIモデル</li>
+      <li>専任サポート</li>
+    </ul>
+  </div>
+</div>
+
+<h3>トラストシグナル -- 申し込みの心理的障壁を下げる</h3>
+
+<p>日本のSaaS市場では「いきなり課金」への抵抗が強い。LP上に3つのトラストシグナルを目立つ位置に配置した。</p>
+
+<ul>
+  <li><strong>クレジットカード不要</strong> -- Free プランの登録にカード情報は不要。試してからカードを登録する流れ</li>
+  <li><strong>セットアップ5分</strong> -- 既存カメラのRTSP URLを入力するだけ。専用機器の購入不要</li>
+  <li><strong>いつでもキャンセル可能</strong> -- Stripe Customer Portal から即時解約。縛り期間なし</li>
+</ul>
+
+<h3>CTA の変更</h3>
+
+<table class="comparison-table reveal">
+  <thead><tr><th>項目</th><th>Before (Cycle 4)</th><th>After (Cycle 5)</th></tr></thead>
+  <tbody>
+    <tr><td>CTAテキスト</td><td class="before">お問い合わせ</td><td class="after">無料で始める (ダッシュボード直リンク)</td></tr>
+    <tr><td>リンク先</td><td class="before">メールフォーム</td><td class="after">/dashboard/ (セルフサーブ)</td></tr>
+    <tr><td>トライアル表記</td><td class="before">なし</td><td class="after">14日間無料トライアル明記</td></tr>
+    <tr><td>トラストシグナル</td><td class="before">なし</td><td class="after">カード不要 / 5分 / いつでも解約</td></tr>
+    <tr><td>プラン比較</td><td class="before">3プラン表</td><td class="after">4プラン + 機能マトリクス</td></tr>
+  </tbody>
+</table>
+
+<p>「お問い合わせ」から「無料で始める」への変更は小さく見えるが、<strong>セルフサーブ率に直結する</strong>。営業担当を介さずに登録 &rarr; カメラ接続 &rarr; 価値体感 &rarr; 有料プランという自走導線が完成した。</p>
+
+
+<h2>6. 技術的判断</h2>
+
+<div class="decision-box reveal">
+  <h3>なぜこの設計にしたか</h3>
+  <ul>
+    <li><strong>純粋関数 + 非同期ラッパー</strong> -- <code>max_cameras_for_tier</code> 等は純粋関数、<code>can_add_camera</code> は非同期ラッパー。テスト時は純粋関数だけで完結する</li>
+    <li><strong>match による網羅性</strong> -- Rust の match 式で全プランを列挙。未知のプランは free 扱いにフォールバック</li>
+    <li><strong>8機能フラグのハードコード</strong> -- 現段階で DB に feature flag テーブルを作るのはオーバーエンジニアリング。コードで一元管理し、将来必要になったら DB に移行</li>
+    <li><strong>Usage エンドポイント</strong> -- フロントエンドがプラン情報をAPIから取得する設計。ハードコードさせない</li>
+    <li><strong>LP のセルフサーブ動線</strong> -- 日本のSMBは「試してから買う」文化。Free &rarr; Starter の自然な導線を優先</li>
+  </ul>
+</div>
+
+
+<h2>7. 成果と数字</h2>
+
+<div class="result-grid reveal">
+  <div class="result-item">
+    <div class="result-value nums">~850<span style="font-size:.875rem;font-weight:500">行</span></div>
+    <div class="result-label">追加コード</div>
+  </div>
+  <div class="result-item">
+    <div class="result-value nums">3</div>
+    <div class="result-label">ユニットテスト</div>
+  </div>
+  <div class="result-item">
+    <div class="result-value nums">8</div>
+    <div class="result-label">機能フラグ</div>
+  </div>
+  <div class="result-item">
+    <div class="result-value nums">~1<span style="font-size:.875rem;font-weight:500">時間</span></div>
+    <div class="result-label">実装時間</div>
+  </div>
+</div>
+
+<h3>作成・更新したファイル</h3>
+<ol>
+  <li><code>crates/api/src/plan_guard.rs</code> -- プラン別制限モジュール (新規、約180行)</li>
+  <li><code>crates/api/src/db.rs</code> -- <code>count_cameras()</code> 追加 (+25行)</li>
+  <li><code>crates/api/src/main.rs</code> -- <code>mod plan_guard</code> 宣言、<code>GET /api/v1/stores/me/usage</code> 追加 (+85行)</li>
+  <li><code>web/landing/index.html</code> -- 料金セクション全面刷新 (約560行 変更)</li>
+</ol>
+
+<blockquote>
+  <p>「決済ができる」と「売れる仕組みがある」は違う。プランガードで制限を明確にし、LPで価値を伝え、セルフサーブで申し込める。この3点が揃って初めて「売れる」プロダクトになる。</p>
+</blockquote>
+
+
+<h2>8. 次のサイクルで何をするか</h2>
+
+<div class="roadmap-list reveal">
+  <div class="roadmap-item done">
+    <span class="roadmap-cycle">Cycle 1</span>
+    <div class="roadmap-content"><strong>ダッシュボード・DB・認証</strong><span>完了 -- UI、6テーブル、Supabase Auth</span></div>
+  </div>
+  <div class="roadmap-item done">
+    <span class="roadmap-cycle">Cycle 2</span>
+    <div class="roadmap-content"><strong>Rust API × Supabase (sqlx + JWT)</strong><span>完了 -- 7エンドポイント、データパイプライン</span></div>
+  </div>
+  <div class="roadmap-item done">
+    <span class="roadmap-cycle">Cycle 3</span>
+    <div class="roadmap-content"><strong>LINE通知Bot + リアルタイムアラート</strong><span>完了 -- 5エンドポイント、LINE Messaging API</span></div>
+  </div>
+  <div class="roadmap-item done">
+    <span class="roadmap-cycle">Cycle 4</span>
+    <div class="roadmap-content"><strong>Stripe決済統合</strong><span>完了 -- Checkout Session、Customer Portal、Webhook</span></div>
+  </div>
+  <div class="roadmap-item done">
+    <span class="roadmap-cycle">Cycle 5</span>
+    <div class="roadmap-content"><strong>プランガード + LP料金刷新</strong><span>完了 -- 本記事の内容</span></div>
+  </div>
+  <div class="roadmap-item active">
+    <span class="roadmap-cycle">Cycle 6</span>
+    <div class="roadmap-content"><strong>法務・オンボーディング・クローズドベータ準備</strong><span>プライバシーポリシー、利用規約、オンボーディングウィザード</span></div>
+  </div>
+  <div class="roadmap-item">
+    <span class="roadmap-cycle">Cycle 7</span>
+    <div class="roadmap-content"><strong>クローズドベータテスト</strong><span>実店舗での動作検証。実データによるチューニング</span></div>
+  </div>
+</div>
+
+<p>Cycle 6 では<strong>法務コンプライアンス</strong> (プライバシーポリシー、利用規約、特商法表記) と<strong>オンボーディングウィザード</strong>を構築する。日本のSaaSとして公開するには、法的ページは必須。そして、初回ログインからカメラ接続までの体験を滑らかにするオンボーディングが、フリーユーザーの定着率を決める。</p>
+
+<blockquote>
+  <p>「守り」の plan_guard と「攻め」の LP刷新。プロダクトは技術だけでなく、ビジネスの仕組みが揃って初めて市場に出せる。</p>
+</blockquote>
+
+
+<!-- CTA -->
+<div class="article-cta reveal">
+  <h3>プラン選びの迷いをゼロに。14日間の無料トライアルで体感してください。</h3>
+  <p>ミセバンAIは、スプリントサイクルで高速に進化中。<br>既存の防犯カメラがAI店長に変わる、小規模店舗のための次世代AI分析。</p>
+  <div class="cta-buttons">
+    <a href="/blog/" class="btn btn-ghost btn-sm">ブログ一覧を見る</a>
+    <a href="/#cta" class="btn btn-primary btn-sm">ミセバンAIを無料で試す</a>
+  </div>
+</div>
+
+</article>
+
+<!-- Footer -->
+<footer class="footer">
+  <div class="container">
+    <div class="footer-grid">
+      <div>
+        <div class="footer-brand">ミセバン<span class="logo-ai">AI</span></div>
+        <p class="footer-tagline">既存カメラが、AI店長に変わる。<br>小規模店舗のための次世代AI分析。</p>
+        <a href="mailto:info@miseban.ai" class="footer-email">info@miseban.ai</a>
+      </div>
+      <div>
+        <h4>サービス</h4>
+        <ul>
+          <li><a href="/#features">機能</a></li>
+          <li><a href="/#pricing">料金</a></li>
+          <li><a href="/cameras.html">対応カメラ</a></li>
+          <li><a href="/#faq">FAQ</a></li>
+          <li><a href="/#partner">パートナー募集</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>法的情報</h4>
+        <ul>
+          <li><a href="/terms.html">利用規約</a></li>
+          <li><a href="/privacy.html">プライバシーポリシー</a></li>
+          <li><a href="/legal.html">特定商取引法に基づく表記</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>お問い合わせ</h4>
+        <ul>
+          <li><a href="mailto:info@miseban.ai">一般のお問い合わせ</a></li>
+          <li><a href="mailto:partner@miseban.ai">パートナー窓口</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>&copy; 2026 MisebanAI. All rights reserved.</p>
+    </div>
+  </div>
+</footer>
+
+<script>
+(function(){
+  var toggle=document.getElementById('mobileToggle'),menu=document.getElementById('mobileMenu'),close=document.getElementById('mobileClose'),links=menu.querySelectorAll('a');
+  function open(){menu.classList.add('open');document.body.style.overflow='hidden'}
+  function shut(){menu.classList.remove('open');document.body.style.overflow=''}
+  toggle.addEventListener('click',open);close.addEventListener('click',shut);
+  for(var i=0;i<links.length;i++) links[i].addEventListener('click',shut);
+})();
+(function(){
+  var els=document.querySelectorAll('.reveal');
+  if(!('IntersectionObserver' in window)){els.forEach(function(el){el.classList.add('visible')});return}
+  var obs=new IntersectionObserver(function(entries){entries.forEach(function(e){if(e.isIntersecting){e.target.classList.add('visible');obs.unobserve(e.target)}})},{threshold:0.1});
+  els.forEach(function(el){obs.observe(el)});
+})();
+</script>
+</body>
+</html>

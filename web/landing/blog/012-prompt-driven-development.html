@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>プロンプト1行で、チームが動く — AI駆動開発の全手法を公開｜ミセバンAI Blog</title>
+<meta name="description" content="1人の開発者がClaude Codeでプロンプトを書き、6人のAIエージェントチームを率いてプロダクトを構築する全手法を公開。会議の開き方、プロンプトの書き方、実際の成果まで。">
+<meta name="keywords" content="AI駆動開発,プロンプトエンジニアリング,Claude Code,AIエージェント,個人開発,スタートアップ,ミセバンAI">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://miseban.ai/blog/012-prompt-driven-development">
+
+<!-- OGP -->
+<meta property="og:title" content="プロンプト1行で、チームが動く — AI駆動開発の全手法を公開｜ミセバンAI Blog">
+<meta property="og:description" content="1人の開発者 + Claude Code = 6人のAIチーム。会議を開き、意思決定し、即日実行する全手法を公開。">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://miseban.ai/blog/012-prompt-driven-development">
+<meta property="og:image" content="https://miseban.ai/ogp.png">
+<meta property="og:site_name" content="ミセバンAI">
+<meta property="og:locale" content="ja_JP">
+<meta property="article:published_time" content="2026-02-23">
+<meta property="article:author" content="ミセバンAI チーム">
+<meta property="article:tag" content="AI駆動開発">
+<meta property="article:tag" content="プロンプトエンジニアリング">
+
+<!-- Twitter Card -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="プロンプト1行で、チームが動く — AI駆動開発の全手法を公開">
+<meta name="twitter:description" content="1人の開発者 + Claude Code = 6人のAIチーム。会議を開き、意思決定し、即日実行する全手法を公開。">
+<meta name="twitter:image" content="https://miseban.ai/ogp.png">
+
+<!-- Favicon -->
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%234f46e5'/><text x='50%25' y='54%25' dominant-baseline='middle' text-anchor='middle' fill='white' font-size='18' font-weight='bold' font-family='sans-serif'>M</text></svg>">
+
+<!-- Google Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<style>
+/* ===== Reset & Custom Properties ===== */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --white:#ffffff;
+  --gray-50:#f8fafc;
+  --gray-100:#f1f5f9;
+  --gray-200:#e2e8f0;
+  --gray-300:#cbd5e1;
+  --gray-400:#94a3b8;
+  --gray-500:#64748b;
+  --slate-600:#475569;
+  --slate-700:#334155;
+  --slate-800:#1e293b;
+  --slate-900:#0f172a;
+  --indigo-50:#eef2ff;
+  --indigo-100:#e0e7ff;
+  --indigo-500:#6366f1;
+  --indigo-600:#4f46e5;
+  --indigo-700:#4338ca;
+  --indigo-900:#312e81;
+  --indigo-950:#1e1b4b;
+  --emerald-50:#ecfdf5;
+  --emerald-500:#10b981;
+  --emerald-600:#059669;
+  --amber-50:#fffbeb;
+  --amber-500:#f59e0b;
+  --amber-600:#d97706;
+  --rose-50:#fff1f2;
+  --rose-500:#f43f5e;
+  --rose-600:#e11d48;
+  --sky-50:#f0f9ff;
+  --sky-500:#0ea5e9;
+  --sky-600:#0284c7;
+  --purple-50:#faf5ff;
+  --purple-500:#a855f7;
+  --purple-600:#9333ea;
+  --teal-50:#f0fdfa;
+  --teal-500:#14b8a6;
+  --teal-600:#0d9488;
+  --radius-sm:8px;
+  --radius:12px;
+  --radius-lg:16px;
+  --radius-xl:24px;
+  --shadow-sm:0 1px 3px rgba(0,0,0,.1),0 1px 2px rgba(0,0,0,.06);
+  --shadow-md:0 4px 6px -1px rgba(0,0,0,.1),0 2px 4px -2px rgba(0,0,0,.1);
+  --shadow-lg:0 10px 15px -3px rgba(0,0,0,.1),0 4px 6px -4px rgba(0,0,0,.1);
+}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+body{font-family:'Noto Sans JP','Inter',system-ui,-apple-system,sans-serif;color:var(--slate-900);background:var(--white);line-height:1.8;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+img{max-width:100%;height:auto;display:block}
+a{text-decoration:none;color:inherit;transition:color .2s}
+ul,ol{list-style:none}
+.container{max-width:1200px;margin:0 auto;padding:0 24px}
+.nums{font-family:'Inter','Noto Sans JP',sans-serif}
+
+/* ===== Buttons ===== */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;font-family:inherit;font-size:.9375rem;font-weight:600;padding:14px 28px;border-radius:100px;border:none;cursor:pointer;transition:all .2s ease;white-space:nowrap;line-height:1.4}
+.btn-primary{background:var(--indigo-600);color:var(--white);box-shadow:0 1px 2px rgba(79,70,229,.3),0 4px 12px rgba(79,70,229,.2)}
+.btn-primary:hover{background:var(--indigo-700);transform:translateY(-1px)}
+.btn-sm{padding:10px 20px;font-size:.875rem}
+.btn-ghost{background:transparent;color:var(--indigo-600);border:2px solid var(--indigo-200);padding:12px 24px}
+.btn-ghost:hover{background:var(--indigo-50);border-color:var(--indigo-400)}
+
+/* ===== Header ===== */
+.header{position:fixed;top:0;left:0;width:100%;z-index:1000;background:rgba(255,255,255,.92);backdrop-filter:blur(16px) saturate(180%);-webkit-backdrop-filter:blur(16px) saturate(180%);box-shadow:0 1px 3px rgba(0,0,0,.06);border-bottom:1px solid rgba(0,0,0,.04)}
+.header-inner{display:flex;align-items:center;justify-content:space-between;height:72px}
+.logo{display:flex;align-items:center;gap:2px;font-size:1.25rem;font-weight:700;color:var(--slate-900)}
+.logo-ai{color:var(--indigo-600);font-weight:700}
+.nav{display:flex;align-items:center;gap:32px}
+.nav a{font-size:.875rem;font-weight:500;color:var(--slate-600);transition:color .2s}
+.nav a:hover{color:var(--slate-900)}
+.nav-cta{margin-left:8px}
+.mobile-toggle{display:none;background:none;border:none;cursor:pointer;padding:8px}
+.mobile-toggle span{display:block;width:22px;height:2px;background:var(--slate-900);margin:5px 0;border-radius:1px;transition:.3s}
+.mobile-menu{display:none;position:fixed;inset:0;background:var(--white);z-index:999;flex-direction:column;align-items:center;justify-content:center;gap:28px}
+.mobile-menu.open{display:flex}
+.mobile-menu a{font-size:1.125rem;color:var(--slate-900);font-weight:500}
+.mobile-close{position:absolute;top:24px;right:24px;background:none;border:none;color:var(--slate-600);font-size:1.5rem;cursor:pointer;width:40px;height:40px;display:flex;align-items:center;justify-content:center;border-radius:50%;transition:background .2s}
+.mobile-close:hover{background:var(--gray-100)}
+
+@media(max-width:768px){
+  .nav{display:none}
+  .mobile-toggle{display:block}
+}
+
+/* ===== Article Hero ===== */
+.article-hero{background:linear-gradient(165deg,var(--slate-900) 0%,#1a1647 50%,var(--indigo-950) 100%);padding:140px 0 72px;color:var(--white);position:relative;overflow:hidden}
+.article-hero::before{content:'';position:absolute;top:0;left:0;right:0;bottom:0;background:radial-gradient(ellipse 80% 50% at 50% -20%,rgba(99,102,241,.15),transparent);pointer-events:none}
+.article-hero-content{position:relative;z-index:1;max-width:800px;margin:0 auto;text-align:center}
+.article-hero-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.1);padding:7px 18px;border-radius:100px;font-size:.8125rem;font-weight:500;color:rgba(255,255,255,.8);margin-bottom:24px;backdrop-filter:blur(8px)}
+.article-hero h1{font-size:clamp(1.75rem,4.5vw,2.5rem);font-weight:700;line-height:1.4;margin-bottom:20px;letter-spacing:-.02em}
+.article-hero-meta{display:flex;align-items:center;justify-content:center;gap:16px;font-size:.875rem;color:rgba(255,255,255,.5)}
+
+/* ===== Article Body ===== */
+.article-body{max-width:800px;margin:0 auto;padding:64px 24px 96px}
+.article-body h2{font-size:1.5rem;font-weight:700;color:var(--slate-900);margin:56px 0 24px;padding-bottom:12px;border-bottom:2px solid var(--indigo-100);letter-spacing:-.01em}
+.article-body h3{font-size:1.1875rem;font-weight:700;color:var(--slate-800);margin:40px 0 16px}
+.article-body p{font-size:.9375rem;color:var(--slate-700);line-height:2;margin-bottom:20px}
+.article-body ul,.article-body ol{margin:0 0 24px 0;padding-left:0}
+.article-body ul li,.article-body ol li{font-size:.9375rem;color:var(--slate-700);line-height:2;padding-left:24px;position:relative;margin-bottom:8px}
+.article-body ul li::before{content:'';position:absolute;left:6px;top:13px;width:6px;height:6px;border-radius:50%;background:var(--indigo-500)}
+.article-body ol{counter-reset:ol-counter}
+.article-body ol li{counter-increment:ol-counter}
+.article-body ol li::before{content:counter(ol-counter)'.';position:absolute;left:0;font-weight:700;color:var(--indigo-600);font-size:.875rem}
+.article-body strong{font-weight:700;color:var(--slate-900)}
+.article-body blockquote{border-left:4px solid var(--indigo-500);background:var(--indigo-50);padding:20px 24px;margin:24px 0;border-radius:0 var(--radius) var(--radius) 0}
+.article-body blockquote p{color:var(--indigo-900);margin-bottom:0;font-style:italic}
+.article-body code{font-family:'JetBrains Mono','Noto Sans JP',monospace;background:var(--gray-100);padding:2px 8px;border-radius:4px;font-size:.85em;color:var(--indigo-700)}
+.article-body pre{background:var(--slate-900);color:#e2e8f0;padding:24px;border-radius:var(--radius);margin:24px 0;overflow-x:auto;line-height:1.7}
+.article-body pre code{background:none;padding:0;color:inherit;font-size:.8125rem}
+
+/* ===== Back to blog ===== */
+.back-link{display:inline-flex;align-items:center;gap:8px;font-size:.875rem;font-weight:600;color:var(--indigo-600);margin-bottom:32px;transition:all .2s}
+.back-link:hover{color:var(--indigo-700);gap:10px}
+
+/* ===== Intro Box ===== */
+.intro-box{background:linear-gradient(135deg,var(--indigo-50),var(--purple-50));border:1px solid var(--indigo-100);border-radius:var(--radius-lg);padding:32px;margin:32px 0}
+.intro-box p{font-size:.9375rem;color:var(--slate-700);line-height:2;margin-bottom:12px}
+.intro-box p:last-child{margin-bottom:0}
+
+/* ===== Prompt Card ===== */
+.prompt-card{background:var(--white);border:1px solid var(--gray-200);border-radius:var(--radius-lg);padding:28px 32px;margin:24px 0;position:relative;transition:all .3s ease}
+.prompt-card:hover{box-shadow:var(--shadow-md);border-color:var(--gray-300)}
+.prompt-card::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;border-radius:var(--radius-lg) var(--radius-lg) 0 0}
+.prompt-card.meeting::before{background:linear-gradient(90deg,var(--indigo-500),var(--purple-600))}
+.prompt-card.design::before{background:linear-gradient(90deg,var(--sky-500),var(--teal-500))}
+.prompt-card.insight::before{background:linear-gradient(90deg,var(--amber-500),var(--rose-500))}
+.prompt-card.execution::before{background:linear-gradient(90deg,var(--emerald-500),var(--emerald-600))}
+.prompt-card-label{font-family:'Inter','Noto Sans JP',sans-serif;font-size:.75rem;font-weight:700;letter-spacing:.05em;padding:4px 12px;border-radius:100px;display:inline-block;margin-bottom:16px}
+.meeting .prompt-card-label{background:var(--indigo-50);color:var(--indigo-600)}
+.design .prompt-card-label{background:var(--sky-50);color:var(--sky-600)}
+.insight .prompt-card-label{background:var(--amber-50);color:var(--amber-600)}
+.execution .prompt-card-label{background:var(--emerald-50);color:var(--emerald-600)}
+.prompt-card h3{font-size:1.125rem;font-weight:700;color:var(--slate-900);margin:0 0 12px 0}
+.prompt-card p{font-size:.9375rem;color:var(--slate-700);line-height:2;margin-bottom:12px}
+
+/* ===== Result Stats ===== */
+.result-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin:32px 0}
+.result-item{background:var(--gray-50);border:1px solid var(--gray-200);border-radius:var(--radius);padding:20px;text-align:center}
+.result-value{font-family:'Inter','Noto Sans JP',sans-serif;font-size:1.75rem;font-weight:700;line-height:1.2;color:var(--indigo-600)}
+.result-label{font-size:.75rem;color:var(--gray-500);margin-top:4px;font-weight:500}
+
+@media(max-width:640px){
+  .result-grid{grid-template-columns:repeat(2,1fr)}
+}
+
+/* ===== Flow Diagram ===== */
+.flow-box{background:var(--slate-900);border-radius:var(--radius-lg);padding:32px;margin:32px 0;color:var(--white)}
+.flow-box h3{font-size:1.0625rem;font-weight:700;color:var(--white);margin-bottom:20px;text-align:center}
+.flow-steps{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:8px}
+.flow-step{background:rgba(99,102,241,.15);border:1px solid rgba(99,102,241,.3);padding:10px 18px;border-radius:var(--radius-sm);font-size:.8125rem;font-weight:600;color:var(--indigo-100);text-align:center}
+.flow-arrow{color:var(--indigo-500);font-size:1.25rem;font-weight:700}
+
+@media(max-width:640px){
+  .flow-steps{flex-direction:column}
+  .flow-arrow{transform:rotate(90deg)}
+}
+
+/* ===== Lesson Box ===== */
+.lesson-box{background:linear-gradient(135deg,var(--amber-50),var(--rose-50));border:1px solid rgba(245,158,11,.2);border-radius:var(--radius-lg);padding:28px 32px;margin:32px 0}
+.lesson-box h3{font-size:1.0625rem;font-weight:700;color:var(--slate-800);margin-bottom:16px}
+.lesson-box ul li{padding-left:24px;position:relative;margin-bottom:10px;font-size:.9375rem;color:var(--slate-700);line-height:1.9}
+.lesson-box ul li::before{content:'';position:absolute;left:6px;top:12px;width:5px;height:5px;border-radius:50%;background:var(--amber-500)}
+
+/* ===== CTA Section ===== */
+.article-cta{background:linear-gradient(135deg,var(--indigo-50),var(--purple-50));border:2px solid var(--indigo-100);border-radius:var(--radius-xl);padding:48px 32px;margin:56px 0 0;text-align:center}
+.article-cta h3{font-size:1.375rem;font-weight:700;color:var(--slate-900);margin-bottom:12px}
+.article-cta p{font-size:.9375rem;color:var(--slate-600);line-height:2;margin-bottom:24px}
+.article-cta .cta-buttons{display:flex;align-items:center;justify-content:center;gap:16px;flex-wrap:wrap}
+
+/* ===== Footer ===== */
+.footer{background:var(--slate-900);color:rgba(255,255,255,.5);padding:64px 0 32px;border-top:1px solid rgba(255,255,255,.06)}
+.footer-grid{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:40px;margin-bottom:48px}
+.footer-brand{font-size:1.125rem;font-weight:700;color:var(--white);margin-bottom:8px}
+.footer-brand .logo-ai{color:var(--indigo-500)}
+.footer-tagline{font-size:.8125rem;line-height:1.8;margin-bottom:20px}
+.footer-email{font-size:.8125rem;color:var(--indigo-500);transition:color .2s}
+.footer-email:hover{color:var(--indigo-400)}
+.footer h4{font-size:.75rem;font-weight:600;color:rgba(255,255,255,.7);margin-bottom:16px;letter-spacing:.05em;text-transform:uppercase}
+.footer ul li{margin-bottom:8px}
+.footer ul a{font-size:.8125rem;transition:color .2s}
+.footer ul a:hover{color:var(--white)}
+.footer-bottom{border-top:1px solid rgba(255,255,255,.06);padding-top:24px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;font-size:.75rem}
+
+@media(max-width:768px){
+  .footer-grid{grid-template-columns:1fr 1fr;gap:32px}
+  .prompt-card{padding:20px 24px}
+}
+@media(max-width:480px){
+  .footer-grid{grid-template-columns:1fr}
+}
+
+/* ===== Scroll Reveal ===== */
+.reveal{opacity:0;transform:translateY(20px);transition:opacity .5s ease,transform .5s ease}
+.reveal.visible{opacity:1;transform:none}
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<header class="header" id="header">
+  <div class="container header-inner">
+    <a href="/" class="logo">
+      ミセバン<span class="logo-ai">AI</span>
+    </a>
+    <nav class="nav">
+      <a href="/#setup">導入方法</a>
+      <a href="/#features">機能</a>
+      <a href="/#pricing">料金</a>
+      <a href="/cameras.html">対応カメラ</a>
+      <a href="/blog/">ブログ</a>
+      <a href="/#cta" class="btn btn-primary btn-sm nav-cta">無料で始める</a>
+    </nav>
+    <button class="mobile-toggle" id="mobileToggle" aria-label="メニューを開く">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</header>
+
+<!-- Mobile Menu -->
+<div class="mobile-menu" id="mobileMenu">
+  <button class="mobile-close" id="mobileClose" aria-label="メニューを閉じる">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+  </button>
+  <a href="/#setup">導入方法</a>
+  <a href="/#features">機能</a>
+  <a href="/#pricing">料金</a>
+  <a href="/cameras.html">対応カメラ</a>
+  <a href="/blog/">ブログ</a>
+  <a href="/#cta" class="btn btn-primary">無料で始める</a>
+</div>
+
+<!-- Article Hero -->
+<section class="article-hero">
+  <div class="container">
+    <div class="article-hero-content">
+      <div class="article-hero-badge">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+        AI駆動開発
+      </div>
+      <h1>プロンプト1行で、チームが動く — AI駆動開発の全手法を公開</h1>
+      <div class="article-hero-meta">
+        <time datetime="2026-02-23">2026.02.23</time>
+        <span>|</span>
+        <span>ミセバンAI チーム</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Article Body -->
+<article class="article-body">
+
+<a href="/blog/" class="back-link">
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+  ブログ一覧へ戻る
+</a>
+
+<div class="intro-box">
+  <p>ミセバンAIは、コードを書く開発者が作っているのではない。</p>
+  <p><strong>プロンプトを書く開発者</strong>が、<strong>AIエージェントのチーム</strong>を率いて作っている。</p>
+  <p>本記事では、1人の創業者がClaude Codeを使い、CEO・CTO・デザイナー・マーケターなど6つのAIエージェントを並列起動して会議を開き、意思決定し、即日実装するまでの<strong>全手法</strong>を公開する。</p>
+</div>
+
+
+<h2>1. プロダクト開発の新しい形</h2>
+
+<p>従来のスタートアップ開発を思い浮かべてほしい。5-6人のチームを採用し、毎週ミーティングを開き、仕様を決め、実装し、レビューし、デプロイする。早くても1つの機能に2-3週間。</p>
+
+<p>ミセバンAIの開発は違う。</p>
+
+<blockquote>
+  <p>1人の開発者 + Claude Code = 6人のAIエージェントチーム。コードを書く前に「会議」をする。AIに考えさせてから実行する。</p>
+</blockquote>
+
+<p>実際のタイムラインを見てほしい。</p>
+
+<h3>Day 1: ゼロからプロダクトの骨格を構築</h3>
+
+<ul>
+  <li>ランディングページの設計・実装・デプロイ</li>
+  <li>Rustバックエンドのアーキテクチャ設計と基盤構築</li>
+  <li>CI/CDパイプラインの構築（テスト→ビルド→デプロイ）</li>
+  <li>ブログシステムの構築と最初の記事公開</li>
+  <li><strong>所要時間: 6時間</strong></li>
+</ul>
+
+<h3>Day 2: AI経営会議で7つの意思決定</h3>
+
+<ul>
+  <li>6人のAIエージェント（CEO, CTO, CFO, CPO, PM, Growth Hacker）を並列起動</li>
+  <li>プロダクト戦略、価格設定、技術アーキテクチャ、Go-to-Market戦略を同時に議論</li>
+  <li>7つの意思決定を確定し、その場で実装に着手</li>
+  <li><strong>会議30分 → 実装3時間 → 全てデプロイ完了</strong></li>
+</ul>
+
+<h3>Day 3: 3つの会議を連続開催</h3>
+
+<ul>
+  <li><strong>リリース準備会議</strong>: MVP定義、Go/No-Goゲート設計、6週スプリント計画</li>
+  <li><strong>マルチプロダクト戦略会議</strong>: 5プロダクト同時開発の是非を経営陣が激論</li>
+  <li><strong>デザインレビュー会議</strong>: 4名の専門家がUI/UXを徹底レビュー → 即日改善</li>
+</ul>
+
+<p>3日間で、通常のスタートアップが1-2ヶ月かける意思決定と実装を完了した。</p>
+
+
+<h2>2. プロンプトの書き方 — 全公開</h2>
+
+<p>ここからが本記事の核心だ。実際に使っているプロンプトを、そのまま公開する。</p>
+
+
+<div class="prompt-card meeting reveal">
+  <span class="prompt-card-label">PATTERN 1: 会議を開く</span>
+  <h3>AIエージェント会議の起動プロンプト</h3>
+  <p>6つのエージェントを並列起動し、それぞれの専門領域から意見を出させる。重要なのは<strong>「独り言」</strong>の指示だ。これにより、建前ではなく本音の議論が生まれる。</p>
+</div>
+
+<pre><code>6人のAIエージェントを並列に起動し、以下の議題について議論してください。
+
+## 参加者
+1. CEO「田中 翔太」— 事業判断・市場分析
+2. CTO「山田 理」— 技術アーキテクチャ・実装可能性
+3. CFO「佐藤 美咲」— 財務・コスト分析
+4. CPO「鈴木 健一」— プロダクト設計・UX
+5. PM「高橋 彩」— スケジュール・リソース管理
+6. Growth Hacker「渡辺 拓」— グロース戦略・データ分析
+
+## ルール
+- 各参加者は発言の前に【独り言】（内心を書いてください。建前ではなく本音で。）を必ず書く
+- 他のメンバーの発言に対して、賛成・反対・条件付き賛成のいずれかを明示する
+- 最終的に議長（CEO）が結論をまとめる
+
+## 議題
+[ここに議題を書く]
+
+## 前提情報
+[コードベース、予算、タイムラインなどの制約条件を書く]</code></pre>
+
+<p>「独り言」がなぜ重要なのか。通常のAIは「正しそうなこと」を言おうとする。しかし「内心を書け」と指示すると、<strong>「これは本当に大丈夫か?」「正直リスクが高い」「でも言い出しにくい...」</strong>といった本音が出てくる。この一言で、AIの出力品質が劇的に変わった。</p>
+
+<p>実際のプロンプト例を見てみよう。</p>
+
+<pre><code>あなたはCEO「田中 翔太」です。以下の前提でマルチプロダクト戦略の是非を議論してください。
+
+【独り言】（内心を書いてください。建前ではなく本音で。）
+
+前提:
+- 5プロダクト同時開発
+- 8週間タイムライン
+- 予算100万円
+- 開発者1名（創業者のみ）
+- 全プロダクトがAI×店舗DXの領域
+
+質問:
+1. 5プロダクト同時は「リソース分散」か「相互シナジー」か?
+2. どのプロダクトを最優先にすべきか? 根拠は?
+3. 撤退基準をどう設定するか?</code></pre>
+
+<p>このプロンプトに対して、AIは以下のような「独り言」を出力する。</p>
+
+<blockquote>
+  <p>【独り言】（正直、5プロダクト同時は無謀だと思う。でもCTOは「技術基盤を共有すれば可能」と言うだろうし、Growth Hackerは「ポートフォリオ戦略だ」と言うだろう。でも自分の経験上、1つもPMFしていない段階で5つに手を出すのは...。まあ、まずは聞いてみるか。）</p>
+</blockquote>
+
+
+<div class="prompt-card design reveal">
+  <span class="prompt-card-label">PATTERN 2: デザインレビュー</span>
+  <h3>専門家チームによるUI/UXレビュー</h3>
+  <p>超一流デザイナー、マーケター、ブランド戦略家、フロントエンドエンジニアを同時に起動し、多角的にレビューする。</p>
+</div>
+
+<pre><code>あなたは世界的UIデザイナー「佐藤 悠（元Apple Design Team → Airbnb Principal Designer）」です。
+以下のサイトのHTMLを読んで、超一流デザイナーの視点でUI/UXを徹底レビューしてください。
+
+## レビュー観点
+1. 視覚的ヒエラルキー: 情報の優先順位が正しく表現されているか
+2. タイポグラフィ: フォントサイズ・行間・文字間のリズム
+3. カラーシステム: ブランドカラーの一貫性、コントラスト比
+4. スペーシング: 余白のリズム、8pxグリッドへの準拠
+5. マイクロインタラクション: ホバー、トランジション、フィードバック
+6. モバイル体験: タッチターゲット、スクロール体験
+7. アクセシビリティ: WCAG 2.1 AA準拠
+
+## フォーマット
+各観点について:
+- 現状スコア（/10）
+- 具体的な問題点
+- 改善案（CSSコード付き）
+
+[ここにHTMLコードを貼る]</code></pre>
+
+<p>同時に、別のエージェントとして以下も起動する。</p>
+
+<pre><code>あなたはグロースマーケター「田村 恵（元Mercari Head of Growth → Stripe Japan Marketing Lead）」です。
+同じHTMLを読んで、コンバージョン最適化の観点でレビューしてください。
+
+## レビュー観点
+1. ファーストビュー: 3秒以内に価値提案が伝わるか
+2. CTA: ボタンの配置・文言・色・サイズは最適か
+3. 信頼性シグナル: ソーシャルプルーフ、数字、ロゴ
+4. 離脱ポイント: どこでユーザーが迷うか
+5. ストーリーフロー: 上から下に読んだときの感情の流れ</code></pre>
+
+
+<div class="prompt-card insight reveal">
+  <span class="prompt-card-label">PATTERN 3: 独り言で本音を引き出す</span>
+  <h3>意思決定の質を上げる「独り言」テクニック</h3>
+  <p>AIに「建前」と「本音」を分けて書かせることで、議論の深さが段違いに変わる。</p>
+</div>
+
+<p>通常のプロンプトで「この戦略についてどう思いますか?」と聞くと、AIは「良い戦略だと思います。ただし以下のリスクがあります...」と優等生的な回答をする。</p>
+
+<p>しかし「独り言を書け」と指示すると、こうなる。</p>
+
+<pre><code>## フォーマット
+
+### 【独り言】
+（他のメンバーには聞こえない内心。建前ではなく本音で。
+ 「これは無理だと思う」「正直、自分の専門外だ」「他のメンバーは気づいていないが...」
+ といった本音を必ず書くこと。）
+
+### 【発言】
+（会議での正式な発言。データと根拠に基づいて。）
+
+### 【提案】
+（具体的なアクションアイテム。担当者・期限・成功基準を明記。）</code></pre>
+
+<p>この構造を使うことで、AIは「言いにくいこと」を独り言として出力する。結果として、楽観的すぎる計画にブレーキがかかり、見落としていたリスクが表面化する。</p>
+
+
+<div class="prompt-card execution reveal">
+  <span class="prompt-card-label">PATTERN 4: 会議→実装の変換</span>
+  <h3>会議の結論をそのまま実装指示に変換する</h3>
+  <p>議論で終わらせない。結論が出た瞬間に、そのまま実装フェーズに移行する。</p>
+</div>
+
+<div class="flow-box reveal">
+  <h3>プロンプト駆動開発のフロー</h3>
+  <div class="flow-steps">
+    <div class="flow-step">議題を設定</div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-step">6人のエージェント<br>を並列起動</div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-step">独り言付きで<br>議論</div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-step">CEOが結論を<br>まとめる</div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-step">結論を実装指示<br>に変換</div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-step">Claude Codeで<br>即日実装</div>
+  </div>
+</div>
+
+<pre><code>## 会議の結論を実装に変換する
+
+以下は先ほどの経営会議の結論です。これを実装指示に変換してください。
+
+### 会議の結論
+- 価格体系: フリープラン（カメラ1台）+ スタータープラン（¥4,980/月、3台）+ プロプラン（¥14,800/月、10台）
+- 技術方針: エッジ推論を優先。映像はクラウドに送らない
+- MVP範囲: ダッシュボード8画面 + LINE通知
+
+### 実装指示に変換するルール
+1. 各結論を具体的なタスクに分解する
+2. 各タスクに「完了の定義」を明記する
+3. 依存関係を明示する（何を先にやるべきか）
+4. 推定工数を書く
+5. テスト方針を書く</code></pre>
+
+<p>このフローの強みは、<strong>「議論」と「実装」の間にタイムラグがないこと</strong>だ。通常の開発では、会議の結論を議事録にまとめ、チケットを切り、スプリントに入れ、実装に着手するまでに数日〜数週間かかる。このフローでは、会議の結論がそのまま実装指示になり、数分後にはコードが生成されている。</p>
+
+
+<h2>3. 実際の成果</h2>
+
+<p>プロンプト駆動開発で、実際にどれだけのアウトプットが出たか。</p>
+
+<div class="result-grid reveal">
+  <div class="result-item">
+    <div class="result-value">12本</div>
+    <div class="result-label">ブログ記事（2日間で公開）</div>
+  </div>
+  <div class="result-item">
+    <div class="result-value">3回</div>
+    <div class="result-label">AI経営会議（延べ18名のエージェント）</div>
+  </div>
+  <div class="result-item">
+    <div class="result-value">25+</div>
+    <div class="result-label">意思決定（全て即日実行）</div>
+  </div>
+  <div class="result-item">
+    <div class="result-value">1時間</div>
+    <div class="result-label">LP → 4名レビュー → 改善完了</div>
+  </div>
+</div>
+
+<p>具体的な成果を列挙する。</p>
+
+<ul>
+  <li><strong>ランディングページ</strong>: デザイン→実装→デプロイ→4名のエキスパートレビュー→改善実施を1日で完了</li>
+  <li><strong>ブログ記事12本</strong>: 技術解説、会議の全文公開、意思決定サマリー、戦略解説を2日で公開</li>
+  <li><strong>AI経営会議3回</strong>: プロダクト戦略、リリース判定、マルチプロダクト戦略を各30分で議論・決定</li>
+  <li><strong>CI/CDパイプライン</strong>: テスト→ビルド→デプロイの自動化を初日に構築</li>
+  <li><strong>全プロセスの透明性</strong>: 会議の全文、意思決定の根拠、プロンプトの原文を全てブログで公開</li>
+</ul>
+
+<p>最後の項目が特に重要だ。<strong>透明性そのものがマーケティングになる。</strong>「AIでプロダクトを作っている」という事実を公開すること自体が、同じことをやりたい開発者やスタートアップ創業者の関心を引く。</p>
+
+
+<h2>4. このアプローチの限界と学び</h2>
+
+<p>AI駆動開発は万能ではない。3日間の実践で見えた限界と学びを正直に書く。</p>
+
+<div class="lesson-box reveal">
+  <h3>限界: AIにできないこと</h3>
+  <ul>
+    <li><strong>AIは「考える」が「感じない」。</strong>顧客が本当に困っていることは、データからは見えない。店舗に足を運び、オーナーの表情を見て、声のトーンを聞くことでしか分からない。AIエージェントの会議でどれだけ議論しても、顧客の「生の声」の代わりにはならない。</li>
+    <li><strong>AIは「最適解」を出すが「狂気的なアイデア」は出さない。</strong>AIの提案は常に合理的だ。しかし、ブレイクスルーは往々にして「合理的に見えない」ところから生まれる。Airbnbの「見知らぬ人の家に泊まる」もUberの「見知らぬ人の車に乗る」も、AIなら「リスクが高い」と却下しただろう。</li>
+    <li><strong>プロンプトの質 = アウトプットの質。</strong>曖昧な指示からは曖昧な結果しか出ない。「良いサイトを作って」ではなく「WCAG 2.1 AA準拠、8pxグリッド、フォントスケール1.25倍」と指示する必要がある。プロンプトを書く人間のスキルがボトルネックになる。</li>
+  </ul>
+</div>
+
+<div class="lesson-box reveal">
+  <h3>学び: 劇的に効いたテクニック</h3>
+  <ul>
+    <li><strong>「独り言を書け」の一言。</strong>この指示を追加するだけで、AIの出力品質が劇的に変わった。建前の「良いと思います」が消え、「正直これは不安だ」「他のメンバーは気づいていないが」という本音が出てくる。</li>
+    <li><strong>並列起動で多角的な視点。</strong>1つのAIに全てを聞くのではなく、6つのエージェントに別々の役割を与えることで、視点の偏りが減る。CTOが「技術的に可能」と言っても、CFOが「コスト的に無理」と言い、PMが「スケジュール的に厳しい」と言う。</li>
+    <li><strong>会議→実装のゼロタイムラグ。</strong>議論と実装の間にチケットも承認フローもない。結論が出た瞬間にコードが生成される。このスピードは、従来の開発プロセスでは不可能だ。</li>
+    <li><strong>公開すること自体が価値。</strong>プロセスの透明性は、信頼の構築にもマーケティングにもなる。「何を考えて、どう意思決定したか」を公開することで、読者は自分のプロジェクトに応用できる。</li>
+  </ul>
+</div>
+
+
+<h2>5. 未来: 1人で100人分のチーム</h2>
+
+<p>AI駆動開発の時代、<strong>個人開発者がスタートアップを1人で回せるようになった。</strong></p>
+
+<p>これは誇張ではない。ミセバンAIの開発を振り返ると、以下の役割を全てAIエージェントが担っている。</p>
+
+<ul>
+  <li><strong>CEO</strong>: 事業戦略の策定、意思決定のファシリテーション</li>
+  <li><strong>CTO</strong>: 技術アーキテクチャの設計、コードレビュー</li>
+  <li><strong>CFO</strong>: コスト分析、価格設定、財務シミュレーション</li>
+  <li><strong>CPO</strong>: プロダクト仕様の策定、UXフローの設計</li>
+  <li><strong>デザイナー</strong>: UI/UXレビュー、改善提案</li>
+  <li><strong>マーケター</strong>: コンバージョン最適化、コンテンツ戦略</li>
+  <li><strong>エンジニア</strong>: コードの生成、テストの実装、デプロイ</li>
+</ul>
+
+<p>残っている「人間の仕事」は何か。</p>
+
+<blockquote>
+  <p>「何を作るか」を決めること。そして、顧客の声を聞きに行くこと。</p>
+</blockquote>
+
+<p>判断力と共感力。これだけは、まだAIに任せられない。逆に言えば、<strong>それ以外の全てはAIに委譲できる時代になった。</strong></p>
+
+<p>ミセバンAIの全プロセスは、このブログで公開し続ける。プロンプトの書き方、会議の全文、意思決定の根拠、失敗した試み。全てをオープンにすることで、AI駆動開発を始めたい人の参考になれば幸いだ。</p>
+
+<p>次回の記事では、実際の顧客インタビューの結果と、そこから得られた「AIには見えなかったインサイト」を公開する予定だ。</p>
+
+
+<!-- CTA -->
+<div class="article-cta reveal">
+  <h3>AI駆動で生まれたプロダクトを体験してみませんか?</h3>
+  <p>ミセバンAIは、この記事で紹介した手法で開発されています。<br>既存の防犯カメラがAI店長に変わる、小規模店舗のための次世代AI分析。</p>
+  <div class="cta-buttons">
+    <a href="/blog/" class="btn btn-ghost btn-sm">ブログ一覧を見る</a>
+    <a href="/#cta" class="btn btn-primary btn-sm">ミセバンAIを無料で試す</a>
+  </div>
+</div>
+
+</article>
+
+<!-- Footer -->
+<footer class="footer">
+  <div class="container">
+    <div class="footer-grid">
+      <div>
+        <div class="footer-brand">ミセバン<span class="logo-ai">AI</span></div>
+        <p class="footer-tagline">既存カメラが、AI店長に変わる。<br>小規模店舗のための次世代AI分析。</p>
+        <a href="mailto:info@miseban.ai" class="footer-email">info@miseban.ai</a>
+      </div>
+      <div>
+        <h4>サービス</h4>
+        <ul>
+          <li><a href="/#features">機能</a></li>
+          <li><a href="/#pricing">料金</a></li>
+          <li><a href="/cameras.html">対応カメラ</a></li>
+          <li><a href="/#faq">FAQ</a></li>
+          <li><a href="/#partner">パートナー募集</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>法的情報</h4>
+        <ul>
+          <li><a href="#">利用規約</a></li>
+          <li><a href="#">プライバシーポリシー</a></li>
+          <li><a href="#">特定商取引法に基づく表記</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>お問い合わせ</h4>
+        <ul>
+          <li><a href="mailto:info@miseban.ai">一般のお問い合わせ</a></li>
+          <li><a href="mailto:partner@miseban.ai">パートナー窓口</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>&copy; 2026 MisebanAI. All rights reserved.</p>
+    </div>
+  </div>
+</footer>
+
+<script>
+/* ===== Mobile menu ===== */
+(function(){
+  var toggle = document.getElementById('mobileToggle');
+  var menu = document.getElementById('mobileMenu');
+  var close = document.getElementById('mobileClose');
+  var links = menu.querySelectorAll('a');
+  function open(){menu.classList.add('open');document.body.style.overflow='hidden'}
+  function shut(){menu.classList.remove('open');document.body.style.overflow=''}
+  toggle.addEventListener('click', open);
+  close.addEventListener('click', shut);
+  for(var i=0;i<links.length;i++) links[i].addEventListener('click', shut);
+})();
+
+/* ===== Scroll reveal ===== */
+(function(){
+  var els = document.querySelectorAll('.reveal');
+  if(!('IntersectionObserver' in window)){
+    els.forEach(function(el){el.classList.add('visible')});
+    return;
+  }
+  var observer = new IntersectionObserver(function(entries){
+    entries.forEach(function(e){
+      if(e.isIntersecting){
+        e.target.classList.add('visible');
+        observer.unobserve(e.target);
+      }
+    });
+  },{threshold:0.1});
+  els.forEach(function(el){observer.observe(el)});
+})();
+</script>
+
+</body>
+</html>

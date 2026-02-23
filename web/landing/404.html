@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ページが見つかりません｜ミセバンAI</title>
+<meta name="robots" content="noindex, nofollow">
+
+<!-- Favicon -->
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%234f46e5'/><text x='50%25' y='54%25' dominant-baseline='middle' text-anchor='middle' fill='white' font-size='18' font-weight='bold' font-family='sans-serif'>M</text></svg>">
+
+<!-- Google Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
+
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --white:#ffffff;
+  --gray-50:#f8fafc;
+  --gray-100:#f1f5f9;
+  --gray-200:#e2e8f0;
+  --gray-300:#cbd5e1;
+  --gray-400:#94a3b8;
+  --gray-500:#64748b;
+  --slate-600:#475569;
+  --slate-700:#334155;
+  --slate-800:#1e293b;
+  --slate-900:#0f172a;
+  --indigo-50:#eef2ff;
+  --indigo-100:#e0e7ff;
+  --indigo-500:#6366f1;
+  --indigo-600:#4f46e5;
+  --indigo-700:#4338ca;
+  --indigo-900:#312e81;
+  --indigo-950:#1e1b4b;
+  --radius-sm:8px;
+  --radius:12px;
+  --radius-lg:16px;
+  --shadow-sm:0 1px 3px rgba(0,0,0,.1),0 1px 2px rgba(0,0,0,.06);
+}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+body{font-family:'Noto Sans JP','Inter',system-ui,-apple-system,sans-serif;color:var(--slate-900);background:var(--white);line-height:1.8;overflow-x:hidden;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;min-height:100vh;display:flex;flex-direction:column}
+a{text-decoration:none;color:inherit;transition:color .2s}
+.container{max-width:1200px;margin:0 auto;padding:0 24px}
+
+/* Header */
+.header{background:var(--white);border-bottom:1px solid var(--gray-200);position:sticky;top:0;z-index:100}
+.header-inner{display:flex;align-items:center;justify-content:space-between;height:72px}
+.logo{display:flex;align-items:center;gap:2px;font-size:1.25rem;font-weight:700;color:var(--slate-900)}
+.logo-ai{color:var(--indigo-600);font-weight:700}
+.nav{display:flex;align-items:center;gap:24px}
+.nav a{font-size:.875rem;font-weight:400;color:var(--slate-600);transition:color .2s}
+.nav a:hover{color:var(--indigo-600)}
+
+/* Error Content */
+.error-content{flex:1;display:flex;align-items:center;justify-content:center;padding:80px 24px;text-align:center}
+.error-inner{max-width:520px}
+.error-code{font-size:clamp(6rem,15vw,10rem);font-weight:700;color:var(--indigo-600);line-height:1;margin-bottom:16px;font-family:'Inter',sans-serif;letter-spacing:-.04em}
+.error-title{font-size:clamp(1.25rem,3vw,1.75rem);font-weight:700;color:var(--slate-900);margin-bottom:12px}
+.error-desc{font-size:.9375rem;color:var(--slate-600);line-height:1.8;margin-bottom:40px}
+
+/* Link buttons */
+.error-links{display:flex;flex-wrap:wrap;gap:12px;justify-content:center}
+.error-links a{display:inline-flex;align-items:center;gap:6px;font-size:.875rem;font-weight:600;padding:12px 24px;border-radius:var(--radius-sm);transition:all .2s}
+.btn-primary{background:var(--indigo-600);color:var(--white)}
+.btn-primary:hover{background:var(--indigo-700);color:var(--white)}
+.btn-secondary{background:var(--white);color:var(--slate-700);border:1px solid var(--gray-200)}
+.btn-secondary:hover{background:var(--gray-50);border-color:var(--gray-300);color:var(--slate-900)}
+
+/* Footer */
+.footer{background:var(--slate-900);color:rgba(255,255,255,.7);padding:48px 0 32px;border-top:1px solid rgba(255,255,255,.06)}
+.footer-inner{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px}
+.footer-brand{font-size:1rem;font-weight:700;color:var(--white)}
+.footer-brand .logo-ai{color:var(--indigo-500)}
+.footer-links{display:flex;gap:24px;flex-wrap:wrap}
+.footer-links a{font-size:.8125rem;color:rgba(255,255,255,.6);transition:color .2s}
+.footer-links a:hover{color:var(--white)}
+.footer-copy{width:100%;text-align:center;font-size:.75rem;color:rgba(255,255,255,.4);margin-top:24px;padding-top:24px;border-top:1px solid rgba(255,255,255,.06)}
+
+@media(max-width:640px){
+  .error-content{padding:60px 20px}
+  .error-links{flex-direction:column;align-items:stretch}
+  .error-links a{justify-content:center}
+  .footer-inner{flex-direction:column;text-align:center}
+  .footer-links{justify-content:center}
+  .nav{gap:16px}
+}
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="container">
+    <div class="header-inner">
+      <a href="/" class="logo">ミセバン<span class="logo-ai">AI</span></a>
+      <nav class="nav">
+        <a href="/">トップ</a>
+        <a href="/blog/">ブログ</a>
+        <a href="/terms.html">利用規約</a>
+        <a href="/legal.html">特商法表記</a>
+      </nav>
+    </div>
+  </div>
+</header>
+
+<main class="error-content">
+  <div class="error-inner">
+    <div class="error-code">404</div>
+    <h1 class="error-title">お探しのページは見つかりませんでした</h1>
+    <p class="error-desc">URLが正しいかご確認ください。ページが移動または削除された可能性があります。</p>
+    <div class="error-links">
+      <a href="/" class="btn-primary">トップページへ</a>
+      <a href="/dashboard/" class="btn-secondary">ダッシュボード</a>
+      <a href="/blog/" class="btn-secondary">ブログ</a>
+    </div>
+  </div>
+</main>
+
+<footer class="footer">
+  <div class="container">
+    <div class="footer-inner">
+      <div class="footer-brand">ミセバン<span class="logo-ai">AI</span></div>
+      <div class="footer-links">
+        <a href="/">トップ</a>
+        <a href="/blog/">ブログ</a>
+        <a href="/privacy.html">プライバシーポリシー</a>
+        <a href="/terms.html">利用規約</a>
+        <a href="/legal.html">特定商取引法に基づく表記</a>
+      </div>
+    </div>
+    <div class="footer-copy">&copy; 2026 MisebanAI. All rights reserved.</div>
+  </div>
+</footer>
+
+</body>
+</html>

@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sprint Cycle 3: LINE通知Bot × リアルタイムアラートで「見守り」が動き出す｜ミセバンAI Blog</title>
+<meta name="description" content="Sprint Cycle 3 でLINE Messaging API連携とリアルタイムアラートシステムを構築。AI検知からLINEプッシュ通知までのフルパイプラインを公開。">
+<meta name="keywords" content="LINE Messaging API,リアルタイムアラート,Supabase Realtime,プッシュ通知,侵入検知,ミセバンAI">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://miseban.ai/blog/015-sprint-cycle-3">
+<!-- OGP -->
+<meta property="og:title" content="Sprint Cycle 3: LINE通知Bot × リアルタイムアラートで「見守り」が動き出す｜ミセバンAI Blog">
+<meta property="og:description" content="Sprint Cycle 3 でLINE Messaging API連携とリアルタイムアラートシステムを構築。AI検知からLINEプッシュ通知までのフルパイプラインを公開。">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://miseban.ai/blog/015-sprint-cycle-3">
+<meta property="og:image" content="https://miseban.ai/ogp.png">
+<meta property="og:site_name" content="ミセバンAI">
+<meta property="og:locale" content="ja_JP">
+<meta property="article:published_time" content="2026-02-23">
+<meta property="article:author" content="ミセバンAI チーム">
+<meta property="article:tag" content="LINE Bot">
+<meta property="article:tag" content="Realtime">
+<meta property="article:tag" content="Alert">
+<meta property="article:tag" content="Building in Public">
+<!-- Twitter Card -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Sprint Cycle 3: LINE通知Bot × リアルタイムアラートで「見守り」が動き出す">
+<meta name="twitter:description" content="Sprint Cycle 3 でLINE Messaging API連携とリアルタイムアラートシステムを構築。AI検知からLINEプッシュ通知までのフルパイプラインを公開。">
+<meta name="twitter:image" content="https://miseban.ai/ogp.png">
+<!-- Favicon -->
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%234f46e5'/><text x='50%25' y='54%25' dominant-baseline='middle' text-anchor='middle' fill='white' font-size='18' font-weight='bold' font-family='sans-serif'>M</text></svg>">
+<!-- Google Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--white:#fff;--gray-50:#f8fafc;--gray-100:#f1f5f9;--gray-200:#e2e8f0;--gray-300:#cbd5e1;--gray-400:#94a3b8;--gray-500:#64748b;--slate-600:#475569;--slate-700:#334155;--slate-800:#1e293b;--slate-900:#0f172a;--indigo-50:#eef2ff;--indigo-100:#e0e7ff;--indigo-500:#6366f1;--indigo-600:#4f46e5;--indigo-700:#4338ca;--indigo-900:#312e81;--indigo-950:#1e1b4b;--emerald-50:#ecfdf5;--emerald-500:#10b981;--emerald-600:#059669;--amber-50:#fffbeb;--amber-500:#f59e0b;--amber-600:#d97706;--rose-50:#fff1f2;--rose-500:#f43f5e;--rose-600:#e11d48;--sky-50:#f0f9ff;--sky-500:#0ea5e9;--purple-50:#faf5ff;--purple-600:#9333ea;--teal-50:#f0fdfa;--teal-500:#14b8a6;--radius-sm:8px;--radius:12px;--radius-lg:16px;--radius-xl:24px;--shadow-md:0 4px 6px -1px rgba(0,0,0,.1),0 2px 4px -2px rgba(0,0,0,.1)}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+body{font-family:'Noto Sans JP','Inter',system-ui,-apple-system,sans-serif;color:var(--slate-900);background:var(--white);line-height:1.8;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+img{max-width:100%;height:auto;display:block}
+a{text-decoration:none;color:inherit;transition:color .2s}
+ul,ol{list-style:none}
+.container{max-width:1200px;margin:0 auto;padding:0 24px}
+.nums{font-family:'Inter','Noto Sans JP',sans-serif}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;font-family:inherit;font-size:.9375rem;font-weight:600;padding:14px 28px;border-radius:100px;border:none;cursor:pointer;transition:all .2s ease;white-space:nowrap;line-height:1.4}
+.btn-primary{background:var(--indigo-600);color:var(--white);box-shadow:0 1px 2px rgba(79,70,229,.3),0 4px 12px rgba(79,70,229,.2)}
+.btn-primary:hover{background:var(--indigo-700);transform:translateY(-1px)}
+.btn-sm{padding:10px 20px;font-size:.875rem}
+.btn-ghost{background:transparent;color:var(--indigo-600);border:2px solid var(--indigo-200);padding:12px 24px}
+.btn-ghost:hover{background:var(--indigo-50);border-color:var(--indigo-400)}
+.header{position:fixed;top:0;left:0;width:100%;z-index:1000;background:rgba(255,255,255,.92);backdrop-filter:blur(16px) saturate(180%);-webkit-backdrop-filter:blur(16px) saturate(180%);box-shadow:0 1px 3px rgba(0,0,0,.06);border-bottom:1px solid rgba(0,0,0,.04)}
+.header-inner{display:flex;align-items:center;justify-content:space-between;height:72px}
+.logo{display:flex;align-items:center;gap:2px;font-size:1.25rem;font-weight:700;color:var(--slate-900)}
+.logo-ai{color:var(--indigo-600);font-weight:700}
+.nav{display:flex;align-items:center;gap:32px}
+.nav a{font-size:.875rem;font-weight:500;color:var(--slate-600);transition:color .2s}
+.nav a:hover{color:var(--slate-900)}
+.nav-cta{margin-left:8px}
+.mobile-toggle{display:none;background:none;border:none;cursor:pointer;padding:8px}
+.mobile-toggle span{display:block;width:22px;height:2px;background:var(--slate-900);margin:5px 0;border-radius:1px;transition:.3s}
+.mobile-menu{display:none;position:fixed;inset:0;background:var(--white);z-index:999;flex-direction:column;align-items:center;justify-content:center;gap:28px}
+.mobile-menu.open{display:flex}
+.mobile-menu a{font-size:1.125rem;color:var(--slate-900);font-weight:500}
+.mobile-close{position:absolute;top:24px;right:24px;background:none;border:none;color:var(--slate-600);font-size:1.5rem;cursor:pointer;width:40px;height:40px;display:flex;align-items:center;justify-content:center;border-radius:50%;transition:background .2s}
+.mobile-close:hover{background:var(--gray-100)}
+@media(max-width:768px){.nav{display:none}.mobile-toggle{display:block}}
+.article-hero{background:linear-gradient(165deg,var(--slate-900) 0%,#1a1647 50%,var(--indigo-950) 100%);padding:140px 0 72px;color:var(--white);position:relative;overflow:hidden}
+.article-hero::before{content:'';position:absolute;top:0;left:0;right:0;bottom:0;background:radial-gradient(ellipse 80% 50% at 50% -20%,rgba(99,102,241,.15),transparent);pointer-events:none}
+.article-hero-content{position:relative;z-index:1;max-width:800px;margin:0 auto;text-align:center}
+.article-hero-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.1);padding:7px 18px;border-radius:100px;font-size:.8125rem;font-weight:500;color:rgba(255,255,255,.8);margin-bottom:24px;backdrop-filter:blur(8px)}
+.article-hero h1{font-size:clamp(1.75rem,4.5vw,2.5rem);font-weight:700;line-height:1.4;margin-bottom:20px;letter-spacing:-.02em}
+.article-hero-meta{display:flex;align-items:center;justify-content:center;gap:16px;font-size:.875rem;color:rgba(255,255,255,.5)}
+.article-body{max-width:800px;margin:0 auto;padding:64px 24px 96px}
+.article-body h2{font-size:1.5rem;font-weight:700;color:var(--slate-900);margin:56px 0 24px;padding-bottom:12px;border-bottom:2px solid var(--indigo-100);letter-spacing:-.01em}
+.article-body h3{font-size:1.1875rem;font-weight:700;color:var(--slate-800);margin:40px 0 16px}
+.article-body p{font-size:.9375rem;color:var(--slate-700);line-height:2;margin-bottom:20px}
+.article-body ul,.article-body ol{margin:0 0 24px 0;padding-left:0}
+.article-body ul li,.article-body ol li{font-size:.9375rem;color:var(--slate-700);line-height:2;padding-left:24px;position:relative;margin-bottom:8px}
+.article-body ul li::before{content:'';position:absolute;left:6px;top:13px;width:6px;height:6px;border-radius:50%;background:var(--indigo-500)}
+.article-body ol{counter-reset:ol-counter}
+.article-body ol li{counter-increment:ol-counter}
+.article-body ol li::before{content:counter(ol-counter)'.';position:absolute;left:0;font-weight:700;color:var(--indigo-600);font-size:.875rem}
+.article-body strong{font-weight:700;color:var(--slate-900)}
+.article-body blockquote{border-left:4px solid var(--indigo-500);background:var(--indigo-50);padding:20px 24px;margin:24px 0;border-radius:0 var(--radius) var(--radius) 0}
+.article-body blockquote p{color:var(--indigo-900);margin-bottom:0;font-style:italic}
+.article-body code{font-family:'JetBrains Mono',monospace;background:var(--gray-100);padding:2px 8px;border-radius:4px;font-size:.85em;color:var(--indigo-700)}
+.article-body pre{background:var(--slate-900);color:#e2e8f0;padding:24px;border-radius:var(--radius);margin:24px 0;overflow-x:auto;line-height:1.7}
+.article-body pre code{background:none;padding:0;color:inherit;font-size:.8125rem}
+.back-link{display:inline-flex;align-items:center;gap:8px;font-size:.875rem;font-weight:600;color:var(--indigo-600);margin-bottom:32px;transition:all .2s}
+.back-link:hover{color:var(--indigo-700);gap:10px}
+.intro-box{background:linear-gradient(135deg,var(--indigo-50),var(--purple-50));border:1px solid var(--indigo-100);border-radius:var(--radius-lg);padding:32px;margin:32px 0}
+.intro-box p{font-size:.9375rem;color:var(--slate-700);line-height:2;margin-bottom:12px}
+.intro-box p:last-child{margin-bottom:0}
+.arch-diagram{background:var(--slate-900);border-radius:var(--radius-lg);padding:32px;margin:32px 0;color:var(--white)}
+.arch-diagram h3{font-size:1.0625rem;font-weight:700;color:var(--white);margin-bottom:20px;text-align:center}
+.arch-steps{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:8px}
+.arch-step{background:rgba(99,102,241,.15);border:1px solid rgba(99,102,241,.3);padding:12px 20px;border-radius:var(--radius-sm);font-size:.8125rem;font-weight:600;color:var(--indigo-100);text-align:center;min-width:100px}
+.arch-step .arch-sub{display:block;font-size:.6875rem;font-weight:400;color:rgba(255,255,255,.4);margin-top:4px}
+.arch-step.highlight{background:rgba(99,102,241,.3);border-color:rgba(99,102,241,.6)}
+.arch-step.line-green{background:rgba(6,198,148,.15);border-color:rgba(6,198,148,.4)}
+.arch-arrow{color:var(--indigo-500);font-size:1.25rem;font-weight:700}
+.arch-fork{display:flex;flex-direction:column;gap:8px}
+@media(max-width:640px){.arch-steps{flex-direction:column}.arch-arrow{transform:rotate(90deg)}}
+.comparison-table,.endpoints-table{width:100%;border-collapse:collapse;margin:24px 0;font-size:.875rem}
+.endpoints-table{font-size:.8125rem}
+.comparison-table th,.comparison-table td,.endpoints-table th,.endpoints-table td{padding:10px 14px;text-align:left;border-bottom:1px solid var(--gray-200)}
+.comparison-table th{background:var(--gray-50);font-weight:600;color:var(--slate-800);font-size:.8125rem;text-transform:uppercase;letter-spacing:.03em}
+.comparison-table td,.endpoints-table td{color:var(--slate-700)}
+.comparison-table tr:hover td,.endpoints-table tr:hover td{background:var(--gray-50)}
+.comparison-table .before{color:var(--gray-400);text-decoration:line-through}
+.comparison-table .after{color:var(--emerald-600);font-weight:600}
+.endpoints-table th{background:var(--slate-900);color:var(--indigo-100);font-weight:600;font-size:.75rem;text-transform:uppercase;letter-spacing:.05em}
+.method{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:.75rem;padding:3px 8px;border-radius:4px;display:inline-block}
+.method-get{background:var(--emerald-50);color:var(--emerald-600)}
+.method-post{background:var(--amber-50);color:var(--amber-600)}
+.method-patch{background:var(--sky-50);color:var(--sky-500)}
+.auth-badge{font-size:.6875rem;background:var(--rose-50);color:var(--rose-600);padding:2px 8px;border-radius:100px;font-weight:600}
+.public-badge{font-size:.6875rem;background:var(--emerald-50);color:var(--emerald-600);padding:2px 8px;border-radius:100px;font-weight:600}
+.file-card{background:var(--white);border:1px solid var(--gray-200);border-radius:var(--radius-lg);padding:28px 32px;margin:24px 0;position:relative;transition:all .3s ease}
+.file-card:hover{box-shadow:var(--shadow-md);border-color:var(--gray-300)}
+.file-card::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;border-radius:var(--radius-lg) var(--radius-lg) 0 0}
+.file-line::before{background:linear-gradient(90deg,#06d6a0,#00b894)}
+.file-alert::before{background:linear-gradient(90deg,var(--rose-500),var(--amber-500))}
+.file-dash::before{background:linear-gradient(90deg,var(--sky-500),var(--indigo-500))}
+.file-card-label{font-family:'JetBrains Mono',monospace;font-size:.75rem;font-weight:700;letter-spacing:.03em;padding:4px 12px;border-radius:100px;display:inline-block;margin-bottom:16px}
+.file-line .file-card-label{background:#ecfdf5;color:#059669}
+.file-alert .file-card-label{background:var(--rose-50);color:var(--rose-600)}
+.file-dash .file-card-label{background:var(--sky-50);color:var(--sky-500)}
+.file-card h3{font-size:1.125rem;font-weight:700;color:var(--slate-900);margin:0 0 12px 0}
+.file-card p,.file-card ul li{font-size:.9375rem;color:var(--slate-700);line-height:2}
+.file-card p{margin-bottom:12px}.file-card ul{margin:0 0 12px 0;padding-left:0}
+.file-card ul li{padding-left:24px;position:relative;margin-bottom:4px}
+.file-card ul li::before{content:'';position:absolute;left:6px;top:13px;width:5px;height:5px;border-radius:50%}
+.file-line ul li::before{background:#06d6a0}
+.file-alert ul li::before{background:var(--rose-500)}
+.file-dash ul li::before{background:var(--sky-500)}
+.line-mockup{background:#7b8e9b;border-radius:var(--radius-lg);padding:24px;margin:32px 0;max-width:380px;margin-left:auto;margin-right:auto}
+.line-mockup-header{text-align:center;font-size:.75rem;font-weight:600;color:rgba(255,255,255,.7);margin-bottom:16px;letter-spacing:.03em}
+.line-bubble{background:var(--white);border-radius:18px;padding:0;margin-bottom:12px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.1)}
+.line-bubble-header{color:var(--white);padding:12px 16px;font-size:.8125rem;font-weight:700;display:flex;align-items:center;gap:8px}
+.line-bubble-body{padding:14px 16px;font-size:.8125rem;color:var(--slate-700);line-height:1.8}
+.line-bubble-body .line-label{font-size:.6875rem;color:var(--gray-500);display:block;margin-bottom:2px}
+.line-bubble-body .line-value{font-weight:600;color:var(--slate-900);margin-bottom:8px;display:block}
+.line-bubble-footer{border-top:1px solid var(--gray-200);padding:10px 16px;text-align:center}
+.line-bubble-footer a{font-size:.8125rem;color:var(--indigo-600);font-weight:600}
+.alert-types{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin:32px 0}
+.alert-type{border-radius:var(--radius);padding:24px;text-align:center;border:1px solid var(--gray-200)}
+.alert-type-icon{font-size:2rem;margin-bottom:8px}
+.alert-type h4{font-size:1rem;font-weight:700;color:var(--slate-900);margin-bottom:4px}
+.alert-type .alert-type-en{font-size:.75rem;color:var(--gray-400);font-family:'JetBrains Mono',monospace;margin-bottom:8px}
+.alert-type p{font-size:.8125rem;color:var(--slate-600);line-height:1.7;margin-bottom:0}
+.alert-type.intrusion{background:var(--rose-50);border-color:rgba(244,63,94,.2)}
+.alert-type.crowding{background:var(--amber-50);border-color:rgba(245,158,11,.2)}
+.alert-type.unusual{background:var(--purple-50);border-color:rgba(147,51,234,.2)}
+@media(max-width:640px){.alert-types{grid-template-columns:1fr}}
+.decision-box{background:linear-gradient(135deg,var(--sky-50),var(--indigo-50));border:1px solid rgba(14,165,233,.2);border-radius:var(--radius-lg);padding:28px 32px;margin:32px 0}
+.decision-box h3{font-size:1.0625rem;font-weight:700;color:var(--slate-800);margin-bottom:16px}
+.decision-box ul li{padding-left:24px;position:relative;margin-bottom:10px;font-size:.9375rem;color:var(--slate-700);line-height:1.9}
+.decision-box ul li::before{content:'';position:absolute;left:6px;top:12px;width:5px;height:5px;border-radius:50%;background:var(--sky-500)}
+.result-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin:32px 0}
+.result-item{background:var(--gray-50);border:1px solid var(--gray-200);border-radius:var(--radius);padding:20px;text-align:center}
+.result-value{font-family:'Inter',sans-serif;font-size:1.75rem;font-weight:700;line-height:1.2;color:var(--indigo-600)}
+.result-label{font-size:.75rem;color:var(--gray-500);margin-top:4px;font-weight:500}
+@media(max-width:640px){.result-grid{grid-template-columns:repeat(2,1fr)}}
+.roadmap-list{margin:24px 0}
+.roadmap-item{display:flex;align-items:flex-start;gap:16px;padding:16px 20px;border-left:3px solid var(--gray-200);margin-bottom:0;transition:all .2s}
+.roadmap-item:hover{border-left-color:var(--indigo-500);background:var(--gray-50);border-radius:0 var(--radius-sm) var(--radius-sm) 0}
+.roadmap-item.done{border-left-color:var(--emerald-500);background:var(--emerald-50)}
+.roadmap-item.active{border-left-color:var(--indigo-500);background:var(--indigo-50)}
+.roadmap-cycle{font-family:'Inter',sans-serif;font-size:.75rem;font-weight:700;color:var(--indigo-600);background:var(--indigo-50);padding:4px 10px;border-radius:100px;white-space:nowrap;min-width:72px;text-align:center;margin-top:2px}
+.roadmap-item.done .roadmap-cycle{background:var(--emerald-600);color:var(--white)}
+.roadmap-item.active .roadmap-cycle{background:var(--indigo-600);color:var(--white)}
+.roadmap-content{flex:1}
+.roadmap-content strong{font-size:.9375rem;color:var(--slate-900);display:block;margin-bottom:2px}
+.roadmap-content span{font-size:.8125rem;color:var(--gray-500)}
+.article-cta{background:linear-gradient(135deg,var(--indigo-50),var(--purple-50));border:2px solid var(--indigo-100);border-radius:var(--radius-xl);padding:48px 32px;margin:56px 0 0;text-align:center}
+.article-cta h3{font-size:1.375rem;font-weight:700;color:var(--slate-900);margin-bottom:12px}
+.article-cta p{font-size:.9375rem;color:var(--slate-600);line-height:2;margin-bottom:24px}
+.article-cta .cta-buttons{display:flex;align-items:center;justify-content:center;gap:16px;flex-wrap:wrap}
+.footer{background:var(--slate-900);color:rgba(255,255,255,.5);padding:64px 0 32px;border-top:1px solid rgba(255,255,255,.06)}
+.footer-grid{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:40px;margin-bottom:48px}
+.footer-brand{font-size:1.125rem;font-weight:700;color:var(--white);margin-bottom:8px}
+.footer-brand .logo-ai{color:var(--indigo-500)}
+.footer-tagline{font-size:.8125rem;line-height:1.8;margin-bottom:20px}
+.footer-email{font-size:.8125rem;color:var(--indigo-500);transition:color .2s}
+.footer-email:hover{color:var(--indigo-400)}
+.footer h4{font-size:.75rem;font-weight:600;color:rgba(255,255,255,.7);margin-bottom:16px;letter-spacing:.05em;text-transform:uppercase}
+.footer ul li{margin-bottom:8px}
+.footer ul a{font-size:.8125rem;transition:color .2s}
+.footer ul a:hover{color:var(--white)}
+.footer-bottom{border-top:1px solid rgba(255,255,255,.06);padding-top:24px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;font-size:.75rem}
+@media(max-width:768px){.footer-grid{grid-template-columns:1fr 1fr;gap:32px}.file-card{padding:20px 24px}.comparison-table,.endpoints-table{font-size:.75rem}.comparison-table th,.comparison-table td,.endpoints-table th,.endpoints-table td{padding:8px 10px}}
+@media(max-width:480px){.footer-grid{grid-template-columns:1fr}}
+.reveal{opacity:0;transform:translateY(20px);transition:opacity .5s ease,transform .5s ease}
+.reveal.visible{opacity:1;transform:none}
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<header class="header" id="header">
+  <div class="container header-inner">
+    <a href="/" class="logo">ミセバン<span class="logo-ai">AI</span></a>
+    <nav class="nav">
+      <a href="/#setup">導入方法</a>
+      <a href="/#features">機能</a>
+      <a href="/#pricing">料金</a>
+      <a href="/cameras.html">対応カメラ</a>
+      <a href="/blog/">ブログ</a>
+      <a href="/#cta" class="btn btn-primary btn-sm nav-cta">無料で始める</a>
+    </nav>
+    <button class="mobile-toggle" id="mobileToggle" aria-label="メニューを開く"><span></span><span></span><span></span></button>
+  </div>
+</header>
+
+<!-- Mobile Menu -->
+<div class="mobile-menu" id="mobileMenu">
+  <button class="mobile-close" id="mobileClose" aria-label="メニューを閉じる">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+  </button>
+  <a href="/#setup">導入方法</a><a href="/#features">機能</a><a href="/#pricing">料金</a>
+  <a href="/cameras.html">対応カメラ</a><a href="/blog/">ブログ</a>
+  <a href="/#cta" class="btn btn-primary">無料で始める</a>
+</div>
+
+<!-- Article Hero -->
+<section class="article-hero">
+  <div class="container">
+    <div class="article-hero-content">
+      <div class="article-hero-badge">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+        Sprint Cycle 3
+      </div>
+      <h1>LINE通知Bot × リアルタイムアラートで<br>「見守り」が動き出す</h1>
+      <div class="article-hero-meta">
+        <time datetime="2026-02-23">2026.02.23</time>
+        <span>|</span>
+        <span>ミセバンAI チーム</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Article Body -->
+<article class="article-body">
+
+<a href="/blog/" class="back-link">
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+  ブログ一覧へ戻る
+</a>
+
+<div class="intro-box">
+  <p>Cycle 2 で API &rarr; DB のデータパイプラインが開通した。カメラが捉えた映像はAIで推論され、PostgreSQL に永続化される。</p>
+  <p>しかし、それだけでは「見守り」にならない。<strong>異常を検知したら、即座にオーナーに伝える</strong>。その「出口」が今回の Sprint Cycle 3 だ。</p>
+  <p>LINE Messaging API によるプッシュ通知、Supabase Realtime によるダッシュボードのライブ更新、アラート管理の5つの新エンドポイント。AI が「見ている」だけでなく「知らせる」存在になった。</p>
+</div>
+
+
+<h2>1. アーキテクチャ -- 検知から通知までのフルパイプライン</h2>
+
+<p>Cycle 3 の核心は、AI推論の結果を<strong>アラートとして評価し、複数の出口に同時配信する</strong>パイプラインだ。</p>
+
+<div class="arch-diagram reveal">
+  <h3>Cycle 3 アラートパイプライン</h3>
+  <div class="arch-steps">
+    <div class="arch-step">Camera<span class="arch-sub">RTSP / フレーム送信</span></div>
+    <span class="arch-arrow">&rarr;</span>
+    <div class="arch-step highlight">AI Inference<span class="arch-sub">人物検出 / 行動分析</span></div>
+    <span class="arch-arrow">&rarr;</span>
+    <div class="arch-step highlight">Alert Evaluation<span class="arch-sub">閾値判定 / ルール評価</span></div>
+    <span class="arch-arrow">&rarr;</span>
+    <div class="arch-step">Supabase DB<span class="arch-sub">alerts テーブル</span></div>
+    <span class="arch-arrow">&rarr;</span>
+    <div class="arch-fork">
+      <div class="arch-step line-green">LINE Push<span class="arch-sub">Messaging API</span></div>
+      <div class="arch-step">Dashboard<span class="arch-sub">Realtime subscription</span></div>
+    </div>
+  </div>
+</div>
+
+<p>ポイントは<strong>Alert Evaluation</strong>レイヤーの挿入だ。AI推論結果をそのまま通知するのではなく、閾値・ルールで評価してから永続化する。ノイズを排除し、本当に対応が必要なイベントだけがオーナーに届く。</p>
+
+
+<h2>2. アラートの3つの型</h2>
+
+<div class="alert-types reveal">
+  <div class="alert-type intrusion">
+    <div class="alert-type-icon">&#x1F6A8;</div>
+    <h4>侵入検知</h4>
+    <div class="alert-type-en">intrusion</div>
+    <p>営業時間外に人物を検出。深夜の不法侵入、閉店後の不審者を即座に通知。最も緊急度が高い。</p>
+  </div>
+  <div class="alert-type crowding">
+    <div class="alert-type-icon">&#x1F465;</div>
+    <h4>混雑検知</h4>
+    <div class="alert-type-en">crowding</div>
+    <p>設定した人数閾値を超過。レジ待ち列の増加、イベント時の密集を検知して対応を促す。</p>
+  </div>
+  <div class="alert-type unusual">
+    <div class="alert-type-icon">&#x26A0;</div>
+    <h4>異常検知</h4>
+    <div class="alert-type-en">unusual_activity</div>
+    <p>通常パターンから外れた行動を検知。長時間の滞留、特定エリアへの不正アクセスなど。</p>
+  </div>
+</div>
+
+
+<h2>3. 実装の詳細</h2>
+
+<div class="file-card file-line reveal">
+  <span class="file-card-label">crates/api/src/line.rs</span>
+  <h3>LINE Messaging API クライアント</h3>
+  <p>LINE公式アカウントからユーザーにプッシュ通知を送る HTTP クライアント。チャネルトークン設定時のみ初期化。</p>
+  <ul>
+    <li><code>LineClient::new()</code> -- チャネルトークンを受け取り reqwest::Client をラップ</li>
+    <li><code>push_message()</code> -- 任意テキストをプッシュ送信</li>
+    <li><code>push_alert_message()</code> -- アラート種別に応じたリッチメッセージを構築して送信</li>
+    <li>Optional 初期化 -- <code>LINE_CHANNEL_TOKEN</code> 未設定時は <code>None</code></li>
+  </ul>
+</div>
+
+<pre><code>pub struct LineClient {
+    http: reqwest::Client,
+    channel_token: String,
+}
+
+impl LineClient {
+    pub async fn push_alert_message(
+        &amp;self, user_id: &amp;str, alert: &amp;AlertPayload
+    ) -&gt; Result&lt;(), LineError&gt; {
+        let (label, _color) = match alert.alert_type.as_str() {
+            "intrusion"        =&gt; ("侵入検知", "#e74c3c"),
+            "crowding"         =&gt; ("混雑検知", "#d97706"),
+            "unusual_activity" =&gt; ("異常検知", "#9333ea"),
+            _                  =&gt; ("アラート", "#4f46e5"),
+        };
+        let text = format!(
+            "[{}] {}\n場所: {}\n時刻: {}",
+            label, alert.message, alert.camera_name, alert.detected_at
+        );
+        self.push_message(user_id, &amp;text).await
+    }
+}</code></pre>
+
+
+<div class="file-card file-alert reveal">
+  <span class="file-card-label">crates/api/src/alerts.rs</span>
+  <h3>アラート評価・永続化・クエリ</h3>
+  <p>AI推論結果からアラートを評価し、DBに永続化し、ダッシュボードから参照するためのクエリ関数群。</p>
+  <ul>
+    <li><code>AlertRow</code> / <code>AlertPayload</code> -- DB行とAPI入出力の型定義</li>
+    <li><code>evaluate_alert()</code> -- 推論結果 + 店舗設定 &rarr; アラート生成判定 (純粋関数)</li>
+    <li><code>insert_alert()</code> -- alerts テーブルへの INSERT</li>
+    <li><code>get_alerts()</code> / <code>get_unread_count()</code> -- クエリ関数</li>
+    <li><code>mark_as_read()</code> / <code>mark_all_as_read()</code> -- 既読フラグ更新</li>
+  </ul>
+</div>
+
+<pre><code>pub fn evaluate_alert(
+    inference: &amp;InferenceResult,
+    config: &amp;StoreConfig,
+) -&gt; Option&lt;AlertPayload&gt; {
+    // 営業時間外 + 人物検出 = 侵入検知
+    if !config.is_open_now() &amp;&amp; inference.people_count &gt; 0 {
+        return Some(AlertPayload {
+            alert_type: "intrusion".into(),
+            severity: "critical".into(),
+            message: format!("営業時間外に{}名を検出", inference.people_count),
+            ..
+        });
+    }
+    // 人数が閾値超過 = 混雑検知
+    if inference.people_count &gt; config.crowding_threshold {
+        return Some(AlertPayload {
+            alert_type: "crowding".into(), severity: "warning".into(),
+            message: format!("{}名検出 (閾値: {}名)",
+                inference.people_count, config.crowding_threshold), ..
+        });
+    }
+    // 異常スコア超過 = 異常検知
+    if inference.anomaly_score &gt; config.anomaly_threshold {
+        return Some(AlertPayload {
+            alert_type: "unusual_activity".into(), severity: "warning".into(),
+            message: "通常と異なる行動パターンを検出".into(), ..
+        });
+    }
+    None
+}</code></pre>
+
+<p><code>evaluate_alert</code> は純粋関数。副作用を持たず、推論結果と店舗設定だけで判定する。テスト容易性とルール拡張性を両立する設計だ。</p>
+
+
+<div class="file-card file-dash reveal">
+  <span class="file-card-label">Dashboard (web/dashboard)</span>
+  <h3>ダッシュボード -- リアルタイムアラート + LINE連携</h3>
+  <ul>
+    <li><strong>Supabase クエリ</strong> -- alerts テーブルから実データ取得。デモモードではフォールバック</li>
+    <li><strong>Realtime subscription</strong> -- <code>postgres_changes</code> で INSERT を監視</li>
+    <li><strong>未読バッジ + トースト</strong> -- 新規アラートをリアルタイム表示</li>
+    <li><strong>LINE連携モーダル</strong> -- 友だち追加QRコード + OAuth認証コードフロー</li>
+  </ul>
+</div>
+
+<pre><code>// Supabase Realtime -- アラートのライブ購読
+const channel = supabase
+  .channel('alerts-realtime')
+  .on('postgres_changes',
+    { event: 'INSERT', schema: 'public', table: 'alerts',
+      filter: `store_id=eq.${storeId}` },
+    (payload) =&gt; {
+      alerts.value.unshift(payload.new);
+      unreadCount.value += 1;
+      showToast({ type: payload.new.alert_type, message: payload.new.message });
+    }
+  ).subscribe();</code></pre>
+
+
+<h2>4. LINE通知メッセージの例</h2>
+
+<div class="line-mockup reveal">
+  <div class="line-mockup-header">LINE -- ミセバンAI 公式アカウント</div>
+  <div class="line-bubble">
+    <div class="line-bubble-header" style="background:#e74c3c">&#x1F6A8; 侵入検知アラート</div>
+    <div class="line-bubble-body">
+      <span class="line-label">店舗</span><span class="line-value">サンプル珈琲店 渋谷店</span>
+      <span class="line-label">カメラ</span><span class="line-value">裏口カメラ #03</span>
+      <span class="line-label">検知内容</span><span class="line-value">営業時間外に2名を検出しました</span>
+      <span class="line-label">時刻</span><span class="line-value">2026-02-23 02:34:17 JST</span>
+    </div>
+    <div class="line-bubble-footer"><a href="#">ダッシュボードで確認 &rarr;</a></div>
+  </div>
+  <div class="line-bubble">
+    <div class="line-bubble-header" style="background:#d97706">&#x1F465; 混雑検知アラート</div>
+    <div class="line-bubble-body">
+      <span class="line-label">検知内容</span><span class="line-value">18名を検出 (閾値: 15名)</span>
+      <span class="line-label">カメラ</span><span class="line-value">レジ前カメラ #01</span>
+      <span class="line-label">時刻</span><span class="line-value">2026-02-23 12:15:42 JST</span>
+    </div>
+  </div>
+  <div class="line-bubble">
+    <div class="line-bubble-header" style="background:#9333ea">&#x26A0; 異常検知アラート</div>
+    <div class="line-bubble-body">
+      <span class="line-label">検知内容</span><span class="line-value">通常と異なる行動パターンを検出</span>
+      <span class="line-label">カメラ</span><span class="line-value">倉庫カメラ #05</span>
+      <span class="line-label">時刻</span><span class="line-value">2026-02-23 19:48:03 JST</span>
+    </div>
+  </div>
+</div>
+
+
+<h2>5. Before / After -- デモからライブへ</h2>
+
+<table class="comparison-table reveal">
+  <thead><tr><th>項目</th><th>Cycle 2 (Before)</th><th>Cycle 3 (After)</th></tr></thead>
+  <tbody>
+    <tr><td>アラート表示</td><td class="before">ハードコードされたデモデータ</td><td class="after">Supabase alerts テーブルからリアルクエリ</td></tr>
+    <tr><td>リアルタイム更新</td><td class="before">なし (ページリロード必要)</td><td class="after">Supabase Realtime (postgres_changes)</td></tr>
+    <tr><td>通知手段</td><td class="before">なし</td><td class="after">LINE プッシュ通知 + ブラウザトースト</td></tr>
+    <tr><td>アラート管理</td><td class="before">なし</td><td class="after">既読/未読管理、未読バッジ、一括既読</td></tr>
+    <tr><td>AI &rarr; 通知</td><td class="before">推論結果はDBに保存されるだけ</td><td class="after">推論 &rarr; 評価 &rarr; 永続化 &rarr; LINE通知</td></tr>
+  </tbody>
+</table>
+
+<p>最大の変化は<strong>「受動的な監視」から「能動的な通知」への転換</strong>だ。日本の小売店オーナーの97%がLINEを利用している。ダッシュボードを開かなくても、異常はLINEで届く。</p>
+
+
+<h2>6. 新規APIエンドポイント</h2>
+
+<table class="endpoints-table reveal">
+  <thead><tr><th>Method</th><th>Path</th><th>説明</th><th>認証</th></tr></thead>
+  <tbody>
+    <tr><td><span class="method method-get">GET</span></td><td><code>/api/v1/stores/me/alerts</code></td><td>自店舗のアラート一覧 (新しい順)</td><td><span class="auth-badge">JWT</span></td></tr>
+    <tr><td><span class="method method-get">GET</span></td><td><code>/api/v1/stores/me/alerts/unread</code></td><td>未読アラート数</td><td><span class="auth-badge">JWT</span></td></tr>
+    <tr><td><span class="method method-patch">PATCH</span></td><td><code>/api/v1/alerts/:alert_id/read</code></td><td>指定アラートを既読化 (所有権検証)</td><td><span class="auth-badge">JWT</span></td></tr>
+    <tr><td><span class="method method-post">POST</span></td><td><code>/api/v1/stores/me/alerts/read-all</code></td><td>全アラート一括既読</td><td><span class="auth-badge">JWT</span></td></tr>
+    <tr><td><span class="method method-post">POST</span></td><td><code>/api/v1/webhooks/line</code></td><td>LINE Webhook受信 (署名検証)</td><td><span class="public-badge">Public</span></td></tr>
+  </tbody>
+</table>
+
+<p>Cycle 2 の7エンドポイントと合わせ、合計<strong>12エンドポイント</strong>。<code>PATCH /alerts/:alert_id/read</code> は JWT の <code>sub</code> で所有権を検証し、他店舗のアラートには403を返す。</p>
+
+
+<h2>7. フレーム受信フローの拡張</h2>
+
+<pre><code>/// POST /api/v1/frames -- Cycle 3 拡張版
+async fn receive_frame(
+    State(state): State&lt;AppState&gt;,
+    AuthUser(user_id): AuthUser,
+    Json(payload): Json&lt;FramePayload&gt;,
+) -&gt; Result&lt;Json&lt;FrameResponse&gt;, ApiError&gt; {
+    let inference = run_inference(&amp;payload).await?;           // 1. AI推論
+    insert_visitor_count(&amp;state.pool, ..).await.ok();         // 2. DB永続化
+
+    // --- Cycle 3 で追加 ---
+    let config = get_store_config(&amp;state.pool, user_id).await?;
+    if let Some(alert) = evaluate_alert(&amp;inference, &amp;config) {
+        insert_alert(&amp;state.pool, &amp;alert).await.ok();        // 3. アラート永続化
+        if let Some(ref line) = state.line_client {            // 4. LINE通知
+            if let Some(uid) = config.line_user_id {
+                line.push_alert_message(&amp;uid, &amp;alert).await.ok();
+            }
+        }
+    }
+    Ok(Json(FrameResponse { inference, alert: alert.is_some() }))
+}</code></pre>
+
+<p><code>.ok()</code> で失敗を握りつぶしている点に注目。<strong>通知は best-effort、推論は must-succeed</strong>。LINE障害でもカメラ分析は止まらない。</p>
+
+
+<h2>8. 技術的判断</h2>
+
+<div class="decision-box reveal">
+  <h3>なぜこの設計にしたか</h3>
+  <ul>
+    <li><strong>LINE Messaging API</strong> -- 日本の小売店オーナーのリーチに最適。Slack や Email では開封率が低い</li>
+    <li><strong>Optional LineClient</strong> -- <code>Option&lt;LineClient&gt;</code> で保持。開発環境で LINE なしでもテスト可能</li>
+    <li><strong>Supabase Realtime</strong> -- <code>postgres_changes</code> で INSERT をそのまま配信。自前 WebSocket サーバー不要</li>
+    <li><strong>evaluate_alert() を純粋関数に</strong> -- 副作用なしで単体テスト容易。ルール追加時もこの関数だけ修正</li>
+    <li><strong>デモデータフォールバック</strong> -- Supabase 未接続でもダッシュボードが動作。DX を犠牲にしない</li>
+  </ul>
+</div>
+
+
+<h2>9. 成果と数字</h2>
+
+<div class="result-grid reveal">
+  <div class="result-item">
+    <div class="result-value nums">5</div>
+    <div class="result-label">新規エンドポイント</div>
+  </div>
+  <div class="result-item">
+    <div class="result-value nums">~650<span style="font-size:.875rem;font-weight:500">行</span></div>
+    <div class="result-label">追加コード</div>
+  </div>
+  <div class="result-item">
+    <div class="result-value nums">8</div>
+    <div class="result-label">ファイル作成/更新</div>
+  </div>
+  <div class="result-item">
+    <div class="result-value nums">~1.5<span style="font-size:.875rem;font-weight:500">時間</span></div>
+    <div class="result-label">実装時間</div>
+  </div>
+</div>
+
+<h3>作成・更新したファイル</h3>
+<ol>
+  <li><code>crates/api/src/line.rs</code> -- LINE Messaging API クライアント (89行)</li>
+  <li><code>crates/api/src/alerts.rs</code> -- アラート評価・クエリ関数群 (156行)</li>
+  <li><code>crates/api/src/main.rs</code> -- 5エンドポイント追加、LINE初期化 (+120行)</li>
+  <li><code>crates/api/Cargo.toml</code> -- reqwest 依存追加</li>
+  <li><code>web/dashboard/alerts.js</code> -- Supabase Realtime + アラートUI (142行)</li>
+  <li><code>web/dashboard/line-link.js</code> -- LINE連携モーダル (68行)</li>
+  <li><code>web/dashboard/index.html</code> -- 未読バッジ・トースト追加</li>
+  <li><code>supabase/migrations/003_alerts.sql</code> -- alerts テーブル + RLS ポリシー (45行)</li>
+</ol>
+
+<blockquote>
+  <p>Cycle 2 でデータパイプラインを通したからこそ、Cycle 3 は「出口を増やすだけ」で済んだ。基盤の設計が正しかった証拠だ。</p>
+</blockquote>
+
+
+<h2>10. 次のサイクルで何をするか</h2>
+
+<div class="roadmap-list reveal">
+  <div class="roadmap-item done">
+    <span class="roadmap-cycle">Cycle 1</span>
+    <div class="roadmap-content"><strong>ダッシュボード・DB・認証</strong><span>完了 -- UI、6テーブル、Supabase Auth</span></div>
+  </div>
+  <div class="roadmap-item done">
+    <span class="roadmap-cycle">Cycle 2</span>
+    <div class="roadmap-content"><strong>Rust API × Supabase (sqlx + JWT)</strong><span>完了 -- 7エンドポイント、データパイプライン</span></div>
+  </div>
+  <div class="roadmap-item done">
+    <span class="roadmap-cycle">Cycle 3</span>
+    <div class="roadmap-content"><strong>LINE通知Bot + リアルタイムアラート</strong><span>完了 -- 本記事の内容</span></div>
+  </div>
+  <div class="roadmap-item active">
+    <span class="roadmap-cycle">Cycle 4</span>
+    <div class="roadmap-content"><strong>Edge推論 or Stripe決済</strong><span>YOLOv8n on-device でクラウド依存排除、または Stripe で課金フロー構築</span></div>
+  </div>
+  <div class="roadmap-item">
+    <span class="roadmap-cycle">Cycle 5</span>
+    <div class="roadmap-content"><strong>クローズドベータテスト</strong><span>実店舗での動作検証。実データによるチューニング</span></div>
+  </div>
+</div>
+
+<p>Cycle 4 は2つの候補がある。<strong>Edge推論 (YOLOv8n on-device)</strong> はクラウドへのフレーム送信を不要にし、レイテンシとコストを劇的に削減する。<strong>Stripe決済統合</strong> はフリー / スターター / プロの課金フローを構築し、事業としての収益化を可能にする。どちらを先にするかは、ベータ候補の店舗オーナーからのフィードバック次第だ。</p>
+
+<blockquote>
+  <p>カメラが「見て」、AIが「判断して」、LINEが「知らせる」。3つのサイクルで、ミセバンAIは本当の意味で「見守り」を始めた。</p>
+</blockquote>
+
+
+<!-- CTA -->
+<div class="article-cta reveal">
+  <h3>AIが見守り、LINEが知らせる。次世代の店舗セキュリティを体験しませんか?</h3>
+  <p>ミセバンAIは、スプリントサイクルで高速に進化中。<br>既存の防犯カメラがAI店長に変わる、小規模店舗のための次世代AI分析。</p>
+  <div class="cta-buttons">
+    <a href="/blog/" class="btn btn-ghost btn-sm">ブログ一覧を見る</a>
+    <a href="/#cta" class="btn btn-primary btn-sm">ミセバンAIを無料で試す</a>
+  </div>
+</div>
+
+</article>
+
+<!-- Footer -->
+<footer class="footer">
+  <div class="container">
+    <div class="footer-grid">
+      <div>
+        <div class="footer-brand">ミセバン<span class="logo-ai">AI</span></div>
+        <p class="footer-tagline">既存カメラが、AI店長に変わる。<br>小規模店舗のための次世代AI分析。</p>
+        <a href="mailto:info@miseban.ai" class="footer-email">info@miseban.ai</a>
+      </div>
+      <div>
+        <h4>サービス</h4>
+        <ul>
+          <li><a href="/#features">機能</a></li>
+          <li><a href="/#pricing">料金</a></li>
+          <li><a href="/cameras.html">対応カメラ</a></li>
+          <li><a href="/#faq">FAQ</a></li>
+          <li><a href="/#partner">パートナー募集</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>法的情報</h4>
+        <ul>
+          <li><a href="#">利用規約</a></li>
+          <li><a href="#">プライバシーポリシー</a></li>
+          <li><a href="#">特定商取引法に基づく表記</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>お問い合わせ</h4>
+        <ul>
+          <li><a href="mailto:info@miseban.ai">一般のお問い合わせ</a></li>
+          <li><a href="mailto:partner@miseban.ai">パートナー窓口</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>&copy; 2026 MisebanAI. All rights reserved.</p>
+    </div>
+  </div>
+</footer>
+
+<script>
+(function(){
+  var toggle=document.getElementById('mobileToggle'),menu=document.getElementById('mobileMenu'),close=document.getElementById('mobileClose'),links=menu.querySelectorAll('a');
+  function open(){menu.classList.add('open');document.body.style.overflow='hidden'}
+  function shut(){menu.classList.remove('open');document.body.style.overflow=''}
+  toggle.addEventListener('click',open);close.addEventListener('click',shut);
+  for(var i=0;i<links.length;i++) links[i].addEventListener('click',shut);
+})();
+(function(){
+  var els=document.querySelectorAll('.reveal');
+  if(!('IntersectionObserver' in window)){els.forEach(function(el){el.classList.add('visible')});return}
+  var obs=new IntersectionObserver(function(entries){entries.forEach(function(e){if(e.isIntersecting){e.target.classList.add('visible');obs.unobserve(e.target)}})},{threshold:0.1});
+  els.forEach(function(el){obs.observe(el)});
+})();
+</script>
+</body>
+</html>

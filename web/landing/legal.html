@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>特定商取引法に基づく表記｜ミセバンAI</title>
+<meta name="description" content="ミセバンAIの特定商取引法に基づく表記。販売事業者、販売価格、支払い方法等の法定表示事項について。">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://miseban.ai/legal.html">
+
+<!-- Favicon -->
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%234f46e5'/><text x='50%25' y='54%25' dominant-baseline='middle' text-anchor='middle' fill='white' font-size='18' font-weight='bold' font-family='sans-serif'>M</text></svg>">
+
+<!-- Google Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
+
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --white:#ffffff;
+  --gray-50:#f8fafc;
+  --gray-100:#f1f5f9;
+  --gray-200:#e2e8f0;
+  --gray-300:#cbd5e1;
+  --gray-400:#94a3b8;
+  --gray-500:#64748b;
+  --slate-600:#475569;
+  --slate-700:#334155;
+  --slate-800:#1e293b;
+  --slate-900:#0f172a;
+  --indigo-50:#eef2ff;
+  --indigo-100:#e0e7ff;
+  --indigo-500:#6366f1;
+  --indigo-600:#4f46e5;
+  --indigo-700:#4338ca;
+  --indigo-900:#312e81;
+  --indigo-950:#1e1b4b;
+  --radius-sm:8px;
+  --radius:12px;
+  --radius-lg:16px;
+  --shadow-sm:0 1px 3px rgba(0,0,0,.1),0 1px 2px rgba(0,0,0,.06);
+}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+body{font-family:'Noto Sans JP','Inter',system-ui,-apple-system,sans-serif;color:var(--slate-900);background:var(--white);line-height:1.8;overflow-x:hidden;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
+a{text-decoration:none;color:inherit;transition:color .2s}
+.container{max-width:1200px;margin:0 auto;padding:0 24px}
+
+/* Header */
+.header{background:var(--white);border-bottom:1px solid var(--gray-200);position:sticky;top:0;z-index:100}
+.header-inner{display:flex;align-items:center;justify-content:space-between;height:72px}
+.logo{display:flex;align-items:center;gap:2px;font-size:1.25rem;font-weight:700;color:var(--slate-900)}
+.logo-ai{color:var(--indigo-600);font-weight:700}
+.nav{display:flex;align-items:center;gap:24px}
+.nav a{font-size:.875rem;font-weight:400;color:var(--slate-600);transition:color .2s}
+.nav a:hover{color:var(--indigo-600)}
+
+/* Page Header */
+.page-header{background:linear-gradient(165deg,var(--slate-900) 0%,#1a1647 50%,var(--indigo-950) 100%);padding:80px 0 48px;color:var(--white)}
+.page-header h1{font-size:clamp(1.75rem,4vw,2.5rem);font-weight:700;line-height:1.4;margin-bottom:8px}
+.page-header p{font-size:.9375rem;color:rgba(255,255,255,.7)}
+
+/* Content */
+.legal-content{max-width:800px;margin:0 auto;padding:56px 24px 80px}
+.legal-content .effective-date{display:inline-block;background:var(--indigo-50);color:var(--indigo-600);font-size:.875rem;font-weight:600;padding:6px 16px;border-radius:100px;margin-bottom:32px}
+
+/* Disclosure Table */
+.disclosure-table{width:100%;border-collapse:collapse;margin:0 0 24px;font-size:.9375rem}
+.disclosure-table th,.disclosure-table td{padding:20px 24px;border-bottom:1px solid var(--gray-200);text-align:left;vertical-align:top}
+.disclosure-table th{width:200px;font-weight:700;color:var(--slate-800);background:var(--gray-50);white-space:nowrap}
+.disclosure-table td{color:var(--slate-700);line-height:1.9}
+.disclosure-table td ul{margin:8px 0 0 20px;list-style:disc}
+.disclosure-table td ul li{margin-bottom:4px}
+.disclosure-table td .note{font-size:.8125rem;color:var(--gray-500);margin-top:8px}
+
+/* Footer */
+.footer{background:var(--slate-900);color:rgba(255,255,255,.7);padding:48px 0 32px;border-top:1px solid rgba(255,255,255,.06)}
+.footer-inner{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px}
+.footer-brand{font-size:1rem;font-weight:700;color:var(--white)}
+.footer-brand .logo-ai{color:var(--indigo-500)}
+.footer-links{display:flex;gap:24px;flex-wrap:wrap}
+.footer-links a{font-size:.8125rem;color:rgba(255,255,255,.6);transition:color .2s}
+.footer-links a:hover{color:var(--white)}
+.footer-copy{width:100%;text-align:center;font-size:.75rem;color:rgba(255,255,255,.4);margin-top:24px;padding-top:24px;border-top:1px solid rgba(255,255,255,.06)}
+
+@media(max-width:640px){
+  .page-header{padding:64px 0 36px}
+  .legal-content{padding:40px 20px 60px}
+  .disclosure-table th{width:120px;padding:14px 12px;font-size:.8125rem}
+  .disclosure-table td{padding:14px 12px;font-size:.875rem}
+  .footer-inner{flex-direction:column;text-align:center}
+  .footer-links{justify-content:center}
+  .nav{gap:16px}
+}
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="container">
+    <div class="header-inner">
+      <a href="/" class="logo">ミセバン<span class="logo-ai">AI</span></a>
+      <nav class="nav">
+        <a href="/">トップ</a>
+        <a href="/blog/">ブログ</a>
+        <a href="/privacy.html">プライバシー</a>
+        <a href="/terms.html">利用規約</a>
+      </nav>
+    </div>
+  </div>
+</header>
+
+<div class="page-header">
+  <div class="container">
+    <h1>特定商取引法に基づく表記</h1>
+    <p>特定商取引に関する法律第11条に基づく表示</p>
+  </div>
+</div>
+
+<main class="legal-content">
+  <span class="effective-date">最終更新: 2026年2月23日</span>
+
+  <table class="disclosure-table">
+    <tbody>
+      <tr>
+        <th>販売事業者名</th>
+        <td>EnablerHQ (<a href="https://enablerhq.com" style="color:var(--indigo-600)">https://enablerhq.com</a>)</td>
+      </tr>
+      <tr>
+        <th>代表者</th>
+        <td>濱田 裕紀</td>
+      </tr>
+      <tr>
+        <th>所在地</th>
+        <td>
+          東京都
+          <p class="note">詳細な住所は、ご請求いただいた方に遅滞なく開示いたします。</p>
+        </td>
+      </tr>
+      <tr>
+        <th>連絡先</th>
+        <td>
+          メール：<a href="mailto:support@miseban.ai" style="color:var(--indigo-600)">support@miseban.ai</a>
+          <p class="note">電話番号は、ご請求いただいた方に遅滞なく開示いたします。</p>
+        </td>
+      </tr>
+      <tr>
+        <th>販売URL</th>
+        <td><a href="https://miseban.ai" style="color:var(--indigo-600)">https://miseban.ai</a></td>
+      </tr>
+      <tr>
+        <th>販売価格</th>
+        <td>
+          <ul>
+            <li><strong>Free プラン</strong>：0円（税込）</li>
+            <li><strong>Starter プラン</strong>：9,800円/月（税込）</li>
+            <li><strong>Pro プラン</strong>：29,800円/月（税込）</li>
+            <li><strong>Enterprise プラン</strong>：49,800円/月（税込）</li>
+          </ul>
+        </td>
+      </tr>
+      <tr>
+        <th>販売価格以外に必要な費用</th>
+        <td>
+          <ul>
+            <li>インターネット接続料金および通信費（利用者負担）</li>
+            <li>カメラ等のハードウェア費用（既存設備を利用する場合は不要）</li>
+          </ul>
+        </td>
+      </tr>
+      <tr>
+        <th>支払い方法</th>
+        <td>クレジットカード（Stripe, Inc. 経由）<br>対応ブランド：Visa、Mastercard、American Express、JCB</td>
+      </tr>
+      <tr>
+        <th>支払い時期</th>
+        <td>有料プラン登録時に初回決済。以降、毎月登録日と同日に自動課金。</td>
+      </tr>
+      <tr>
+        <th>商品の引渡し時期</th>
+        <td>お申し込み後、即時ご利用いただけます。アカウント登録完了と同時にサービスが有効になります。</td>
+      </tr>
+      <tr>
+        <th>返品・キャンセルについて</th>
+        <td>
+          <ul>
+            <li>サブスクリプション（定期課金）はいつでもキャンセル可能です。</li>
+            <li>キャンセル後も、当該課金期間の終了日までサービスをご利用いただけます。</li>
+            <li>日割り計算による返金は行いません。</li>
+            <li>デジタルサービスの性質上、利用開始後の返金には応じかねます。</li>
+          </ul>
+        </td>
+      </tr>
+      <tr>
+        <th>動作環境</th>
+        <td>
+          以下のモダンブラウザの最新版を推奨します。
+          <ul>
+            <li>Google Chrome</li>
+            <li>Safari</li>
+            <li>Mozilla Firefox</li>
+            <li>Microsoft Edge</li>
+          </ul>
+          <p class="note">Internet Explorer はサポート対象外です。</p>
+        </td>
+      </tr>
+      <tr>
+        <th>特別な販売条件</th>
+        <td>
+          <ul>
+            <li>本サービスの利用には、<a href="/terms.html" style="color:var(--indigo-600)">利用規約</a>への同意が必要です。</li>
+            <li>カメラ映像データの取り扱いについては、<a href="/privacy.html" style="color:var(--indigo-600)">プライバシーポリシー</a>をご確認ください。</li>
+            <li>14日間の無料トライアル期間中にキャンセルした場合、料金は発生しません。</li>
+          </ul>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</main>
+
+<footer class="footer">
+  <div class="container">
+    <div class="footer-inner">
+      <div class="footer-brand">ミセバン<span class="logo-ai">AI</span></div>
+      <div class="footer-links">
+        <a href="/">トップ</a>
+        <a href="/blog/">ブログ</a>
+        <a href="/privacy.html">プライバシーポリシー</a>
+        <a href="/terms.html">利用規約</a>
+        <a href="/legal.html">特定商取引法に基づく表記</a>
+      </div>
+    </div>
+    <div class="footer-copy">運営: <a href="https://enablerhq.com" style="color:var(--indigo-500)">EnablerHQ</a> &middot; &copy; 2026 MisebanAI. All rights reserved.</div>
+  </div>
+</footer>
+
+</body>
+</html>

@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sprint Cycle 7: CSV出力・APIドキュメント・クローズドベータ実用化｜ミセバンAI Blog</title>
+<meta name="description" content="Sprint Cycle 7 でCSV出力API、全18エンドポイントのAPIドキュメント、カスタム404ページを実装。クローズドベータとして実用可能なプロダクトが完成。">
+<meta name="keywords" content="CSV出力,APIドキュメント,クローズドベータ,Data Export,API Reference,Building in Public,ミセバンAI">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://miseban.ai/blog/019-sprint-cycle-7">
+<!-- OGP -->
+<meta property="og:title" content="Sprint Cycle 7: CSV出力・APIドキュメント・クローズドベータ実用化｜ミセバンAI Blog">
+<meta property="og:description" content="Sprint Cycle 7 でCSV出力API、全18エンドポイントのAPIドキュメント、カスタム404ページを実装。クローズドベータとして実用可能なプロダクトが完成。">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://miseban.ai/blog/019-sprint-cycle-7">
+<meta property="og:image" content="https://miseban.ai/ogp.png">
+<meta property="og:site_name" content="ミセバンAI">
+<meta property="og:locale" content="ja_JP">
+<meta property="article:published_time" content="2026-02-23">
+<meta property="article:author" content="ミセバンAI チーム">
+<meta property="article:tag" content="CSV出力">
+<meta property="article:tag" content="APIドキュメント">
+<meta property="article:tag" content="クローズドベータ">
+<meta property="article:tag" content="Building in Public">
+<!-- Twitter Card -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Sprint Cycle 7: CSV出力・APIドキュメント・クローズドベータ実用化">
+<meta name="twitter:description" content="Sprint Cycle 7 でCSV出力API、全18エンドポイントのAPIドキュメント、カスタム404ページを実装。クローズドベータとして実用可能なプロダクトが完成。">
+<meta name="twitter:image" content="https://miseban.ai/ogp.png">
+<!-- Favicon -->
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%234f46e5'/><text x='50%25' y='54%25' dominant-baseline='middle' text-anchor='middle' fill='white' font-size='18' font-weight='bold' font-family='sans-serif'>M</text></svg>">
+<!-- Google Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--white:#fff;--gray-50:#f8fafc;--gray-100:#f1f5f9;--gray-200:#e2e8f0;--gray-300:#cbd5e1;--gray-400:#94a3b8;--gray-500:#64748b;--slate-600:#475569;--slate-700:#334155;--slate-800:#1e293b;--slate-900:#0f172a;--indigo-50:#eef2ff;--indigo-100:#e0e7ff;--indigo-500:#6366f1;--indigo-600:#4f46e5;--indigo-700:#4338ca;--indigo-900:#312e81;--indigo-950:#1e1b4b;--emerald-50:#ecfdf5;--emerald-500:#10b981;--emerald-600:#059669;--amber-50:#fffbeb;--amber-500:#f59e0b;--amber-600:#d97706;--rose-50:#fff1f2;--rose-500:#f43f5e;--rose-600:#e11d48;--sky-50:#f0f9ff;--sky-500:#0ea5e9;--purple-50:#faf5ff;--purple-600:#9333ea;--teal-50:#f0fdfa;--teal-500:#14b8a6;--radius-sm:8px;--radius:12px;--radius-lg:16px;--radius-xl:24px;--shadow-md:0 4px 6px -1px rgba(0,0,0,.1),0 2px 4px -2px rgba(0,0,0,.1)}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+body{font-family:'Noto Sans JP','Inter',system-ui,-apple-system,sans-serif;color:var(--slate-900);background:var(--white);line-height:1.8;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+img{max-width:100%;height:auto;display:block}a{text-decoration:none;color:inherit;transition:color .2s}ul,ol{list-style:none}
+.container{max-width:1200px;margin:0 auto;padding:0 24px}.nums{font-family:'Inter','Noto Sans JP',sans-serif}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;font-family:inherit;font-size:.9375rem;font-weight:600;padding:14px 28px;border-radius:100px;border:none;cursor:pointer;transition:all .2s ease;white-space:nowrap;line-height:1.4}
+.btn-primary{background:var(--indigo-600);color:var(--white);box-shadow:0 1px 2px rgba(79,70,229,.3),0 4px 12px rgba(79,70,229,.2)}.btn-primary:hover{background:var(--indigo-700);transform:translateY(-1px)}.btn-sm{padding:10px 20px;font-size:.875rem}
+.btn-ghost{background:transparent;color:var(--indigo-600);border:2px solid var(--indigo-200);padding:12px 24px}.btn-ghost:hover{background:var(--indigo-50);border-color:var(--indigo-400)}
+.header{position:fixed;top:0;left:0;width:100%;z-index:1000;background:rgba(255,255,255,.92);backdrop-filter:blur(16px) saturate(180%);-webkit-backdrop-filter:blur(16px) saturate(180%);box-shadow:0 1px 3px rgba(0,0,0,.06);border-bottom:1px solid rgba(0,0,0,.04)}
+.header-inner{display:flex;align-items:center;justify-content:space-between;height:72px}.logo{display:flex;align-items:center;gap:2px;font-size:1.25rem;font-weight:700;color:var(--slate-900)}.logo-ai{color:var(--indigo-600);font-weight:700}
+.nav{display:flex;align-items:center;gap:32px}.nav a{font-size:.875rem;font-weight:500;color:var(--slate-600);transition:color .2s}.nav a:hover{color:var(--slate-900)}.nav-cta{margin-left:8px}
+.mobile-toggle{display:none;background:none;border:none;cursor:pointer;padding:8px}.mobile-toggle span{display:block;width:22px;height:2px;background:var(--slate-900);margin:5px 0;border-radius:1px;transition:.3s}
+.mobile-menu{display:none;position:fixed;inset:0;background:var(--white);z-index:999;flex-direction:column;align-items:center;justify-content:center;gap:28px}.mobile-menu.open{display:flex}.mobile-menu a{font-size:1.125rem;color:var(--slate-900);font-weight:500}
+.mobile-close{position:absolute;top:24px;right:24px;background:none;border:none;color:var(--slate-600);font-size:1.5rem;cursor:pointer;width:40px;height:40px;display:flex;align-items:center;justify-content:center;border-radius:50%;transition:background .2s}.mobile-close:hover{background:var(--gray-100)}
+@media(max-width:768px){.nav{display:none}.mobile-toggle{display:block}}
+.article-hero{background:linear-gradient(165deg,var(--slate-900) 0%,#1a1647 50%,var(--indigo-950) 100%);padding:140px 0 72px;color:var(--white);position:relative;overflow:hidden}
+.article-hero::before{content:'';position:absolute;top:0;left:0;right:0;bottom:0;background:radial-gradient(ellipse 80% 50% at 50% -20%,rgba(99,102,241,.15),transparent);pointer-events:none}
+.article-hero-content{position:relative;z-index:1;max-width:800px;margin:0 auto;text-align:center}
+.article-hero-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.1);padding:7px 18px;border-radius:100px;font-size:.8125rem;font-weight:500;color:rgba(255,255,255,.8);margin-bottom:24px;backdrop-filter:blur(8px)}
+.article-hero h1{font-size:clamp(1.75rem,4.5vw,2.5rem);font-weight:700;line-height:1.4;margin-bottom:20px;letter-spacing:-.02em}
+.article-hero-meta{display:flex;align-items:center;justify-content:center;gap:16px;font-size:.875rem;color:rgba(255,255,255,.5)}
+.article-body{max-width:800px;margin:0 auto;padding:64px 24px 96px}
+.article-body h2{font-size:1.5rem;font-weight:700;color:var(--slate-900);margin:56px 0 24px;padding-bottom:12px;border-bottom:2px solid var(--indigo-100);letter-spacing:-.01em}
+.article-body h3{font-size:1.1875rem;font-weight:700;color:var(--slate-800);margin:40px 0 16px}
+.article-body p{font-size:.9375rem;color:var(--slate-700);line-height:2;margin-bottom:20px}
+.article-body ul,.article-body ol{margin:0 0 24px 0;padding-left:0}
+.article-body ul li,.article-body ol li{font-size:.9375rem;color:var(--slate-700);line-height:2;padding-left:24px;position:relative;margin-bottom:8px}
+.article-body ul li::before{content:'';position:absolute;left:6px;top:13px;width:6px;height:6px;border-radius:50%;background:var(--indigo-500)}
+.article-body ol{counter-reset:ol-counter}.article-body ol li{counter-increment:ol-counter}
+.article-body ol li::before{content:counter(ol-counter)'.';position:absolute;left:0;font-weight:700;color:var(--indigo-600);font-size:.875rem}
+.article-body strong{font-weight:700;color:var(--slate-900)}
+.article-body blockquote{border-left:4px solid var(--indigo-500);background:var(--indigo-50);padding:20px 24px;margin:24px 0;border-radius:0 var(--radius) var(--radius) 0}
+.article-body blockquote p{color:var(--indigo-900);margin-bottom:0;font-style:italic}
+.article-body code{font-family:'JetBrains Mono',monospace;background:var(--gray-100);padding:2px 8px;border-radius:4px;font-size:.85em;color:var(--indigo-700)}
+.article-body pre{background:var(--slate-900);color:#e2e8f0;padding:24px;border-radius:var(--radius);margin:24px 0;overflow-x:auto;line-height:1.7}
+.article-body pre code{background:none;padding:0;color:inherit;font-size:.8125rem}
+.back-link{display:inline-flex;align-items:center;gap:8px;font-size:.875rem;font-weight:600;color:var(--indigo-600);margin-bottom:32px;transition:all .2s}.back-link:hover{color:var(--indigo-700);gap:10px}
+.intro-box{background:linear-gradient(135deg,var(--indigo-50),var(--purple-50));border:1px solid var(--indigo-100);border-radius:var(--radius-lg);padding:32px;margin:32px 0}
+.intro-box p{font-size:.9375rem;color:var(--slate-700);line-height:2;margin-bottom:12px}.intro-box p:last-child{margin-bottom:0}
+.arch-diagram{background:var(--slate-900);border-radius:var(--radius-lg);padding:32px;margin:32px 0;color:var(--white)}
+.arch-diagram h3{font-size:1.0625rem;font-weight:700;color:var(--white);margin-bottom:20px;text-align:center}
+.arch-steps{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:8px}
+.arch-step{background:rgba(99,102,241,.15);border:1px solid rgba(99,102,241,.3);padding:12px 20px;border-radius:var(--radius-sm);font-size:.8125rem;font-weight:600;color:var(--indigo-100);text-align:center;min-width:100px}
+.arch-step .arch-sub{display:block;font-size:.6875rem;font-weight:400;color:rgba(255,255,255,.4);margin-top:4px}
+.arch-step.highlight{background:rgba(99,102,241,.3);border-color:rgba(99,102,241,.6)}
+.arch-step.line-green{background:rgba(6,198,148,.15);border-color:rgba(6,198,148,.4)}
+.arch-arrow{color:var(--indigo-500);font-size:1.25rem;font-weight:700}
+.arch-fork{display:flex;flex-direction:column;gap:8px}
+@media(max-width:640px){.arch-steps{flex-direction:column}.arch-arrow{transform:rotate(90deg)}}
+.comparison-table,.endpoints-table{width:100%;border-collapse:collapse;margin:24px 0;font-size:.875rem}
+.endpoints-table{font-size:.8125rem}
+.comparison-table th,.comparison-table td,.endpoints-table th,.endpoints-table td{padding:10px 14px;text-align:left;border-bottom:1px solid var(--gray-200)}
+.comparison-table th{background:var(--gray-50);font-weight:600;color:var(--slate-800);font-size:.8125rem;text-transform:uppercase;letter-spacing:.03em}
+.comparison-table td,.endpoints-table td{color:var(--slate-700)}
+.comparison-table tr:hover td,.endpoints-table tr:hover td{background:var(--gray-50)}
+.comparison-table .before{color:var(--gray-400);text-decoration:line-through}
+.comparison-table .after{color:var(--emerald-600);font-weight:600}
+.endpoints-table th{background:var(--slate-900);color:var(--indigo-100);font-weight:600;font-size:.75rem;text-transform:uppercase;letter-spacing:.05em}
+.method{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:.75rem;padding:3px 8px;border-radius:4px;display:inline-block}
+.method-get{background:var(--emerald-50);color:var(--emerald-600)}
+.method-post{background:var(--sky-50);color:var(--sky-500)}
+.method-patch{background:var(--amber-50);color:var(--amber-600)}
+.method-delete{background:var(--rose-50);color:var(--rose-600)}
+.auth-badge{font-size:.6875rem;background:var(--rose-50);color:var(--rose-600);padding:2px 8px;border-radius:100px;font-weight:600}
+.public-badge{font-size:.6875rem;background:var(--emerald-50);color:var(--emerald-600);padding:2px 8px;border-radius:100px;font-weight:600}
+.billing-badge{font-size:.6875rem;background:var(--amber-50);color:var(--amber-600);padding:2px 8px;border-radius:100px;font-weight:600}
+.file-card{background:var(--white);border:1px solid var(--gray-200);border-radius:var(--radius-lg);padding:28px 32px;margin:24px 0;position:relative;transition:all .3s ease}
+.file-card:hover{box-shadow:var(--shadow-md);border-color:var(--gray-300)}
+.file-card::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;border-radius:var(--radius-lg) var(--radius-lg) 0 0}
+.file-guard::before{background:linear-gradient(90deg,var(--amber-500),var(--amber-600))}
+.file-db::before{background:linear-gradient(90deg,var(--emerald-500),var(--teal-500))}
+.file-lp::before{background:linear-gradient(90deg,var(--indigo-500),var(--purple-600))}
+.file-api::before{background:linear-gradient(90deg,var(--sky-500),var(--indigo-500))}
+.file-docs::before{background:linear-gradient(90deg,var(--purple-600),var(--indigo-600))}
+.file-err::before{background:linear-gradient(90deg,var(--rose-500),var(--amber-500))}
+.file-card-label{font-family:'JetBrains Mono',monospace;font-size:.75rem;font-weight:700;letter-spacing:.03em;padding:4px 12px;border-radius:100px;display:inline-block;margin-bottom:16px}
+.file-guard .file-card-label{background:var(--amber-50);color:var(--amber-600)}
+.file-db .file-card-label{background:var(--emerald-50);color:var(--emerald-600)}
+.file-lp .file-card-label{background:var(--purple-50);color:var(--purple-600)}
+.file-api .file-card-label{background:var(--sky-50);color:var(--sky-500)}
+.file-docs .file-card-label{background:var(--purple-50);color:var(--purple-600)}
+.file-err .file-card-label{background:var(--rose-50);color:var(--rose-600)}
+.file-card h3{font-size:1.125rem;font-weight:700;color:var(--slate-900);margin:0 0 12px 0}
+.file-card p,.file-card ul li{font-size:.9375rem;color:var(--slate-700);line-height:2}
+.file-card p{margin-bottom:12px}.file-card ul{margin:0 0 12px 0;padding-left:0}
+.file-card ul li{padding-left:24px;position:relative;margin-bottom:4px}
+.file-card ul li::before{content:'';position:absolute;left:6px;top:13px;width:5px;height:5px;border-radius:50%}
+.file-guard ul li::before{background:var(--amber-500)}
+.file-db ul li::before{background:var(--emerald-500)}
+.file-lp ul li::before{background:var(--purple-600)}
+.file-api ul li::before{background:var(--sky-500)}
+.file-docs ul li::before{background:var(--purple-600)}
+.file-err ul li::before{background:var(--rose-500)}
+.decision-box{background:linear-gradient(135deg,var(--sky-50),var(--indigo-50));border:1px solid rgba(14,165,233,.2);border-radius:var(--radius-lg);padding:28px 32px;margin:32px 0}
+.decision-box h3{font-size:1.0625rem;font-weight:700;color:var(--slate-800);margin-bottom:16px}
+.decision-box ul li{padding-left:24px;position:relative;margin-bottom:10px;font-size:.9375rem;color:var(--slate-700);line-height:1.9}
+.decision-box ul li::before{content:'';position:absolute;left:6px;top:12px;width:5px;height:5px;border-radius:50%;background:var(--sky-500)}
+.result-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin:32px 0}
+.result-item{background:var(--gray-50);border:1px solid var(--gray-200);border-radius:var(--radius);padding:20px;text-align:center}
+.result-value{font-family:'Inter',sans-serif;font-size:1.75rem;font-weight:700;line-height:1.2;color:var(--indigo-600)}
+.result-label{font-size:.75rem;color:var(--gray-500);margin-top:4px;font-weight:500}
+@media(max-width:640px){.result-grid{grid-template-columns:repeat(2,1fr)}}
+.roadmap-list{margin:24px 0}
+.roadmap-item{display:flex;align-items:flex-start;gap:16px;padding:16px 20px;border-left:3px solid var(--gray-200);margin-bottom:0;transition:all .2s}
+.roadmap-item:hover{border-left-color:var(--indigo-500);background:var(--gray-50);border-radius:0 var(--radius-sm) var(--radius-sm) 0}
+.roadmap-item.done{border-left-color:var(--emerald-500);background:var(--emerald-50)}
+.roadmap-item.active{border-left-color:var(--indigo-500);background:var(--indigo-50)}
+.roadmap-cycle{font-family:'Inter',sans-serif;font-size:.75rem;font-weight:700;color:var(--indigo-600);background:var(--indigo-50);padding:4px 10px;border-radius:100px;white-space:nowrap;min-width:72px;text-align:center;margin-top:2px}
+.roadmap-item.done .roadmap-cycle{background:var(--emerald-600);color:var(--white)}
+.roadmap-item.active .roadmap-cycle{background:var(--indigo-600);color:var(--white)}
+.roadmap-content{flex:1}
+.roadmap-content strong{font-size:.9375rem;color:var(--slate-900);display:block;margin-bottom:2px}
+.roadmap-content span{font-size:.8125rem;color:var(--gray-500)}
+.article-cta{background:linear-gradient(135deg,var(--indigo-50),var(--purple-50));border:2px solid var(--indigo-100);border-radius:var(--radius-xl);padding:48px 32px;margin:56px 0 0;text-align:center}
+.article-cta h3{font-size:1.375rem;font-weight:700;color:var(--slate-900);margin-bottom:12px}
+.article-cta p{font-size:.9375rem;color:var(--slate-600);line-height:2;margin-bottom:24px}
+.article-cta .cta-buttons{display:flex;align-items:center;justify-content:center;gap:16px;flex-wrap:wrap}
+.footer{background:var(--slate-900);color:rgba(255,255,255,.5);padding:64px 0 32px;border-top:1px solid rgba(255,255,255,.06)}
+.footer-grid{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:40px;margin-bottom:48px}
+.footer-brand{font-size:1.125rem;font-weight:700;color:var(--white);margin-bottom:8px}
+.footer-brand .logo-ai{color:var(--indigo-500)}
+.footer-tagline{font-size:.8125rem;line-height:1.8;margin-bottom:20px}
+.footer-email{font-size:.8125rem;color:var(--indigo-500);transition:color .2s}.footer-email:hover{color:var(--indigo-400)}
+.footer h4{font-size:.75rem;font-weight:600;color:rgba(255,255,255,.7);margin-bottom:16px;letter-spacing:.05em;text-transform:uppercase}
+.footer ul li{margin-bottom:8px}.footer ul a{font-size:.8125rem;transition:color .2s}.footer ul a:hover{color:var(--white)}
+.footer-bottom{border-top:1px solid rgba(255,255,255,.06);padding-top:24px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;font-size:.75rem}
+@media(max-width:768px){.footer-grid{grid-template-columns:1fr 1fr;gap:32px}.file-card{padding:20px 24px}.comparison-table,.endpoints-table{font-size:.75rem}.comparison-table th,.comparison-table td,.endpoints-table th,.endpoints-table td{padding:8px 10px}}
+@media(max-width:480px){.footer-grid{grid-template-columns:1fr}}
+.reveal{opacity:0;transform:translateY(20px);transition:opacity .5s ease,transform .5s ease}
+.reveal.visible{opacity:1;transform:none}
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<header class="header" id="header">
+  <div class="container header-inner">
+    <a href="/" class="logo">ミセバン<span class="logo-ai">AI</span></a>
+    <nav class="nav">
+      <a href="/#setup">導入方法</a>
+      <a href="/#features">機能</a>
+      <a href="/#pricing">料金</a>
+      <a href="/cameras.html">対応カメラ</a>
+      <a href="/blog/">ブログ</a>
+      <a href="/#cta" class="btn btn-primary btn-sm nav-cta">無料で始める</a>
+    </nav>
+    <button class="mobile-toggle" id="mobileToggle" aria-label="メニューを開く"><span></span><span></span><span></span></button>
+  </div>
+</header>
+
+<!-- Mobile Menu -->
+<div class="mobile-menu" id="mobileMenu">
+  <button class="mobile-close" id="mobileClose" aria-label="メニューを閉じる">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+  </button>
+  <a href="/#setup">導入方法</a><a href="/#features">機能</a><a href="/#pricing">料金</a>
+  <a href="/cameras.html">対応カメラ</a><a href="/blog/">ブログ</a>
+  <a href="/#cta" class="btn btn-primary">無料で始める</a>
+</div>
+
+<!-- Article Hero -->
+<section class="article-hero">
+  <div class="container">
+    <div class="article-hero-content">
+      <div class="article-hero-badge">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        Sprint Cycle 7
+      </div>
+      <h1>CSV出力・APIドキュメント・<br>クローズドベータ実用化</h1>
+      <div class="article-hero-meta">
+        <time datetime="2026-02-23">2026.02.23</time>
+        <span>|</span>
+        <span>ミセバンAI チーム</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Article Body -->
+<article class="article-body">
+
+<a href="/blog/" class="back-link">
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+  ブログ一覧へ戻る
+</a>
+
+<div class="intro-box">
+  <p>Cycle 6 で<strong>プライバシーポリシー・利用規約・特商法表記・オンボーディングウィザード</strong>が完成し、ミセバンAIは「合法的に公開できる」状態になった。法務と導線は整った。しかし、ベータユーザーが「実際の業務で使える」かどうかは別の話だ。</p>
+  <p>Sprint Cycle 7 では、<strong>ベータユーザーが日常業務に組み込める機能</strong>を揃える。3つの柱: <code>csv_export.rs</code> によるデータ出力、全18エンドポイントの API ドキュメント、そしてカスタム404エラーページ。<strong>Data Export &times; API Reference &times; Building in Public Day 2</strong> のサイクルだ。</p>
+</div>
+
+
+<h2>1. CSV Export API -- データを手元に</h2>
+
+<div class="file-card file-api reveal">
+  <span class="file-card-label">crates/api/src/csv_export.rs</span>
+  <h3>CSV データ出力モジュール</h3>
+  <p>来客データを CSV ファイルとしてダウンロードするモジュール。<code>plan_guard</code> の <code>csv_export</code> フィーチャーフラグと連携し、<strong>Pro / Enterprise プランのみ</strong>利用可能。</p>
+  <ul>
+    <li><code>GET /api/v1/stores/me/export/csv</code> -- CSV出力エンドポイント</li>
+    <li>Query params: <code>from</code>, <code>to</code> (NaiveDate, YYYY-MM-DD形式)</li>
+    <li><code>Content-Disposition: attachment</code> でファイルダウンロード</li>
+    <li>CSV columns: 日付, 時間, カメラ名, 来客数</li>
+  </ul>
+</div>
+
+<p>店舗オーナーが最も求める機能のひとつは<strong>「データを手元に持ち出す」</strong>こと。ダッシュボードで見るだけでなく、Excel で加工したり、他のツールに取り込みたい。CSV出力はそのニーズに直接応える。</p>
+
+<h3>エンドポイント設計</h3>
+
+<div class="arch-diagram reveal">
+  <h3>CSV Export フロー</h3>
+  <div class="arch-steps">
+    <div class="arch-step">GET /export/csv<span class="arch-sub">?from=2026-02-01&amp;to=2026-02-23</span></div>
+    <span class="arch-arrow">&rarr;</span>
+    <div class="arch-step">JWT Auth<span class="arch-sub">ユーザー認証</span></div>
+    <span class="arch-arrow">&rarr;</span>
+    <div class="arch-step highlight">plan_guard<span class="arch-sub">csv_export チェック</span></div>
+    <span class="arch-arrow">&rarr;</span>
+    <div class="arch-fork">
+      <div class="arch-step line-green">Pro/Enterprise &rarr; CSV生成<span class="arch-sub">Content-Disposition: attachment</span></div>
+      <div class="arch-step" style="background:rgba(244,63,94,.15);border-color:rgba(244,63,94,.4)">Free/Starter &rarr; 403<span class="arch-sub">プランアップグレード促進</span></div>
+    </div>
+  </div>
+</div>
+
+<h3>実装コード</h3>
+
+<pre><code>/// GET /api/v1/stores/me/export/csv
+pub async fn export_csv(
+    State(state): State&lt;AppState&gt;,
+    AuthUser(user_id): AuthUser,
+    Query(params): Query&lt;CsvExportParams&gt;,
+) -&gt; Result&lt;impl IntoResponse, ApiError&gt; {
+    let store = get_store_by_owner(&amp;state.pool, &amp;user_id).await?;
+    let tier = store.tier.as_deref().unwrap_or("free");
+
+    // Plan guard: csv_export は Pro/Enterprise のみ
+    if !tier_has_feature(tier, "csv_export") {
+        return Err(ApiError::Forbidden(
+            "CSV出力はProプラン以上で利用できます".into()
+        ));
+    }
+
+    let rows = fetch_visitor_data(
+        &amp;state.pool,
+        &amp;store.id,
+        params.from,
+        params.to,
+    ).await?;
+
+    // CSV生成 (標準ライブラリのみ)
+    let mut csv = String::from("日付,時間,カメラ名,来客数\n");
+    for row in &amp;rows {
+        csv.push_str(&amp;format!(
+            "{},{},{},{}\n",
+            row.date, row.time, row.camera_name, row.count
+        ));
+    }
+
+    let filename = format!(
+        "miseban_{}_{}_{}.csv",
+        store.name, params.from, params.to
+    );
+
+    Ok((
+        [
+            (header::CONTENT_TYPE, "text/csv; charset=utf-8"),
+            (
+                header::CONTENT_DISPOSITION,
+                &amp;format!("attachment; filename=\"{}\"", filename),
+            ),
+        ],
+        csv,
+    ))
+}</code></pre>
+
+<p><code>plan_guard</code> の <code>tier_has_feature(tier, "csv_export")</code> が最初の関門。Free/Starter ユーザーがこのエンドポイントを叩くと、403でアップグレードを促す。Pro/Enterprise ならCSVデータを生成し、<code>Content-Disposition: attachment</code> ヘッダーでブラウザにファイルダウンロードさせる。</p>
+
+<h3>Query パラメータ</h3>
+
+<pre><code>#[derive(Deserialize)]
+pub struct CsvExportParams {
+    /// 開始日 (YYYY-MM-DD)
+    pub from: NaiveDate,
+    /// 終了日 (YYYY-MM-DD)
+    pub to: NaiveDate,
+}</code></pre>
+
+<p><code>from</code> と <code>to</code> を必須パラメータにすることで、無制限のデータ取得を防ぐ。日付バリデーションは <code>NaiveDate</code> の Deserialize に任せている。不正な形式なら 400 Bad Request が自動で返る。</p>
+
+
+<h2>2. API Documentation Page -- docs.html</h2>
+
+<div class="file-card file-docs reveal">
+  <span class="file-card-label">web/landing/docs.html</span>
+  <h3>全18エンドポイントの API リファレンス</h3>
+  <p>ベータユーザーや将来の開発パートナーに向けた、静的HTMLの API ドキュメント。認証方式、エンドポイント一覧、curl サンプル、レスポンス例を網羅。</p>
+  <ul>
+    <li>認証方式: JWT Bearer token (Supabase Auth)</li>
+    <li>カテゴリ: Public / JWT Required / Billing</li>
+    <li>Method badges: <span class="method method-get">GET</span> <span class="method method-post">POST</span> <span class="method method-patch">PATCH</span></li>
+    <li>curl examples + JSON response examples</li>
+  </ul>
+</div>
+
+<p>APIドキュメントがないプロダクトは信用されない。ベータユーザーに「APIがある」と言っても、仕様書がなければ使いようがない。Cycle 7 では全18エンドポイントを体系的にドキュメント化した。</p>
+
+<h3>認証方式</h3>
+
+<pre><code># Supabase Auth でJWTトークンを取得
+curl -X POST https://xxx.supabase.co/auth/v1/token?grant_type=password \
+  -H "Content-Type: application/json" \
+  -d '{"email":"user@example.com","password":"***"}'
+
+# APIリクエスト (Bearer token)
+curl https://miseban.ai/api/v1/stores/me \
+  -H "Authorization: Bearer eyJhbG..."</code></pre>
+
+<h3>エンドポイント一覧 (抜粋)</h3>
+
+<table class="endpoints-table reveal">
+  <thead>
+    <tr><th>Method</th><th>Path</th><th>認証</th><th>説明</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><span class="method method-get">GET</span></td>
+      <td><code>/api/v1/health</code></td>
+      <td><span class="public-badge">Public</span></td>
+      <td>ヘルスチェック</td>
+    </tr>
+    <tr>
+      <td><span class="method method-post">POST</span></td>
+      <td><code>/api/v1/stores</code></td>
+      <td><span class="auth-badge">JWT</span></td>
+      <td>店舗登録</td>
+    </tr>
+    <tr>
+      <td><span class="method method-get">GET</span></td>
+      <td><code>/api/v1/stores/me</code></td>
+      <td><span class="auth-badge">JWT</span></td>
+      <td>自店舗情報取得</td>
+    </tr>
+    <tr>
+      <td><span class="method method-patch">PATCH</span></td>
+      <td><code>/api/v1/stores/me</code></td>
+      <td><span class="auth-badge">JWT</span></td>
+      <td>店舗情報更新</td>
+    </tr>
+    <tr>
+      <td><span class="method method-post">POST</span></td>
+      <td><code>/api/v1/cameras</code></td>
+      <td><span class="auth-badge">JWT</span></td>
+      <td>カメラ登録</td>
+    </tr>
+    <tr>
+      <td><span class="method method-get">GET</span></td>
+      <td><code>/api/v1/cameras</code></td>
+      <td><span class="auth-badge">JWT</span></td>
+      <td>カメラ一覧取得</td>
+    </tr>
+    <tr>
+      <td><span class="method method-post">POST</span></td>
+      <td><code>/api/v1/frames</code></td>
+      <td><span class="auth-badge">JWT</span></td>
+      <td>フレーム送信 (画像解析)</td>
+    </tr>
+    <tr>
+      <td><span class="method method-get">GET</span></td>
+      <td><code>/api/v1/analytics/daily</code></td>
+      <td><span class="auth-badge">JWT</span></td>
+      <td>日次分析データ</td>
+    </tr>
+    <tr>
+      <td><span class="method method-get">GET</span></td>
+      <td><code>/api/v1/analytics/hourly</code></td>
+      <td><span class="auth-badge">JWT</span></td>
+      <td>時間帯別分析データ</td>
+    </tr>
+    <tr>
+      <td><span class="method method-get">GET</span></td>
+      <td><code>/api/v1/stores/me/usage</code></td>
+      <td><span class="auth-badge">JWT</span></td>
+      <td>使用量・プラン情報</td>
+    </tr>
+    <tr>
+      <td><span class="method method-get">GET</span></td>
+      <td><code>/api/v1/stores/me/export/csv</code></td>
+      <td><span class="auth-badge">JWT</span></td>
+      <td>CSV出力 (Pro以上)</td>
+    </tr>
+    <tr>
+      <td><span class="method method-post">POST</span></td>
+      <td><code>/api/v1/alerts</code></td>
+      <td><span class="auth-badge">JWT</span></td>
+      <td>アラート設定</td>
+    </tr>
+    <tr>
+      <td><span class="method method-get">GET</span></td>
+      <td><code>/api/v1/alerts</code></td>
+      <td><span class="auth-badge">JWT</span></td>
+      <td>アラート一覧取得</td>
+    </tr>
+    <tr>
+      <td><span class="method method-post">POST</span></td>
+      <td><code>/api/v1/line/webhook</code></td>
+      <td><span class="public-badge">Public</span></td>
+      <td>LINE Webhook受信</td>
+    </tr>
+    <tr>
+      <td><span class="method method-post">POST</span></td>
+      <td><code>/api/v1/billing/checkout</code></td>
+      <td><span class="auth-badge">JWT</span></td>
+      <td>Stripe Checkout Session作成</td>
+    </tr>
+    <tr>
+      <td><span class="method method-post">POST</span></td>
+      <td><code>/api/v1/billing/portal</code></td>
+      <td><span class="auth-badge">JWT</span></td>
+      <td>Stripe Customer Portal</td>
+    </tr>
+    <tr>
+      <td><span class="method method-post">POST</span></td>
+      <td><code>/api/v1/webhooks/stripe</code></td>
+      <td><span class="billing-badge">Stripe</span></td>
+      <td>Stripe Webhook受信</td>
+    </tr>
+    <tr>
+      <td><span class="method method-get">GET</span></td>
+      <td><code>/api/v1/onboarding/status</code></td>
+      <td><span class="auth-badge">JWT</span></td>
+      <td>オンボーディング進捗</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>レスポンス例</h3>
+
+<pre><code>// GET /api/v1/stores/me/usage
+{
+  "tier": "pro",
+  "cameras_used": 3,
+  "cameras_max": 16,
+  "retention_days": 90,
+  "features": [
+    ["basic_count", true],
+    ["demographics", true],
+    ["heatmaps", true],
+    ["alerts", true],
+    ["line_alerts", true],
+    ["csv_export", true],
+    ["api_access", true],
+    ["custom_models", false]
+  ]
+}</code></pre>
+
+<pre><code>// GET /api/v1/stores/me/export/csv
+// Content-Type: text/csv; charset=utf-8
+// Content-Disposition: attachment; filename="miseban_cafe_2026-02-01_2026-02-23.csv"
+
+日付,時間,カメラ名,来客数
+2026-02-01,09:00,入口カメラ,12
+2026-02-01,10:00,入口カメラ,28
+2026-02-01,11:00,入口カメラ,45
+...</code></pre>
+
+<p>全エンドポイントに対して <strong>curl コマンド + 期待されるレスポンスJSON</strong> を記載。ベータユーザーがドキュメントだけで API 連携を実装できる状態を目指した。</p>
+
+
+<h2>3. カスタム 404 エラーページ</h2>
+
+<div class="file-card file-err reveal">
+  <span class="file-card-label">web/landing/404.html</span>
+  <h3>ユーザーフレンドリーな 404 ページ</h3>
+  <p>存在しないURLにアクセスしたユーザーを迷子にさせない。ブラウザデフォルトの404ではなく、ブランドに沿ったカスタムページで適切な導線を提供。</p>
+  <ul>
+    <li>ミセバンAI のブランドデザインを維持</li>
+    <li>トップページ / ダッシュボード / ブログ への導線ボタン</li>
+    <li>「お探しのページは見つかりませんでした」の日本語メッセージ</li>
+    <li>レスポンシブ対応</li>
+  </ul>
+</div>
+
+<p>些細に見えるが、<strong>404ページの品質はプロダクトの信頼感に直結する</strong>。ブラウザのデフォルトエラー画面が表示されると「このサービスは雑に作られている」という印象を与える。カスタム404ページは、迷子になったユーザーを正しい場所へ誘導するナビゲーションの役割を果たす。</p>
+
+
+<h2>4. Before / After 比較</h2>
+
+<table class="comparison-table reveal">
+  <thead><tr><th>項目</th><th>Before (Cycle 6)</th><th>After (Cycle 7)</th></tr></thead>
+  <tbody>
+    <tr>
+      <td>データ出力</td>
+      <td class="before">なし</td>
+      <td class="after">CSV出力 (Pro以上)</td>
+    </tr>
+    <tr>
+      <td>API仕様書</td>
+      <td class="before">なし</td>
+      <td class="after">18エンドポイント文書化</td>
+    </tr>
+    <tr>
+      <td>エラーページ</td>
+      <td class="before">ブラウザデフォルト</td>
+      <td class="after">カスタム404ページ</td>
+    </tr>
+    <tr>
+      <td>ベータ準備</td>
+      <td class="before">6/8項目</td>
+      <td class="after">8/8項目完了</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Cycle 6 まで残っていた「データ出力」と「API仕様書」の2項目が埋まり、<strong>クローズドベータに必要な全8項目が完了</strong>した。ダッシュボード、API、決済、法務、オンボーディング、データ出力、ドキュメント、エラーハンドリング。プロダクトとして公開するために必要な要素が揃った。</p>
+
+<blockquote>
+  <p>ベータチェックリスト 8/8: 認証、API、決済、プランガード、法務、オンボーディング、CSV出力、APIドキュメント -- 全項目 DONE。</p>
+</blockquote>
+
+
+<h2>5. 技術的判断</h2>
+
+<div class="decision-box reveal">
+  <h3>なぜこの設計にしたか</h3>
+  <ul>
+    <li><strong>外部CSVクレートを使わない理由</strong> -- 出力するCSVは4列のシンプルな構造。<code>csv</code> クレートは強力だが、今のユースケースには <code>format!()</code> + <code>String</code> で十分。依存を増やすメリットがない。複雑なエスケープが必要になった時点でクレートに移行する</li>
+    <li><strong>静的HTMLドキュメントにした理由</strong> -- Swagger/OpenAPI は将来的に導入するが、現段階ではエンドポイント数が18個。JSON スキーマの定義に時間をかけるより、即座に読める HTML ドキュメントを先に出すほうがベータユーザーにとって価値が高い</li>
+    <li><strong>Plan guard による機能ゲーティング</strong> -- CSV出力を Pro 以上に限定することで、Free/Starter から Pro へのアップグレード動機を作る。「データを見る」は無料、「データを持ち出す」は有料。この線引きがフリーミアムの要</li>
+    <li><strong>Content-Disposition ヘッダー</strong> -- ブラウザでCSVを直接表示させず、ファイルとしてダウンロードさせる。ユーザーが「保存先を選ぶ」UIが出ることで、データが手元に来た実感を与える</li>
+    <li><strong>NaiveDate による日付バリデーション</strong> -- Deserialize トレイトに任せることで、バリデーションコードをゼロに。不正な日付は serde が自動で 400 を返す</li>
+  </ul>
+</div>
+
+
+<h2>6. 成果と数字</h2>
+
+<div class="result-grid reveal">
+  <div class="result-item">
+    <div class="result-value nums">~500<span style="font-size:.875rem;font-weight:500">行</span></div>
+    <div class="result-label">追加コード</div>
+  </div>
+  <div class="result-item">
+    <div class="result-value nums">18</div>
+    <div class="result-label">API Docs</div>
+  </div>
+  <div class="result-item">
+    <div class="result-value nums">1</div>
+    <div class="result-label">新規エンドポイント</div>
+  </div>
+  <div class="result-item">
+    <div class="result-value nums">7<span style="font-size:.875rem;font-weight:500">cycles</span></div>
+    <div class="result-label">to beta</div>
+  </div>
+</div>
+
+<h3>作成・更新したファイル</h3>
+<ol>
+  <li><code>crates/api/src/csv_export.rs</code> -- CSV出力モジュール (新規、約80行)</li>
+  <li><code>crates/api/src/main.rs</code> -- <code>mod csv_export</code> 宣言、<code>GET /api/v1/stores/me/export/csv</code> ルート追加 (+15行)</li>
+  <li><code>web/landing/docs.html</code> -- APIドキュメントページ (新規、約350行)</li>
+  <li><code>web/landing/404.html</code> -- カスタム404ページ (新規、約60行)</li>
+</ol>
+
+<blockquote>
+  <p>「動くプロダクト」と「使えるプロダクト」は違う。データが出力でき、仕様書があり、迷子にならない。この3つが揃って初めて、ベータユーザーに「使ってください」と言えるプロダクトになる。</p>
+</blockquote>
+
+
+<h2>7. ロードマップ</h2>
+
+<div class="roadmap-list reveal">
+  <div class="roadmap-item done">
+    <span class="roadmap-cycle">Cycle 1</span>
+    <div class="roadmap-content"><strong>ダッシュボード・DB・認証</strong><span>完了 -- UI、6テーブル、Supabase Auth</span></div>
+  </div>
+  <div class="roadmap-item done">
+    <span class="roadmap-cycle">Cycle 2</span>
+    <div class="roadmap-content"><strong>Rust API &times; Supabase (sqlx + JWT)</strong><span>完了 -- 7エンドポイント、データパイプライン</span></div>
+  </div>
+  <div class="roadmap-item done">
+    <span class="roadmap-cycle">Cycle 3</span>
+    <div class="roadmap-content"><strong>LINE通知Bot + リアルタイムアラート</strong><span>完了 -- 5エンドポイント、LINE Messaging API</span></div>
+  </div>
+  <div class="roadmap-item done">
+    <span class="roadmap-cycle">Cycle 4</span>
+    <div class="roadmap-content"><strong>Stripe決済統合</strong><span>完了 -- Checkout Session、Customer Portal、Webhook</span></div>
+  </div>
+  <div class="roadmap-item done">
+    <span class="roadmap-cycle">Cycle 5</span>
+    <div class="roadmap-content"><strong>プランガード + LP料金刷新</strong><span>完了 -- tier enforcement、8機能フラグ、セルフサーブ動線</span></div>
+  </div>
+  <div class="roadmap-item done">
+    <span class="roadmap-cycle">Cycle 6</span>
+    <div class="roadmap-content"><strong>法務・オンボーディング</strong><span>完了 -- プライバシーポリシー、利用規約、特商法、ウィザード</span></div>
+  </div>
+  <div class="roadmap-item done">
+    <span class="roadmap-cycle">Cycle 7</span>
+    <div class="roadmap-content"><strong>CSV出力・APIドキュメント・エラーページ</strong><span>完了 -- 本記事の内容。ベータ準備 8/8</span></div>
+  </div>
+  <div class="roadmap-item active">
+    <span class="roadmap-cycle">Cycle 8</span>
+    <div class="roadmap-content"><strong>パブリックベータローンチ</strong><span>実店舗での動作検証、実データチューニング、フィードバック収集</span></div>
+  </div>
+</div>
+
+<p>7サイクルを経て、ミセバンAIは<strong>パブリックベータに耐えうる完成度</strong>に到達した。Cycle 8 ではいよいよ実店舗にデプロイし、実データでの動作検証とフィードバック収集に入る。ここからが本番だ。</p>
+
+<blockquote>
+  <p>7サイクル、7週間。ダッシュボードから始まって、API、決済、法務、そしてデータ出力とドキュメントまで。Building in Public で走り続けた結果、ベータに出せるプロダクトが出来上がった。次はユーザーの声を聞く番だ。</p>
+</blockquote>
+
+
+<!-- CTA -->
+<div class="article-cta reveal">
+  <h3>クローズドベータへの参加をお待ちしています。</h3>
+  <p>ミセバンAIは、7スプリントサイクルで「使えるプロダクト」に到達。<br>既存の防犯カメラがAI店長に変わる、小規模店舗のための次世代AI分析。</p>
+  <div class="cta-buttons">
+    <a href="/blog/" class="btn btn-ghost btn-sm">ブログ一覧を見る</a>
+    <a href="/#cta" class="btn btn-primary btn-sm">ミセバンAIを無料で試す</a>
+  </div>
+</div>
+
+</article>
+
+<!-- Footer -->
+<footer class="footer">
+  <div class="container">
+    <div class="footer-grid">
+      <div>
+        <div class="footer-brand">ミセバン<span class="logo-ai">AI</span></div>
+        <p class="footer-tagline">既存カメラが、AI店長に変わる。<br>小規模店舗のための次世代AI分析。</p>
+        <a href="mailto:info@miseban.ai" class="footer-email">info@miseban.ai</a>
+      </div>
+      <div>
+        <h4>サービス</h4>
+        <ul>
+          <li><a href="/#features">機能</a></li>
+          <li><a href="/#pricing">料金</a></li>
+          <li><a href="/cameras.html">対応カメラ</a></li>
+          <li><a href="/#faq">FAQ</a></li>
+          <li><a href="/#partner">パートナー募集</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>法的情報</h4>
+        <ul>
+          <li><a href="/terms.html">利用規約</a></li>
+          <li><a href="/privacy.html">プライバシーポリシー</a></li>
+          <li><a href="/legal.html">特定商取引法に基づく表記</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>お問い合わせ</h4>
+        <ul>
+          <li><a href="mailto:info@miseban.ai">一般のお問い合わせ</a></li>
+          <li><a href="mailto:partner@miseban.ai">パートナー窓口</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>&copy; 2026 MisebanAI. All rights reserved.</p>
+    </div>
+  </div>
+</footer>
+
+<script>
+(function(){
+  var toggle=document.getElementById('mobileToggle'),menu=document.getElementById('mobileMenu'),close=document.getElementById('mobileClose'),links=menu.querySelectorAll('a');
+  function open(){menu.classList.add('open');document.body.style.overflow='hidden'}
+  function shut(){menu.classList.remove('open');document.body.style.overflow=''}
+  toggle.addEventListener('click',open);close.addEventListener('click',shut);
+  for(var i=0;i<links.length;i++) links[i].addEventListener('click',shut);
+})();
+(function(){
+  var els=document.querySelectorAll('.reveal');
+  if(!('IntersectionObserver' in window)){els.forEach(function(el){el.classList.add('visible')});return}
+  var obs=new IntersectionObserver(function(entries){entries.forEach(function(e){if(e.isIntersecting){e.target.classList.add('visible');obs.unobserve(e.target)}})},{threshold:0.1});
+  els.forEach(function(el){obs.observe(el)});
+})();
+</script>
+</body>
+</html>

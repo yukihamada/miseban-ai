@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sprint Cycle 6: 法務・オンボーディング・クローズドベータ準備｜ミセバンAI Blog</title>
+<meta name="description" content="Sprint Cycle 6 でプライバシーポリシー・利用規約・特商法表記の法務ページと、4ステップのオンボーディングウィザードを実装。クローズドベータ開始に向けた準備が完了。">
+<meta name="keywords" content="プライバシーポリシー,利用規約,特定商取引法,オンボーディング,クローズドベータ,SaaS法務,ミセバンAI">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://miseban.ai/blog/018-sprint-cycle-6">
+<!-- OGP -->
+<meta property="og:title" content="Sprint Cycle 6: 法務・オンボーディング・クローズドベータ準備｜ミセバンAI Blog">
+<meta property="og:description" content="Sprint Cycle 6 でプライバシーポリシー・利用規約・特商法表記の法務ページと、4ステップのオンボーディングウィザードを実装。クローズドベータ開始に向けた準備が完了。">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://miseban.ai/blog/018-sprint-cycle-6">
+<meta property="og:image" content="https://miseban.ai/ogp.png">
+<meta property="og:site_name" content="ミセバンAI">
+<meta property="og:locale" content="ja_JP">
+<meta property="article:published_time" content="2026-02-23">
+<meta property="article:author" content="ミセバンAI チーム">
+<meta property="article:tag" content="法務コンプライアンス">
+<meta property="article:tag" content="オンボーディング">
+<meta property="article:tag" content="クローズドベータ">
+<meta property="article:tag" content="Building in Public">
+<!-- Twitter Card -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Sprint Cycle 6: 法務・オンボーディング・クローズドベータ準備">
+<meta name="twitter:description" content="Sprint Cycle 6 でプライバシーポリシー・利用規約・特商法表記の法務ページと、4ステップのオンボーディングウィザードを実装。クローズドベータ開始に向けた準備が完了。">
+<meta name="twitter:image" content="https://miseban.ai/ogp.png">
+<!-- Favicon -->
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%234f46e5'/><text x='50%25' y='54%25' dominant-baseline='middle' text-anchor='middle' fill='white' font-size='18' font-weight='bold' font-family='sans-serif'>M</text></svg>">
+<!-- Google Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--white:#fff;--gray-50:#f8fafc;--gray-100:#f1f5f9;--gray-200:#e2e8f0;--gray-300:#cbd5e1;--gray-400:#94a3b8;--gray-500:#64748b;--slate-600:#475569;--slate-700:#334155;--slate-800:#1e293b;--slate-900:#0f172a;--indigo-50:#eef2ff;--indigo-100:#e0e7ff;--indigo-500:#6366f1;--indigo-600:#4f46e5;--indigo-700:#4338ca;--indigo-900:#312e81;--indigo-950:#1e1b4b;--emerald-50:#ecfdf5;--emerald-500:#10b981;--emerald-600:#059669;--amber-50:#fffbeb;--amber-500:#f59e0b;--amber-600:#d97706;--rose-50:#fff1f2;--rose-500:#f43f5e;--rose-600:#e11d48;--sky-50:#f0f9ff;--sky-500:#0ea5e9;--purple-50:#faf5ff;--purple-600:#9333ea;--teal-50:#f0fdfa;--teal-500:#14b8a6;--radius-sm:8px;--radius:12px;--radius-lg:16px;--radius-xl:24px;--shadow-md:0 4px 6px -1px rgba(0,0,0,.1),0 2px 4px -2px rgba(0,0,0,.1)}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+body{font-family:'Noto Sans JP','Inter',system-ui,-apple-system,sans-serif;color:var(--slate-900);background:var(--white);line-height:1.8;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+img{max-width:100%;height:auto;display:block}a{text-decoration:none;color:inherit;transition:color .2s}ul,ol{list-style:none}
+.container{max-width:1200px;margin:0 auto;padding:0 24px}.nums{font-family:'Inter','Noto Sans JP',sans-serif}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;font-family:inherit;font-size:.9375rem;font-weight:600;padding:14px 28px;border-radius:100px;border:none;cursor:pointer;transition:all .2s ease;white-space:nowrap;line-height:1.4}
+.btn-primary{background:var(--indigo-600);color:var(--white);box-shadow:0 1px 2px rgba(79,70,229,.3),0 4px 12px rgba(79,70,229,.2)}.btn-primary:hover{background:var(--indigo-700);transform:translateY(-1px)}.btn-sm{padding:10px 20px;font-size:.875rem}
+.btn-ghost{background:transparent;color:var(--indigo-600);border:2px solid var(--indigo-200);padding:12px 24px}.btn-ghost:hover{background:var(--indigo-50);border-color:var(--indigo-400)}
+.header{position:fixed;top:0;left:0;width:100%;z-index:1000;background:rgba(255,255,255,.92);backdrop-filter:blur(16px) saturate(180%);-webkit-backdrop-filter:blur(16px) saturate(180%);box-shadow:0 1px 3px rgba(0,0,0,.06);border-bottom:1px solid rgba(0,0,0,.04)}
+.header-inner{display:flex;align-items:center;justify-content:space-between;height:72px}.logo{display:flex;align-items:center;gap:2px;font-size:1.25rem;font-weight:700;color:var(--slate-900)}.logo-ai{color:var(--indigo-600);font-weight:700}
+.nav{display:flex;align-items:center;gap:32px}.nav a{font-size:.875rem;font-weight:500;color:var(--slate-600);transition:color .2s}.nav a:hover{color:var(--slate-900)}.nav-cta{margin-left:8px}
+.mobile-toggle{display:none;background:none;border:none;cursor:pointer;padding:8px}.mobile-toggle span{display:block;width:22px;height:2px;background:var(--slate-900);margin:5px 0;border-radius:1px;transition:.3s}
+.mobile-menu{display:none;position:fixed;inset:0;background:var(--white);z-index:999;flex-direction:column;align-items:center;justify-content:center;gap:28px}.mobile-menu.open{display:flex}.mobile-menu a{font-size:1.125rem;color:var(--slate-900);font-weight:500}
+.mobile-close{position:absolute;top:24px;right:24px;background:none;border:none;color:var(--slate-600);font-size:1.5rem;cursor:pointer;width:40px;height:40px;display:flex;align-items:center;justify-content:center;border-radius:50%;transition:background .2s}.mobile-close:hover{background:var(--gray-100)}
+@media(max-width:768px){.nav{display:none}.mobile-toggle{display:block}}
+.article-hero{background:linear-gradient(165deg,var(--slate-900) 0%,#1a1647 50%,var(--indigo-950) 100%);padding:140px 0 72px;color:var(--white);position:relative;overflow:hidden}
+.article-hero::before{content:'';position:absolute;top:0;left:0;right:0;bottom:0;background:radial-gradient(ellipse 80% 50% at 50% -20%,rgba(99,102,241,.15),transparent);pointer-events:none}
+.article-hero-content{position:relative;z-index:1;max-width:800px;margin:0 auto;text-align:center}
+.article-hero-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.1);padding:7px 18px;border-radius:100px;font-size:.8125rem;font-weight:500;color:rgba(255,255,255,.8);margin-bottom:24px;backdrop-filter:blur(8px)}
+.article-hero h1{font-size:clamp(1.75rem,4.5vw,2.5rem);font-weight:700;line-height:1.4;margin-bottom:20px;letter-spacing:-.02em}
+.article-hero-meta{display:flex;align-items:center;justify-content:center;gap:16px;font-size:.875rem;color:rgba(255,255,255,.5)}
+.article-body{max-width:800px;margin:0 auto;padding:64px 24px 96px}
+.article-body h2{font-size:1.5rem;font-weight:700;color:var(--slate-900);margin:56px 0 24px;padding-bottom:12px;border-bottom:2px solid var(--indigo-100);letter-spacing:-.01em}
+.article-body h3{font-size:1.1875rem;font-weight:700;color:var(--slate-800);margin:40px 0 16px}
+.article-body p{font-size:.9375rem;color:var(--slate-700);line-height:2;margin-bottom:20px}
+.article-body ul,.article-body ol{margin:0 0 24px 0;padding-left:0}
+.article-body ul li,.article-body ol li{font-size:.9375rem;color:var(--slate-700);line-height:2;padding-left:24px;position:relative;margin-bottom:8px}
+.article-body ul li::before{content:'';position:absolute;left:6px;top:13px;width:6px;height:6px;border-radius:50%;background:var(--indigo-500)}
+.article-body ol{counter-reset:ol-counter}.article-body ol li{counter-increment:ol-counter}
+.article-body ol li::before{content:counter(ol-counter)'.';position:absolute;left:0;font-weight:700;color:var(--indigo-600);font-size:.875rem}
+.article-body strong{font-weight:700;color:var(--slate-900)}
+.article-body blockquote{border-left:4px solid var(--indigo-500);background:var(--indigo-50);padding:20px 24px;margin:24px 0;border-radius:0 var(--radius) var(--radius) 0}
+.article-body blockquote p{color:var(--indigo-900);margin-bottom:0;font-style:italic}
+.article-body code{font-family:'JetBrains Mono',monospace;background:var(--gray-100);padding:2px 8px;border-radius:4px;font-size:.85em;color:var(--indigo-700)}
+.article-body pre{background:var(--slate-900);color:#e2e8f0;padding:24px;border-radius:var(--radius);margin:24px 0;overflow-x:auto;line-height:1.7}
+.article-body pre code{background:none;padding:0;color:inherit;font-size:.8125rem}
+.back-link{display:inline-flex;align-items:center;gap:8px;font-size:.875rem;font-weight:600;color:var(--indigo-600);margin-bottom:32px;transition:all .2s}.back-link:hover{color:var(--indigo-700);gap:10px}
+.intro-box{background:linear-gradient(135deg,var(--indigo-50),var(--purple-50));border:1px solid var(--indigo-100);border-radius:var(--radius-lg);padding:32px;margin:32px 0}
+.intro-box p{font-size:.9375rem;color:var(--slate-700);line-height:2;margin-bottom:12px}.intro-box p:last-child{margin-bottom:0}
+.arch-diagram{background:var(--slate-900);border-radius:var(--radius-lg);padding:32px;margin:32px 0;color:var(--white)}
+.arch-diagram h3{font-size:1.0625rem;font-weight:700;color:var(--white);margin-bottom:20px;text-align:center}
+.arch-steps{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:8px}
+.arch-step{background:rgba(99,102,241,.15);border:1px solid rgba(99,102,241,.3);padding:12px 20px;border-radius:var(--radius-sm);font-size:.8125rem;font-weight:600;color:var(--indigo-100);text-align:center;min-width:100px}
+.arch-step .arch-sub{display:block;font-size:.6875rem;font-weight:400;color:rgba(255,255,255,.4);margin-top:4px}
+.arch-step.highlight{background:rgba(99,102,241,.3);border-color:rgba(99,102,241,.6)}
+.arch-step.line-green{background:rgba(6,198,148,.15);border-color:rgba(6,198,148,.4)}
+.arch-arrow{color:var(--indigo-500);font-size:1.25rem;font-weight:700}
+.arch-fork{display:flex;flex-direction:column;gap:8px}
+@media(max-width:640px){.arch-steps{flex-direction:column}.arch-arrow{transform:rotate(90deg)}}
+.comparison-table,.endpoints-table{width:100%;border-collapse:collapse;margin:24px 0;font-size:.875rem}
+.endpoints-table{font-size:.8125rem}
+.comparison-table th,.comparison-table td,.endpoints-table th,.endpoints-table td{padding:10px 14px;text-align:left;border-bottom:1px solid var(--gray-200)}
+.comparison-table th{background:var(--gray-50);font-weight:600;color:var(--slate-800);font-size:.8125rem;text-transform:uppercase;letter-spacing:.03em}
+.comparison-table td,.endpoints-table td{color:var(--slate-700)}
+.comparison-table tr:hover td,.endpoints-table tr:hover td{background:var(--gray-50)}
+.comparison-table .before{color:var(--gray-400);text-decoration:line-through}
+.comparison-table .after{color:var(--emerald-600);font-weight:600}
+.endpoints-table th{background:var(--slate-900);color:var(--indigo-100);font-weight:600;font-size:.75rem;text-transform:uppercase;letter-spacing:.05em}
+.file-card{background:var(--white);border:1px solid var(--gray-200);border-radius:var(--radius-lg);padding:28px 32px;margin:24px 0;position:relative;transition:all .3s ease}
+.file-card:hover{box-shadow:var(--shadow-md);border-color:var(--gray-300)}
+.file-card::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;border-radius:var(--radius-lg) var(--radius-lg) 0 0}
+.file-legal::before{background:linear-gradient(90deg,var(--rose-500),var(--amber-500))}
+.file-onboard::before{background:linear-gradient(90deg,var(--emerald-500),var(--teal-500))}
+.file-security::before{background:linear-gradient(90deg,var(--indigo-500),var(--purple-600))}
+.file-dash::before{background:linear-gradient(90deg,var(--sky-500),var(--indigo-500))}
+.file-card-label{font-family:'JetBrains Mono',monospace;font-size:.75rem;font-weight:700;letter-spacing:.03em;padding:4px 12px;border-radius:100px;display:inline-block;margin-bottom:16px}
+.file-legal .file-card-label{background:var(--rose-50);color:var(--rose-600)}
+.file-onboard .file-card-label{background:var(--emerald-50);color:var(--emerald-600)}
+.file-security .file-card-label{background:var(--purple-50);color:var(--purple-600)}
+.file-dash .file-card-label{background:var(--sky-50);color:var(--sky-500)}
+.file-card h3{font-size:1.125rem;font-weight:700;color:var(--slate-900);margin:0 0 12px 0}
+.file-card p,.file-card ul li{font-size:.9375rem;color:var(--slate-700);line-height:2}
+.file-card p{margin-bottom:12px}.file-card ul{margin:0 0 12px 0;padding-left:0}
+.file-card ul li{padding-left:24px;position:relative;margin-bottom:4px}
+.file-card ul li::before{content:'';position:absolute;left:6px;top:13px;width:5px;height:5px;border-radius:50%}
+.file-legal ul li::before{background:var(--rose-500)}
+.file-onboard ul li::before{background:var(--emerald-500)}
+.file-security ul li::before{background:var(--purple-600)}
+.file-dash ul li::before{background:var(--sky-500)}
+.wizard-steps{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin:32px 0}
+.wizard-step{border-radius:var(--radius-lg);padding:24px;text-align:center;border:1px solid var(--gray-200);position:relative;transition:all .3s ease}
+.wizard-step:hover{box-shadow:var(--shadow-md);transform:translateY(-2px)}
+.wizard-step-number{width:32px;height:32px;border-radius:50%;background:var(--indigo-600);color:var(--white);font-family:'Inter',sans-serif;font-size:.8125rem;font-weight:700;display:inline-flex;align-items:center;justify-content:center;margin-bottom:12px}
+.wizard-step h4{font-size:.9375rem;font-weight:700;color:var(--slate-900);margin-bottom:6px}
+.wizard-step p{font-size:.8125rem;color:var(--slate-600);line-height:1.7;margin-bottom:0}
+.wizard-step.step-welcome{background:var(--indigo-50);border-color:rgba(99,102,241,.2)}
+.wizard-step.step-store{background:var(--amber-50);border-color:rgba(245,158,11,.2)}
+.wizard-step.step-camera{background:var(--emerald-50);border-color:rgba(16,185,129,.2)}
+.wizard-step.step-done{background:var(--purple-50);border-color:rgba(147,51,234,.2)}
+@media(max-width:768px){.wizard-steps{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:480px){.wizard-steps{grid-template-columns:1fr}}
+.legal-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin:32px 0}
+.legal-card{border-radius:var(--radius-lg);padding:24px;border:1px solid var(--gray-200);transition:all .3s ease}
+.legal-card:hover{box-shadow:var(--shadow-md);transform:translateY(-2px)}
+.legal-card h4{font-size:1rem;font-weight:700;color:var(--slate-900);margin-bottom:4px}
+.legal-card .legal-en{font-size:.75rem;color:var(--gray-400);font-family:'JetBrains Mono',monospace;margin-bottom:12px}
+.legal-card p{font-size:.8125rem;color:var(--slate-600);line-height:1.8;margin-bottom:0}
+.legal-card.privacy{background:var(--sky-50);border-color:rgba(14,165,233,.2)}
+.legal-card.terms{background:var(--amber-50);border-color:rgba(245,158,11,.2)}
+.legal-card.tokusho{background:var(--rose-50);border-color:rgba(244,63,94,.2)}
+@media(max-width:640px){.legal-grid{grid-template-columns:1fr}}
+.checklist{margin:32px 0;padding:0}
+.checklist-item{display:flex;align-items:flex-start;gap:12px;padding:12px 16px;border-bottom:1px solid var(--gray-100);font-size:.9375rem;color:var(--slate-700);line-height:1.8}
+.checklist-check{width:22px;height:22px;border-radius:50%;background:var(--emerald-500);color:var(--white);font-size:.75rem;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:4px}
+.checklist-item:last-child{border-bottom:none}
+.decision-box{background:linear-gradient(135deg,var(--sky-50),var(--indigo-50));border:1px solid rgba(14,165,233,.2);border-radius:var(--radius-lg);padding:28px 32px;margin:32px 0}
+.decision-box h3{font-size:1.0625rem;font-weight:700;color:var(--slate-800);margin-bottom:16px}
+.decision-box ul li{padding-left:24px;position:relative;margin-bottom:10px;font-size:.9375rem;color:var(--slate-700);line-height:1.9}
+.decision-box ul li::before{content:'';position:absolute;left:6px;top:12px;width:5px;height:5px;border-radius:50%;background:var(--sky-500)}
+.result-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin:32px 0}
+.result-item{background:var(--gray-50);border:1px solid var(--gray-200);border-radius:var(--radius);padding:20px;text-align:center}
+.result-value{font-family:'Inter',sans-serif;font-size:1.75rem;font-weight:700;line-height:1.2;color:var(--indigo-600)}
+.result-label{font-size:.75rem;color:var(--gray-500);margin-top:4px;font-weight:500}
+@media(max-width:640px){.result-grid{grid-template-columns:repeat(2,1fr)}}
+.roadmap-list{margin:24px 0}
+.roadmap-item{display:flex;align-items:flex-start;gap:16px;padding:16px 20px;border-left:3px solid var(--gray-200);margin-bottom:0;transition:all .2s}
+.roadmap-item:hover{border-left-color:var(--indigo-500);background:var(--gray-50);border-radius:0 var(--radius-sm) var(--radius-sm) 0}
+.roadmap-item.done{border-left-color:var(--emerald-500);background:var(--emerald-50)}
+.roadmap-item.active{border-left-color:var(--indigo-500);background:var(--indigo-50)}
+.roadmap-cycle{font-family:'Inter',sans-serif;font-size:.75rem;font-weight:700;color:var(--indigo-600);background:var(--indigo-50);padding:4px 10px;border-radius:100px;white-space:nowrap;min-width:72px;text-align:center;margin-top:2px}
+.roadmap-item.done .roadmap-cycle{background:var(--emerald-600);color:var(--white)}
+.roadmap-item.active .roadmap-cycle{background:var(--indigo-600);color:var(--white)}
+.roadmap-content{flex:1}
+.roadmap-content strong{font-size:.9375rem;color:var(--slate-900);display:block;margin-bottom:2px}
+.roadmap-content span{font-size:.8125rem;color:var(--gray-500)}
+.article-cta{background:linear-gradient(135deg,var(--indigo-50),var(--purple-50));border:2px solid var(--indigo-100);border-radius:var(--radius-xl);padding:48px 32px;margin:56px 0 0;text-align:center}
+.article-cta h3{font-size:1.375rem;font-weight:700;color:var(--slate-900);margin-bottom:12px}
+.article-cta p{font-size:.9375rem;color:var(--slate-600);line-height:2;margin-bottom:24px}
+.article-cta .cta-buttons{display:flex;align-items:center;justify-content:center;gap:16px;flex-wrap:wrap}
+.footer{background:var(--slate-900);color:rgba(255,255,255,.5);padding:64px 0 32px;border-top:1px solid rgba(255,255,255,.06)}
+.footer-grid{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:40px;margin-bottom:48px}
+.footer-brand{font-size:1.125rem;font-weight:700;color:var(--white);margin-bottom:8px}
+.footer-brand .logo-ai{color:var(--indigo-500)}
+.footer-tagline{font-size:.8125rem;line-height:1.8;margin-bottom:20px}
+.footer-email{font-size:.8125rem;color:var(--indigo-500);transition:color .2s}.footer-email:hover{color:var(--indigo-400)}
+.footer h4{font-size:.75rem;font-weight:600;color:rgba(255,255,255,.7);margin-bottom:16px;letter-spacing:.05em;text-transform:uppercase}
+.footer ul li{margin-bottom:8px}.footer ul a{font-size:.8125rem;transition:color .2s}.footer ul a:hover{color:var(--white)}
+.footer-bottom{border-top:1px solid rgba(255,255,255,.06);padding-top:24px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;font-size:.75rem}
+@media(max-width:768px){.footer-grid{grid-template-columns:1fr 1fr;gap:32px}.file-card{padding:20px 24px}.comparison-table,.endpoints-table{font-size:.75rem}.comparison-table th,.comparison-table td,.endpoints-table th,.endpoints-table td{padding:8px 10px}}
+@media(max-width:480px){.footer-grid{grid-template-columns:1fr}}
+.reveal{opacity:0;transform:translateY(20px);transition:opacity .5s ease,transform .5s ease}
+.reveal.visible{opacity:1;transform:none}
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<header class="header" id="header">
+  <div class="container header-inner">
+    <a href="/" class="logo">ミセバン<span class="logo-ai">AI</span></a>
+    <nav class="nav">
+      <a href="/#setup">導入方法</a>
+      <a href="/#features">機能</a>
+      <a href="/#pricing">料金</a>
+      <a href="/cameras.html">対応カメラ</a>
+      <a href="/blog/">ブログ</a>
+      <a href="/#cta" class="btn btn-primary btn-sm nav-cta">無料で始める</a>
+    </nav>
+    <button class="mobile-toggle" id="mobileToggle" aria-label="メニューを開く"><span></span><span></span><span></span></button>
+  </div>
+</header>
+
+<!-- Mobile Menu -->
+<div class="mobile-menu" id="mobileMenu">
+  <button class="mobile-close" id="mobileClose" aria-label="メニューを閉じる">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+  </button>
+  <a href="/#setup">導入方法</a><a href="/#features">機能</a><a href="/#pricing">料金</a>
+  <a href="/cameras.html">対応カメラ</a><a href="/blog/">ブログ</a>
+  <a href="/#cta" class="btn btn-primary">無料で始める</a>
+</div>
+
+<!-- Article Hero -->
+<section class="article-hero">
+  <div class="container">
+    <div class="article-hero-content">
+      <div class="article-hero-badge">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        Sprint Cycle 6
+      </div>
+      <h1>法務・オンボーディング・クローズドベータ準備</h1>
+      <div class="article-hero-meta">
+        <time datetime="2026-02-23">2026.02.23</time>
+        <span>|</span>
+        <span>ミセバンAI チーム</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Article Body -->
+<article class="article-body">
+
+<a href="/blog/" class="back-link">
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+  ブログ一覧へ戻る
+</a>
+
+<div class="intro-box">
+  <p>Cycle 5 までで、ミセバンAIは技術的に「動くプロダクト」になった。AI推論、DB永続化、リアルタイム通知、Stripe決済、プラン制限。しかし、<strong>日本でSaaSを公開するには「法的ページ」が必須</strong>だ。</p>
+  <p>Sprint Cycle 6 では3つの法務ページ (プライバシーポリシー・利用規約・特商法表記) を整備し、ダッシュボードに<strong>4ステップのオンボーディングウィザード</strong>を実装。セキュリティの強化も行い、クローズドベータ開始の準備を完了した。</p>
+</div>
+
+
+<h2>1. なぜ法務ページが先なのか</h2>
+
+<p>日本でSaaSを公開・課金する場合、以下の法令対応が不可欠だ。</p>
+
+<ul>
+  <li><strong>個人情報保護法</strong> -- カメラ映像は個人情報に該当し得る。取得目的、利用範囲、第三者提供の有無を明示する義務がある</li>
+  <li><strong>特定商取引法</strong> -- オンラインでサブスクリプションを販売する事業者は、販売者の表示義務がある</li>
+  <li><strong>電気通信事業法</strong> -- 映像データをクラウドで処理する場合の通信の秘密保護</li>
+</ul>
+
+<p>法務ページなしにクローズドベータを開始すると、<strong>初期ユーザーの信頼を損なう</strong>。特にカメラ映像を扱うサービスでは「映像データはどう扱われるのか」がユーザーの最大の関心事だ。技術の前に信頼。これが Cycle 6 の判断だ。</p>
+
+
+<h2>2. 法務ページ -- 3つのコンプライアンス文書</h2>
+
+<div class="legal-grid reveal">
+  <div class="legal-card privacy">
+    <h4>プライバシーポリシー</h4>
+    <div class="legal-en">privacy.html</div>
+    <p>個人情報保護法準拠。カメラ映像の取得・処理・保存・削除ポリシーを明記。AI推論結果の取り扱いも含む。</p>
+  </div>
+  <div class="legal-card terms">
+    <h4>利用規約</h4>
+    <div class="legal-en">terms.html</div>
+    <p>SaaS利用条件、料金プランと支払い条件、禁止事項、免責事項、解約・退会手続きを規定。</p>
+  </div>
+  <div class="legal-card tokusho">
+    <h4>特定商取引法に基づく表記</h4>
+    <div class="legal-en">legal.html</div>
+    <p>販売事業者名、所在地、連絡先、料金、支払方法、サービス提供時期、返金ポリシーを記載。</p>
+  </div>
+</div>
+
+
+<div class="file-card file-legal reveal">
+  <span class="file-card-label">web/landing/privacy.html</span>
+  <h3>プライバシーポリシー</h3>
+  <p>カメラ映像を扱うAIサービスとして、特に重視した項目。</p>
+  <ul>
+    <li><strong>カメラ映像の取り扱い</strong> -- 映像はAI推論に使用後、プランに応じた保持期間で自動削除。生映像はクラウドに永続保存しない</li>
+    <li><strong>AI推論結果の扱い</strong> -- 人数カウント、属性分析等の統計データは個人を特定しない形式で保存</li>
+    <li><strong>第三者提供の制限</strong> -- ユーザーの同意なく映像データを第三者に提供しない。AI学習への利用もオプトアウト可能</li>
+    <li><strong>Cookie・アクセスログ</strong> -- Supabase Authのセッション管理、アクセス解析の目的と範囲</li>
+    <li><strong>開示・削除請求</strong> -- 個人情報保護法に基づく開示・訂正・削除の手続きを明記</li>
+  </ul>
+</div>
+
+<pre><code>&lt;!-- privacy.html -- カメラ映像セクション抜粋 --&gt;
+&lt;section class="legal-section"&gt;
+  &lt;h2&gt;4. カメラ映像データの取り扱い&lt;/h2&gt;
+  &lt;p&gt;当社は、お客様が接続したカメラから送信される
+     映像フレームを以下の目的で処理します。&lt;/p&gt;
+  &lt;ul&gt;
+    &lt;li&gt;AI推論による来客数カウント、属性分析、行動分析&lt;/li&gt;
+    &lt;li&gt;アラート（侵入検知、混雑検知等）の判定&lt;/li&gt;
+    &lt;li&gt;ダッシュボードへの分析結果の表示&lt;/li&gt;
+  &lt;/ul&gt;
+  &lt;p&gt;映像フレームはAI推論完了後、ご契約プランに応じた
+     保持期間（Free: 7日、Starter: 30日、Pro: 90日、
+     Enterprise: 最大10年）を経過した時点で自動削除されます。&lt;/p&gt;
+&lt;/section&gt;</code></pre>
+
+
+<div class="file-card file-legal reveal">
+  <span class="file-card-label">web/landing/terms.html</span>
+  <h3>利用規約</h3>
+  <ul>
+    <li><strong>料金プランと変更</strong> -- 4プランの内容、プラン変更時の日割り計算ルール</li>
+    <li><strong>禁止事項</strong> -- 公序良俗に反する映像の処理、他人のカメラへの不正接続、リバースエンジニアリング</li>
+    <li><strong>SLA</strong> -- 月間稼働率99.5%目標。計画メンテナンスは48時間前通知</li>
+    <li><strong>解約・退会</strong> -- Stripe Customer Portal から即時解約。データは30日以内に完全削除</li>
+    <li><strong>免責事項</strong> -- AI推論の精度保証なし。防犯目的の利用は補助手段としての位置づけ</li>
+  </ul>
+</div>
+
+
+<div class="file-card file-legal reveal">
+  <span class="file-card-label">web/landing/legal.html</span>
+  <h3>特定商取引法に基づく表記</h3>
+  <ul>
+    <li><strong>販売事業者</strong> -- 事業者名、代表者、所在地、電話番号</li>
+    <li><strong>販売価格</strong> -- Free &yen;0 / Starter &yen;9,800 / Pro &yen;29,800 / Enterprise &yen;49,800 (税込)</li>
+    <li><strong>支払方法</strong> -- クレジットカード (Stripe経由)</li>
+    <li><strong>役務の提供時期</strong> -- 登録完了後、即時利用可能</li>
+    <li><strong>返金ポリシー</strong> -- サブスクリプション型のため、当月分の返金は不可。翌月以降の課金停止は即時</li>
+  </ul>
+</div>
+
+
+<h2>3. オンボーディングウィザード -- 初回体験を設計する</h2>
+
+<p>法務ページが「信頼」なら、オンボーディングは「体験」だ。初回ログインからカメラ接続までの導線が悪いと、Free ユーザーは価値を体感する前に離脱する。</p>
+
+<div class="wizard-steps reveal">
+  <div class="wizard-step step-welcome">
+    <div class="wizard-step-number">1</div>
+    <h4>Welcome</h4>
+    <p>ミセバンAIへようこそ。サービスの概要と3つのステップを説明。</p>
+  </div>
+  <div class="wizard-step step-store">
+    <div class="wizard-step-number">2</div>
+    <h4>Store Info</h4>
+    <p>店舗名、業種、住所を入力。これがダッシュボードの基本情報になる。</p>
+  </div>
+  <div class="wizard-step step-camera">
+    <div class="wizard-step-number">3</div>
+    <h4>Camera Setup</h4>
+    <p>カメラのRTSP URLを入力して接続テスト。映像が届けば成功。</p>
+  </div>
+  <div class="wizard-step step-done">
+    <div class="wizard-step-number">4</div>
+    <h4>Done!</h4>
+    <p>セットアップ完了。CSS-only紙吹雪アニメーションで達成感を演出。</p>
+  </div>
+</div>
+
+
+<div class="file-card file-onboard reveal">
+  <span class="file-card-label">web/dashboard/onboarding.js</span>
+  <h3>4ステップ オンボーディングウィザード</h3>
+  <ul>
+    <li><strong>ステップ管理</strong> -- <code>currentStep</code> state で1-4を管理。戻る/進むボタンで遷移</li>
+    <li><strong>CSS-only 紙吹雪</strong> -- Step 4 到達時に <code>@keyframes confetti</code> を発火。JSライブラリ不要</li>
+    <li><strong>localStorage 永続化</strong> -- <code>miseban_onboarding_done</code> フラグで2回目以降はスキップ</li>
+    <li><strong>バリデーション</strong> -- 各ステップの入力値を次へ進む前に検証</li>
+  </ul>
+</div>
+
+<pre><code>// オンボーディングウィザード -- コア実装
+const STORAGE_KEY = 'miseban_onboarding_done';
+
+function initOnboarding() {
+  // 既に完了済みならスキップ
+  if (localStorage.getItem(STORAGE_KEY) === 'true') return;
+
+  let currentStep = 1;
+  const totalSteps = 4;
+  const overlay = createOverlay();
+
+  function renderStep(step) {
+    switch (step) {
+      case 1: return renderWelcome();
+      case 2: return renderStoreInfo();
+      case 3: return renderCameraSetup();
+      case 4: return renderComplete();
+    }
+  }
+
+  function nextStep() {
+    if (!validateStep(currentStep)) return;
+    currentStep = Math.min(currentStep + 1, totalSteps);
+    overlay.innerHTML = renderStep(currentStep);
+    if (currentStep === totalSteps) triggerConfetti();
+  }
+
+  function complete() {
+    localStorage.setItem(STORAGE_KEY, 'true');
+    overlay.remove();
+  }
+
+  // 初期表示
+  document.body.appendChild(overlay);
+  overlay.innerHTML = renderStep(1);
+}</code></pre>
+
+<h3>CSS-only 紙吹雪アニメーション</h3>
+
+<pre><code>/* CSS-only confetti -- JSライブラリ不要 */
+@keyframes confetti-fall {
+  0%   { transform: translateY(-100vh) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+}
+
+.confetti-piece {
+  position: fixed;
+  width: 10px;
+  height: 10px;
+  top: -10px;
+  animation: confetti-fall 3s ease-in-out forwards;
+}
+.confetti-piece:nth-child(odd)  { background: var(--indigo-500); }
+.confetti-piece:nth-child(even) { background: var(--amber-500); }
+
+/* 20個の紙吹雪を異なるタイミング・位置で配置 */
+.confetti-piece:nth-child(1)  { left: 5%;  animation-delay: 0s; }
+.confetti-piece:nth-child(2)  { left: 15%; animation-delay: .1s; }
+.confetti-piece:nth-child(3)  { left: 25%; animation-delay: .2s; }
+/* ... 20個まで展開 */</code></pre>
+
+<p>紙吹雪は<strong>純粋CSS</strong>で実装した。<code>canvas-confetti</code> 等の外部ライブラリを入れる選択肢もあったが、オンボーディングの最終ステップだけで使う演出に npm パッケージを追加するのはオーバーキル。20個の <code>div</code> と <code>@keyframes</code> だけで十分な達成感を演出できる。</p>
+
+
+<h2>4. セキュリティ強化</h2>
+
+<div class="file-card file-security reveal">
+  <span class="file-card-label">web/dashboard/auth.js</span>
+  <h3>セッション管理・自動リダイレクト</h3>
+  <ul>
+    <li><strong>401 自動リダイレクト</strong> -- APIが401を返したらログインページに自動遷移。セッション切れの UX を改善</li>
+    <li><strong>5分間隔セッション検証</strong> -- <code>setInterval</code> でSupabaseにセッション有効性を問い合わせ。トークン失効を早期検知</li>
+    <li><strong>キーボードショートカット</strong> -- <code>?</code> キーでオーバーレイ表示。<code>Shift+D</code> でダッシュボード、<code>Shift+A</code> でアラートへ遷移</li>
+  </ul>
+</div>
+
+<pre><code>// セッション検証 -- 5分間隔
+const SESSION_CHECK_INTERVAL = 5 * 60 * 1000; // 5分
+
+function startSessionWatcher() {
+  setInterval(async () =&gt; {
+    const { data: { session }, error } = await supabase.auth.getSession();
+    if (error || !session) {
+      console.warn('Session expired, redirecting to login');
+      window.location.href = '/dashboard/login.html';
+    }
+  }, SESSION_CHECK_INTERVAL);
+}
+
+// 401 インターセプター
+async function apiFetch(url, options = {}) {
+  const res = await fetch(url, {
+    ...options,
+    headers: {
+      ...options.headers,
+      'Authorization': `Bearer ${getAccessToken()}`,
+    },
+  });
+  if (res.status === 401) {
+    window.location.href = '/dashboard/login.html';
+    return;
+  }
+  return res;
+}</code></pre>
+
+<p><code>apiFetch</code> はダッシュボード内の全API呼び出しを統一するラッパー関数だ。認証ヘッダーの付与と 401 ハンドリングを集約することで、各ページでの個別実装を排除した。</p>
+
+
+<h2>5. Before / After -- ベータ開始前後の比較</h2>
+
+<table class="comparison-table reveal">
+  <thead><tr><th>項目</th><th>Cycle 5 (Before)</th><th>Cycle 6 (After)</th></tr></thead>
+  <tbody>
+    <tr><td>法務ページ</td><td class="before">なし (フッターリンクは # 空リンク)</td><td class="after">privacy / terms / legal 3ページ完備</td></tr>
+    <tr><td>初回体験</td><td class="before">ログイン後いきなりダッシュボード</td><td class="after">4ステップウィザードで丁寧に誘導</td></tr>
+    <tr><td>セッション管理</td><td class="before">トークン切れで無言のエラー</td><td class="after">5分検証 + 401自動リダイレクト</td></tr>
+    <tr><td>キーボード操作</td><td class="before">なし</td><td class="after">ショートカットオーバーレイ</td></tr>
+    <tr><td>オンボーディング永続化</td><td class="before">なし</td><td class="after">localStorage で完了フラグ管理</td></tr>
+  </tbody>
+</table>
+
+
+<h2>6. クローズドベータ開始チェックリスト</h2>
+
+<p>Cycle 1-6 の成果を総合すると、クローズドベータに必要な項目がすべて揃った。</p>
+
+<div class="checklist reveal">
+  <div class="checklist-item"><span class="checklist-check">&#10003;</span>ダッシュボード UI + Supabase Auth (Cycle 1)</div>
+  <div class="checklist-item"><span class="checklist-check">&#10003;</span>Rust API + DB パイプライン (Cycle 2)</div>
+  <div class="checklist-item"><span class="checklist-check">&#10003;</span>LINE通知 + リアルタイムアラート (Cycle 3)</div>
+  <div class="checklist-item"><span class="checklist-check">&#10003;</span>Stripe 決済 + 4プラン (Cycle 4)</div>
+  <div class="checklist-item"><span class="checklist-check">&#10003;</span>プラン制限 + LP料金刷新 (Cycle 5)</div>
+  <div class="checklist-item"><span class="checklist-check">&#10003;</span>プライバシーポリシー / 利用規約 / 特商法表記 (Cycle 6)</div>
+  <div class="checklist-item"><span class="checklist-check">&#10003;</span>オンボーディングウィザード (Cycle 6)</div>
+  <div class="checklist-item"><span class="checklist-check">&#10003;</span>セッション管理 + 401リダイレクト (Cycle 6)</div>
+</div>
+
+<blockquote>
+  <p>6つのスプリントサイクルを経て、「技術デモ」から「ベータ公開可能なプロダクト」になった。法務、課金、オンボーディング。地味だが、これが本物のプロダクトと個人プロジェクトを分ける境界線だ。</p>
+</blockquote>
+
+
+<h2>7. 技術的判断</h2>
+
+<div class="decision-box reveal">
+  <h3>なぜこの設計にしたか</h3>
+  <ul>
+    <li><strong>法務ページは静的HTML</strong> -- CMSやMarkdownからの生成ではなく、プレーンHTMLで作成。法務テキストの更新頻度は低く、ビルドパイプラインの複雑さを増やす理由がない</li>
+    <li><strong>CSS-only 紙吹雪</strong> -- 外部ライブラリ依存を避け、数KBのCSSで実装。バンドルサイズを増やさない</li>
+    <li><strong>localStorage で永続化</strong> -- オンボーディング完了フラグはサーバーに保存しない。個人デバイスのローカルで十分。DB往復を減らす</li>
+    <li><strong>5分間隔のセッション検証</strong> -- リアルタイムチェックは過剰。5分間隔で十分にセッション切れを検知でき、API負荷も最小限</li>
+    <li><strong>apiFetch ラッパー</strong> -- 認証処理を1箇所に集約。将来のリフレッシュトークン対応も、この関数だけ修正すれば済む</li>
+  </ul>
+</div>
+
+
+<h2>8. 成果と数字</h2>
+
+<div class="result-grid reveal">
+  <div class="result-item">
+    <div class="result-value nums">~700<span style="font-size:.875rem;font-weight:500">行</span></div>
+    <div class="result-label">追加コード</div>
+  </div>
+  <div class="result-item">
+    <div class="result-value nums">3</div>
+    <div class="result-label">法務ページ</div>
+  </div>
+  <div class="result-item">
+    <div class="result-value nums">4</div>
+    <div class="result-label">ウィザードステップ</div>
+  </div>
+  <div class="result-item">
+    <div class="result-value nums">6<span style="font-size:.875rem;font-weight:500">Cycle</span></div>
+    <div class="result-label">ベータ準備完了</div>
+  </div>
+</div>
+
+<h3>作成・更新したファイル</h3>
+<ol>
+  <li><code>web/landing/privacy.html</code> -- プライバシーポリシー (新規、約180行)</li>
+  <li><code>web/landing/terms.html</code> -- 利用規約 (新規、約160行)</li>
+  <li><code>web/landing/legal.html</code> -- 特定商取引法に基づく表記 (新規、約100行)</li>
+  <li><code>web/dashboard/onboarding.js</code> -- オンボーディングウィザード (新規、約150行)</li>
+  <li><code>web/dashboard/auth.js</code> -- セッション検証 + 401リダイレクト (+60行)</li>
+  <li><code>web/dashboard/index.html</code> -- オンボーディング統合 + ショートカット (+50行)</li>
+</ol>
+
+
+<h2>9. 次のサイクルで何をするか</h2>
+
+<div class="roadmap-list reveal">
+  <div class="roadmap-item done">
+    <span class="roadmap-cycle">Cycle 1</span>
+    <div class="roadmap-content"><strong>ダッシュボード・DB・認証</strong><span>完了 -- UI、6テーブル、Supabase Auth</span></div>
+  </div>
+  <div class="roadmap-item done">
+    <span class="roadmap-cycle">Cycle 2</span>
+    <div class="roadmap-content"><strong>Rust API × Supabase (sqlx + JWT)</strong><span>完了 -- 7エンドポイント、データパイプライン</span></div>
+  </div>
+  <div class="roadmap-item done">
+    <span class="roadmap-cycle">Cycle 3</span>
+    <div class="roadmap-content"><strong>LINE通知Bot + リアルタイムアラート</strong><span>完了 -- 5エンドポイント、LINE Messaging API</span></div>
+  </div>
+  <div class="roadmap-item done">
+    <span class="roadmap-cycle">Cycle 4</span>
+    <div class="roadmap-content"><strong>Stripe決済統合</strong><span>完了 -- Checkout Session、Customer Portal、Webhook</span></div>
+  </div>
+  <div class="roadmap-item done">
+    <span class="roadmap-cycle">Cycle 5</span>
+    <div class="roadmap-content"><strong>プランガード + LP料金刷新</strong><span>完了 -- plan_guard.rs、LP pricing最適化</span></div>
+  </div>
+  <div class="roadmap-item done">
+    <span class="roadmap-cycle">Cycle 6</span>
+    <div class="roadmap-content"><strong>法務・オンボーディング・ベータ準備</strong><span>完了 -- 本記事の内容</span></div>
+  </div>
+  <div class="roadmap-item active">
+    <span class="roadmap-cycle">Cycle 7</span>
+    <div class="roadmap-content"><strong>クローズドベータテスト</strong><span>実店舗での動作検証。実データによるチューニング</span></div>
+  </div>
+  <div class="roadmap-item">
+    <span class="roadmap-cycle">Cycle 8</span>
+    <div class="roadmap-content"><strong>パブリックベータ</strong><span>フィードバック反映、パフォーマンス最適化、広告開始</span></div>
+  </div>
+</div>
+
+<p>Cycle 7 ではいよいよ<strong>クローズドベータテスト</strong>を開始する。実際の店舗にカメラを接続し、本物の来客データでAI推論の精度を検証する。テスト環境と本番環境のギャップ、カメラ設置角度による精度変動、LINE通知の配信遅延。実データでしか見えない課題を洗い出すフェーズだ。</p>
+
+<blockquote>
+  <p>法務ページとオンボーディング。華やかさはないが、ユーザーの「信頼」と「体験」を支える基盤だ。この地味な仕事を飛ばしたプロダクトは、市場で必ずつまずく。</p>
+</blockquote>
+
+
+<!-- CTA -->
+<div class="article-cta reveal">
+  <h3>クローズドベータに参加しませんか? 実店舗での AI 見守りを一緒に検証しましょう。</h3>
+  <p>ミセバンAIは、スプリントサイクルで高速に進化中。<br>既存の防犯カメラがAI店長に変わる、小規模店舗のための次世代AI分析。</p>
+  <div class="cta-buttons">
+    <a href="/blog/" class="btn btn-ghost btn-sm">ブログ一覧を見る</a>
+    <a href="/#cta" class="btn btn-primary btn-sm">ミセバンAIを無料で試す</a>
+  </div>
+</div>
+
+</article>
+
+<!-- Footer -->
+<footer class="footer">
+  <div class="container">
+    <div class="footer-grid">
+      <div>
+        <div class="footer-brand">ミセバン<span class="logo-ai">AI</span></div>
+        <p class="footer-tagline">既存カメラが、AI店長に変わる。<br>小規模店舗のための次世代AI分析。</p>
+        <a href="mailto:info@miseban.ai" class="footer-email">info@miseban.ai</a>
+      </div>
+      <div>
+        <h4>サービス</h4>
+        <ul>
+          <li><a href="/#features">機能</a></li>
+          <li><a href="/#pricing">料金</a></li>
+          <li><a href="/cameras.html">対応カメラ</a></li>
+          <li><a href="/#faq">FAQ</a></li>
+          <li><a href="/#partner">パートナー募集</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>法的情報</h4>
+        <ul>
+          <li><a href="/terms.html">利用規約</a></li>
+          <li><a href="/privacy.html">プライバシーポリシー</a></li>
+          <li><a href="/legal.html">特定商取引法に基づく表記</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>お問い合わせ</h4>
+        <ul>
+          <li><a href="mailto:info@miseban.ai">一般のお問い合わせ</a></li>
+          <li><a href="mailto:partner@miseban.ai">パートナー窓口</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>&copy; 2026 MisebanAI. All rights reserved.</p>
+    </div>
+  </div>
+</footer>
+
+<script>
+(function(){
+  var toggle=document.getElementById('mobileToggle'),menu=document.getElementById('mobileMenu'),close=document.getElementById('mobileClose'),links=menu.querySelectorAll('a');
+  function open(){menu.classList.add('open');document.body.style.overflow='hidden'}
+  function shut(){menu.classList.remove('open');document.body.style.overflow=''}
+  toggle.addEventListener('click',open);close.addEventListener('click',shut);
+  for(var i=0;i<links.length;i++) links[i].addEventListener('click',shut);
+})();
+(function(){
+  var els=document.querySelectorAll('.reveal');
+  if(!('IntersectionObserver' in window)){els.forEach(function(el){el.classList.add('visible')});return}
+  var obs=new IntersectionObserver(function(entries){entries.forEach(function(e){if(e.isIntersecting){e.target.classList.add('visible');obs.unobserve(e.target)}})},{threshold:0.1});
+  els.forEach(function(el){obs.observe(el)});
+})();
+</script>
+</body>
+</html>

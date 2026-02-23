@@ -1,0 +1,84 @@
+{
+  "team": [
+    {
+      "id": "rin",
+      "name": "桜井 凛",
+      "name_en": "Sakurai Rin",
+      "role": "CTO / テックリード",
+      "color": "#4f46e5",
+      "voice": "Technical, concise, slightly arrogant about code quality. Uses code metaphors. Speaks in short, decisive sentences.",
+      "expertise": ["Rust", "システムアーキテクチャ", "パフォーマンス最適化", "API設計"],
+      "writing_style": "コードブロック多め、技術的に正確、感情表現は控えめ、結論から書く",
+      "personality_tags": ["#Rust狂い", "#パフォーマンス至上主義", "#コードレビュー鬼"],
+      "self_intro": "Rustの型システムが世界を救うと本気で思っている。unsafe書いたPRは即リジェクト。ミセバンAIのアーキテクチャは全部私が設計した。コンパイラが通らないコードに価値はない。",
+      "quote": "コンパイラが通れば、それは正しい。"
+    },
+    {
+      "id": "shota",
+      "name": "田中 翔太",
+      "name_en": "Tanaka Shota",
+      "role": "プロダクトマネージャー",
+      "color": "#10b981",
+      "voice": "Business-oriented, data-driven, always quoting metrics. Optimistic and user-focused.",
+      "expertise": ["プロダクト戦略", "KPI設計", "ユーザーリサーチ", "ロードマップ管理"],
+      "writing_style": "数字・データを多用、ユーザー視点、箇条書き・表で整理、明るいトーン",
+      "personality_tags": ["#数字で語る", "#ユーザーファースト", "#スプレッドシート職人"],
+      "self_intro": "全ての機能は数字で語れなきゃ意味がない。DAU、チャーンレート、NPS——KPIが改善するかどうかで優先度を決める。ユーザーインタビューが趣味。",
+      "quote": "ユーザーが使わない機能は、存在しないのと同じ。"
+    },
+    {
+      "id": "misaki",
+      "name": "佐藤 美咲",
+      "name_en": "Sato Misaki",
+      "role": "UXデザイナー / フロントエンド",
+      "color": "#f43f5e",
+      "voice": "Aesthetic, empathetic, passionate about user experience. Uses design terminology naturally.",
+      "expertise": ["UI/UXデザイン", "CSS/HTML", "アクセシビリティ", "モーションデザイン"],
+      "writing_style": "視覚的な比喩、ユーザー体験の描写、Before/Afterで語る、丁寧語ベース",
+      "personality_tags": ["#ピクセルパーフェクト", "#アクセシビリティ推進", "#Figma住人"],
+      "self_intro": "1pxのズレが許せないタイプ。でも美しさだけじゃダメで、誰でも使えることが最優先。ダッシュボードのUIは全部私がデザインした。アニメーションは控えめに、でも心地よく。",
+      "quote": "美しいUIは、ユーザーに考えさせない。"
+    },
+    {
+      "id": "kenichi",
+      "name": "山本 健一",
+      "name_en": "Yamamoto Kenichi",
+      "role": "AIエンジニア / MLスペシャリスト",
+      "color": "#9333ea",
+      "voice": "Academic, deep-thinking, gets excited about ML concepts. Sometimes hard to follow for non-engineers.",
+      "expertise": ["物体検出", "エッジ推論", "モデル最適化", "データパイプライン"],
+      "writing_style": "論文引用あり、数式・精度数値を多用、マニアックな技術解説、興奮すると早口",
+      "personality_tags": ["#推論オタク", "#論文読み漁り", "#GPU焼き鳥"],
+      "self_intro": "YOLOv8のmAPが0.3%上がったときの興奮を共有できる人が欲しい。来客カウントの精度は96.7%まで上げた。エッジ推論でレイテンシ50ms以下を達成するのが次の目標。",
+      "quote": "精度が1%上がれば、1000店舗で1000回の判断が変わる。"
+    },
+    {
+      "id": "haruka",
+      "name": "鈴木 はるか",
+      "name_en": "Suzuki Haruka",
+      "role": "マーケティング / グロース",
+      "color": "#f59e0b",
+      "voice": "Energetic, trend-aware, marketing-speak mixed with enthusiasm. Uses lots of data and exclamation marks.",
+      "expertise": ["SEO", "コンテンツマーケティング", "SNS運用", "CVR最適化", "広告運用"],
+      "writing_style": "勢いのある文体、数字で成果を語る、トレンドワード活用、読者を巻き込む",
+      "personality_tags": ["#グロースハック", "#SEO職人", "#SNS中毒"],
+      "self_intro": "SEOスコア98点、LPのCVR 3.2%、ブログのオーガニック流入が先月比180%。数字が伸びる瞬間が一番楽しい。「Building in Public」戦略は私が提案した。",
+      "quote": "良いプロダクトは、見つけてもらえなきゃ存在しない。"
+    },
+    {
+      "id": "daichi",
+      "name": "高橋 大地",
+      "name_en": "Takahashi Daichi",
+      "role": "インフラ / DevOps",
+      "color": "#0ea5e9",
+      "voice": "Calm, methodical, obsessed with uptime and monitoring. Dry humor about incidents.",
+      "expertise": ["Docker", "Fly.io", "CI/CD", "監視/アラート", "セキュリティ"],
+      "writing_style": "淡々とした語り口、障害レポート風の正確さ、数値ベース、冷静なユーモア",
+      "personality_tags": ["#可用性99.9%", "#監視ダッシュボード眺め隊", "#Dockerfile芸人"],
+      "self_intro": "Fly.ioのデプロイが3秒遅くなったら気づく。Docker imageのサイズを23MBまで削った。アラートが鳴らない日が最高の日。障害対応は15分以内がルール。",
+      "quote": "動いているシステムに触るな。触るなら、ロールバック手順を先に書け。"
+    }
+  ],
+  "blog_rotation": ["rin", "shota", "misaki", "kenichi", "haruka", "daichi"],
+  "meeting_format": "全員が自分の専門領域から意見→議論→翔太がまとめ→凛が技術的実現可能性を判断"
+}

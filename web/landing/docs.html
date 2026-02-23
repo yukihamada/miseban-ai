@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>API ドキュメント｜ミセバンAI</title>
+<meta name="description" content="ミセバンAI REST API リファレンス。エンドポイント一覧、認証方法、リクエスト・レスポンス例を掲載。">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://miseban.ai/docs.html">
+
+<!-- Favicon -->
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%234f46e5'/><text x='50%25' y='54%25' dominant-baseline='middle' text-anchor='middle' fill='white' font-size='18' font-weight='bold' font-family='sans-serif'>M</text></svg>">
+
+<!-- Google Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
+
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --white:#ffffff;
+  --gray-50:#f8fafc;
+  --gray-100:#f1f5f9;
+  --gray-200:#e2e8f0;
+  --gray-300:#cbd5e1;
+  --gray-400:#94a3b8;
+  --gray-500:#64748b;
+  --slate-600:#475569;
+  --slate-700:#334155;
+  --slate-800:#1e293b;
+  --slate-900:#0f172a;
+  --indigo-50:#eef2ff;
+  --indigo-100:#e0e7ff;
+  --indigo-500:#6366f1;
+  --indigo-600:#4f46e5;
+  --indigo-700:#4338ca;
+  --indigo-900:#312e81;
+  --indigo-950:#1e1b4b;
+  --green-50:#f0fdf4;
+  --green-600:#16a34a;
+  --green-700:#15803d;
+  --blue-50:#eff6ff;
+  --blue-600:#2563eb;
+  --blue-700:#1d4ed8;
+  --amber-50:#fffbeb;
+  --amber-600:#d97706;
+  --amber-700:#b45309;
+  --radius-sm:8px;
+  --radius:12px;
+  --radius-lg:16px;
+  --shadow-sm:0 1px 3px rgba(0,0,0,.1),0 1px 2px rgba(0,0,0,.06);
+}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+body{font-family:'Noto Sans JP','Inter',system-ui,-apple-system,sans-serif;color:var(--slate-900);background:var(--white);line-height:1.8;overflow-x:hidden;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
+a{text-decoration:none;color:inherit;transition:color .2s}
+.container{max-width:1200px;margin:0 auto;padding:0 24px}
+
+/* Header */
+.header{background:var(--white);border-bottom:1px solid var(--gray-200);position:sticky;top:0;z-index:100}
+.header-inner{display:flex;align-items:center;justify-content:space-between;height:72px}
+.logo{display:flex;align-items:center;gap:2px;font-size:1.25rem;font-weight:700;color:var(--slate-900)}
+.logo-ai{color:var(--indigo-600);font-weight:700}
+.nav{display:flex;align-items:center;gap:24px}
+.nav a{font-size:.875rem;font-weight:400;color:var(--slate-600);transition:color .2s}
+.nav a:hover{color:var(--indigo-600)}
+
+/* Page Header */
+.page-header{background:linear-gradient(165deg,var(--slate-900) 0%,#1a1647 50%,var(--indigo-950) 100%);padding:80px 0 48px;color:var(--white)}
+.page-header h1{font-size:clamp(1.75rem,4vw,2.5rem);font-weight:700;line-height:1.4;margin-bottom:8px}
+.page-header p{font-size:.9375rem;color:rgba(255,255,255,.7)}
+
+/* Content */
+.docs-content{max-width:960px;margin:0 auto;padding:56px 24px 80px}
+.docs-content h2{font-size:1.375rem;font-weight:700;color:var(--slate-900);margin-top:48px;margin-bottom:16px;padding-bottom:8px;border-bottom:2px solid var(--indigo-100)}
+.docs-content h3{font-size:1.125rem;font-weight:700;color:var(--slate-800);margin-top:32px;margin-bottom:12px}
+.docs-content p{font-size:.9375rem;color:var(--slate-700);line-height:1.9;margin-bottom:16px}
+.docs-content ul{margin:12px 0 20px 24px;font-size:.9375rem;color:var(--slate-700);line-height:1.9;list-style:disc}
+.docs-content ul li{margin-bottom:6px}
+
+/* Base URL box */
+.base-url{background:var(--slate-900);color:#e2e8f0;padding:16px 24px;border-radius:var(--radius-sm);font-family:'Inter',monospace;font-size:.9375rem;margin:16px 0 24px;overflow-x:auto}
+.base-url span{color:var(--indigo-500);font-weight:600}
+
+/* Inline code */
+.docs-content code{background:var(--gray-100);color:var(--indigo-700);padding:2px 8px;border-radius:4px;font-size:.875rem;font-family:'Inter',monospace}
+
+/* Endpoint cards */
+.endpoint-group{margin-top:24px}
+.endpoint-group-title{font-size:1rem;font-weight:700;color:var(--slate-800);margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.endpoint-group-title .badge{font-size:.75rem;font-weight:600;padding:2px 10px;border-radius:100px;color:var(--white)}
+.badge-public{background:var(--green-600)}
+.badge-auth{background:var(--indigo-600)}
+.badge-billing{background:var(--amber-600)}
+
+.endpoint-card{background:var(--white);border:1px solid var(--gray-200);border-radius:var(--radius-sm);margin-bottom:12px;overflow:hidden;transition:border-color .2s}
+.endpoint-card:hover{border-color:var(--indigo-500)}
+.endpoint-row{display:flex;align-items:center;gap:12px;padding:14px 20px;cursor:pointer}
+.endpoint-row .method{font-size:.75rem;font-weight:700;padding:4px 10px;border-radius:4px;color:var(--white);font-family:'Inter',monospace;letter-spacing:.02em;min-width:60px;text-align:center;flex-shrink:0}
+.method-get{background:var(--green-600)}
+.method-post{background:var(--blue-600)}
+.method-patch{background:var(--amber-600)}
+.endpoint-row .path{font-size:.875rem;font-family:'Inter',monospace;color:var(--slate-900);font-weight:600;flex-shrink:0}
+.endpoint-row .desc{font-size:.8125rem;color:var(--slate-600);margin-left:auto;text-align:right;flex-shrink:1}
+.endpoint-row .tier{font-size:.6875rem;font-weight:600;color:var(--indigo-600);background:var(--indigo-50);padding:2px 8px;border-radius:100px;flex-shrink:0;margin-left:8px}
+
+/* Expandable detail */
+.endpoint-detail{display:none;border-top:1px solid var(--gray-200);padding:20px;background:var(--gray-50)}
+.endpoint-card.open .endpoint-detail{display:block}
+.endpoint-detail h4{font-size:.875rem;font-weight:700;color:var(--slate-800);margin-bottom:8px;margin-top:16px}
+.endpoint-detail h4:first-child{margin-top:0}
+
+/* Code blocks */
+pre.code-block{background:var(--slate-900);color:#e2e8f0;padding:20px 24px;border-radius:var(--radius-sm);font-family:'Inter',monospace;font-size:.8125rem;line-height:1.7;overflow-x:auto;margin:8px 0 16px;white-space:pre;word-break:normal}
+pre.code-block .comment{color:var(--gray-400)}
+pre.code-block .string{color:#a5f3fc}
+pre.code-block .key{color:#c4b5fd}
+pre.code-block .number{color:#fca5a5}
+
+/* Auth section */
+.auth-box{background:var(--indigo-50);border:1px solid var(--indigo-100);border-radius:var(--radius-sm);padding:20px 24px;margin:16px 0 24px}
+.auth-box p{margin-bottom:8px;font-size:.9375rem;color:var(--slate-700)}
+.auth-box code{background:var(--white);font-size:.8125rem}
+
+/* Table of contents */
+.toc{background:var(--gray-50);border:1px solid var(--gray-200);border-radius:var(--radius-sm);padding:20px 24px;margin:0 0 32px}
+.toc-title{font-size:.875rem;font-weight:700;color:var(--slate-800);margin-bottom:8px}
+.toc ul{list-style:none;margin:0;padding:0}
+.toc ul li{margin-bottom:4px}
+.toc ul li a{font-size:.875rem;color:var(--indigo-600);transition:color .2s}
+.toc ul li a:hover{color:var(--indigo-700);text-decoration:underline}
+
+/* Footer */
+.footer{background:var(--slate-900);color:rgba(255,255,255,.7);padding:48px 0 32px;border-top:1px solid rgba(255,255,255,.06)}
+.footer-inner{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px}
+.footer-brand{font-size:1rem;font-weight:700;color:var(--white)}
+.footer-brand .logo-ai{color:var(--indigo-500)}
+.footer-links{display:flex;gap:24px;flex-wrap:wrap}
+.footer-links a{font-size:.8125rem;color:rgba(255,255,255,.6);transition:color .2s}
+.footer-links a:hover{color:var(--white)}
+.footer-copy{width:100%;text-align:center;font-size:.75rem;color:rgba(255,255,255,.4);margin-top:24px;padding-top:24px;border-top:1px solid rgba(255,255,255,.06)}
+
+@media(max-width:768px){
+  .page-header{padding:64px 0 36px}
+  .docs-content{padding:40px 20px 60px}
+  .docs-content h2{font-size:1.25rem;margin-top:36px}
+  .endpoint-row{flex-wrap:wrap;gap:8px}
+  .endpoint-row .desc{margin-left:0;text-align:left;width:100%;padding-left:72px}
+  .endpoint-row .tier{margin-left:72px}
+  .footer-inner{flex-direction:column;text-align:center}
+  .footer-links{justify-content:center}
+  .nav{gap:16px}
+}
+@media(max-width:480px){
+  .endpoint-row .desc{padding-left:0}
+  .endpoint-row .tier{margin-left:0}
+}
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="container">
+    <div class="header-inner">
+      <a href="/" class="logo">ミセバン<span class="logo-ai">AI</span></a>
+      <nav class="nav">
+        <a href="/">トップ</a>
+        <a href="/blog/">ブログ</a>
+        <a href="/terms.html">利用規約</a>
+        <a href="/legal.html">特商法表記</a>
+      </nav>
+    </div>
+  </div>
+</header>
+
+<div class="page-header">
+  <div class="container">
+    <h1>API ドキュメント</h1>
+    <p>ミセバンAI REST API リファレンス</p>
+  </div>
+</div>
+
+<main class="docs-content">
+
+  <nav class="toc">
+    <div class="toc-title">目次</div>
+    <ul>
+      <li><a href="#base-url">ベース URL</a></li>
+      <li><a href="#authentication">認証</a></li>
+      <li><a href="#public">認証不要エンドポイント (Public)</a></li>
+      <li><a href="#protected">認証必須エンドポイント (JWT Required)</a></li>
+      <li><a href="#billing">課金管理エンドポイント (Billing)</a></li>
+      <li><a href="#errors">エラーレスポンス</a></li>
+    </ul>
+  </nav>
+
+  <!-- Base URL -->
+  <h2 id="base-url">ベース URL</h2>
+  <p>すべてのAPIリクエストは以下のベースURLに送信してください。</p>
+  <div class="base-url"><span>https://api.miseban.ai/api/v1</span></div>
+  <p>すべてのリクエスト・レスポンスは <code>application/json</code> 形式です（CSV出力を除く）。</p>
+
+  <!-- Authentication -->
+  <h2 id="authentication">認証</h2>
+  <p>認証が必要なエンドポイントでは、リクエストヘッダーに JWT Bearer トークンを含めてください。トークンは Supabase Auth を通じて取得できます。</p>
+  <div class="auth-box">
+    <p><strong>ヘッダー形式:</strong></p>
+    <p><code>Authorization: Bearer &lt;your_jwt_token&gt;</code></p>
+    <p>トークンはダッシュボードへのログイン時に Supabase Auth から発行されます。有効期限が切れた場合はリフレッシュトークンを使用して再取得してください。</p>
+  </div>
+
+  <!-- Public endpoints -->
+  <h2 id="public">認証不要エンドポイント (Public)</h2>
+  <p>以下のエンドポイントは認証なしでアクセスできます。</p>
+
+  <div class="endpoint-group">
+    <!-- GET /api/v1/health -->
+    <div class="endpoint-card" id="ep-health">
+      <div class="endpoint-row" onclick="toggleDetail('ep-health')">
+        <span class="method method-get">GET</span>
+        <span class="path">/api/v1/health</span>
+        <span class="desc">ヘルスチェック</span>
+      </div>
+      <div class="endpoint-detail">
+        <h4>説明</h4>
+        <p>APIサーバーの稼働状態を確認します。監視ツールやロードバランサーのヘルスチェックに使用できます。</p>
+        <h4>リクエスト例</h4>
+<pre class="code-block"><span class="comment"># ヘルスチェック</span>
+curl https://api.miseban.ai/api/v1/health</pre>
+        <h4>レスポンス例 (200 OK)</h4>
+<pre class="code-block">{
+  <span class="key">"status"</span>: <span class="string">"ok"</span>,
+  <span class="key">"version"</span>: <span class="string">"1.0.0"</span>,
+  <span class="key">"timestamp"</span>: <span class="string">"2026-02-23T10:00:00Z"</span>
+}</pre>
+      </div>
+    </div>
+
+    <!-- GET /api/v1/pricing -->
+    <div class="endpoint-card" id="ep-pricing">
+      <div class="endpoint-row" onclick="toggleDetail('ep-pricing')">
+        <span class="method method-get">GET</span>
+        <span class="path">/api/v1/pricing</span>
+        <span class="desc">料金プラン一覧</span>
+      </div>
+      <div class="endpoint-detail">
+        <h4>説明</h4>
+        <p>利用可能な料金プランとその詳細情報を取得します。</p>
+        <h4>リクエスト例</h4>
+<pre class="code-block">curl https://api.miseban.ai/api/v1/pricing</pre>
+        <h4>レスポンス例 (200 OK)</h4>
+<pre class="code-block">{
+  <span class="key">"plans"</span>: [
+    {
+      <span class="key">"id"</span>: <span class="string">"free"</span>,
+      <span class="key">"name"</span>: <span class="string">"Free"</span>,
+      <span class="key">"price"</span>: <span class="number">0</span>,
+      <span class="key">"cameras"</span>: <span class="number">1</span>,
+      <span class="key">"retention_days"</span>: <span class="number">7</span>
+    },
+    {
+      <span class="key">"id"</span>: <span class="string">"starter"</span>,
+      <span class="key">"name"</span>: <span class="string">"Starter"</span>,
+      <span class="key">"price"</span>: <span class="number">2980</span>,
+      <span class="key">"cameras"</span>: <span class="number">3</span>,
+      <span class="key">"retention_days"</span>: <span class="number">30</span>
+    },
+    {
+      <span class="key">"id"</span>: <span class="string">"pro"</span>,
+      <span class="key">"name"</span>: <span class="string">"Pro"</span>,
+      <span class="key">"price"</span>: <span class="number">9800</span>,
+      <span class="key">"cameras"</span>: <span class="number">10</span>,
+      <span class="key">"retention_days"</span>: <span class="number">90</span>
+    }
+  ]
+}</pre>
+      </div>
+    </div>
+
+    <!-- POST /api/v1/webhooks/line -->
+    <div class="endpoint-card" id="ep-line">
+      <div class="endpoint-row" onclick="toggleDetail('ep-line')">
+        <span class="method method-post">POST</span>
+        <span class="path">/api/v1/webhooks/line</span>
+        <span class="desc">LINE Webhook受信</span>
+      </div>
+      <div class="endpoint-detail">
+        <h4>説明</h4>
+        <p>LINE Messaging API からの Webhook イベントを受信します。LINE Developers コンソールで Webhook URL として設定してください。リクエストは LINE の署名検証により認証されます。</p>
+      </div>
+    </div>
+
+    <!-- POST /api/v1/webhooks/stripe -->
+    <div class="endpoint-card" id="ep-stripe">
+      <div class="endpoint-row" onclick="toggleDetail('ep-stripe')">
+        <span class="method method-post">POST</span>
+        <span class="path">/api/v1/webhooks/stripe</span>
+        <span class="desc">Stripe Webhook受信</span>
+      </div>
+      <div class="endpoint-detail">
+        <h4>説明</h4>
+        <p>Stripe からの Webhook イベント（決済完了、サブスクリプション更新等）を受信します。Stripe の Webhook 署名検証により認証されます。</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Protected endpoints -->
+  <h2 id="protected">認証必須エンドポイント (JWT Required)</h2>
+  <p>以下のエンドポイントにはすべて <code>Authorization: Bearer &lt;token&gt;</code> ヘッダーが必要です。</p>
+
+  <div class="endpoint-group">
+    <!-- POST /api/v1/frames -->
+    <div class="endpoint-card" id="ep-frames">
+      <div class="endpoint-row" onclick="toggleDetail('ep-frames')">
+        <span class="method method-post">POST</span>
+        <span class="path">/api/v1/frames</span>
+        <span class="desc">フレーム送信（カメラ映像分析）</span>
+      </div>
+      <div class="endpoint-detail">
+        <h4>説明</h4>
+        <p>カメラからキャプチャしたフレーム画像を送信し、AI分析（来客カウント、動線分析等）を実行します。</p>
+        <h4>リクエスト例</h4>
+<pre class="code-block"><span class="comment"># フレーム画像を送信</span>
+curl -X POST https://api.miseban.ai/api/v1/frames \
+  -H <span class="string">"Authorization: Bearer &lt;token&gt;"</span> \
+  -H <span class="string">"Content-Type: application/json"</span> \
+  -d '{
+    <span class="key">"camera_id"</span>: <span class="string">"cam_01"</span>,
+    <span class="key">"image"</span>: <span class="string">"&lt;base64_encoded_image&gt;"</span>,
+    <span class="key">"timestamp"</span>: <span class="string">"2026-02-23T10:30:00Z"</span>
+  }'</pre>
+        <h4>レスポンス例 (200 OK)</h4>
+<pre class="code-block">{
+  <span class="key">"frame_id"</span>: <span class="string">"frm_abc123"</span>,
+  <span class="key">"analysis"</span>: {
+    <span class="key">"people_count"</span>: <span class="number">12</span>,
+    <span class="key">"zone_occupancy"</span>: {
+      <span class="key">"entrance"</span>: <span class="number">3</span>,
+      <span class="key">"register"</span>: <span class="number">5</span>,
+      <span class="key">"aisle"</span>: <span class="number">4</span>
+    }
+  },
+  <span class="key">"processed_at"</span>: <span class="string">"2026-02-23T10:30:01Z"</span>
+}</pre>
+      </div>
+    </div>
+
+    <!-- GET /api/v1/stores/me/stats -->
+    <div class="endpoint-card" id="ep-stats">
+      <div class="endpoint-row" onclick="toggleDetail('ep-stats')">
+        <span class="method method-get">GET</span>
+        <span class="path">/api/v1/stores/me/stats</span>
+        <span class="desc">店舗統計情報</span>
+      </div>
+      <div class="endpoint-detail">
+        <h4>説明</h4>
+        <p>ログイン中の店舗に紐づく統計サマリー（本日の来客数、ピーク時間帯、前日比等）を返します。</p>
+        <h4>リクエスト例</h4>
+<pre class="code-block">curl https://api.miseban.ai/api/v1/stores/me/stats \
+  -H <span class="string">"Authorization: Bearer &lt;token&gt;"</span></pre>
+        <h4>レスポンス例 (200 OK)</h4>
+<pre class="code-block">{
+  <span class="key">"today_visitors"</span>: <span class="number">142</span>,
+  <span class="key">"yesterday_visitors"</span>: <span class="number">128</span>,
+  <span class="key">"change_rate"</span>: <span class="number">10.9</span>,
+  <span class="key">"peak_hour"</span>: <span class="string">"13:00"</span>,
+  <span class="key">"avg_stay_minutes"</span>: <span class="number">18.5</span>,
+  <span class="key">"active_cameras"</span>: <span class="number">3</span>
+}</pre>
+      </div>
+    </div>
+
+    <!-- GET /api/v1/stores/me/daily -->
+    <div class="endpoint-card" id="ep-daily">
+      <div class="endpoint-row" onclick="toggleDetail('ep-daily')">
+        <span class="method method-get">GET</span>
+        <span class="path">/api/v1/stores/me/daily</span>
+        <span class="desc">日次レポート</span>
+      </div>
+      <div class="endpoint-detail">
+        <h4>説明</h4>
+        <p>指定期間の日次レポートデータを取得します。クエリパラメータ <code>from</code> と <code>to</code> で期間を指定できます（YYYY-MM-DD形式）。</p>
+      </div>
+    </div>
+
+    <!-- GET /api/v1/stores/me/cameras -->
+    <div class="endpoint-card" id="ep-cameras">
+      <div class="endpoint-row" onclick="toggleDetail('ep-cameras')">
+        <span class="method method-get">GET</span>
+        <span class="path">/api/v1/stores/me/cameras</span>
+        <span class="desc">カメラ一覧</span>
+      </div>
+      <div class="endpoint-detail">
+        <h4>説明</h4>
+        <p>店舗に登録されているカメラの一覧と各カメラのステータス（オンライン/オフライン、最終接続日時等）を返します。</p>
+      </div>
+    </div>
+
+    <!-- GET /api/v1/stores/me/usage -->
+    <div class="endpoint-card" id="ep-usage">
+      <div class="endpoint-row" onclick="toggleDetail('ep-usage')">
+        <span class="method method-get">GET</span>
+        <span class="path">/api/v1/stores/me/usage</span>
+        <span class="desc">プラン使用状況</span>
+      </div>
+      <div class="endpoint-detail">
+        <h4>説明</h4>
+        <p>現在のプランにおけるリソース使用状況（カメラ数、ストレージ、API呼び出し回数等）を返します。</p>
+      </div>
+    </div>
+
+    <!-- GET /api/v1/stores/me/alerts -->
+    <div class="endpoint-card" id="ep-alerts">
+      <div class="endpoint-row" onclick="toggleDetail('ep-alerts')">
+        <span class="method method-get">GET</span>
+        <span class="path">/api/v1/stores/me/alerts</span>
+        <span class="desc">アラート一覧</span>
+      </div>
+      <div class="endpoint-detail">
+        <h4>説明</h4>
+        <p>店舗のアラート一覧を取得します。異常検知、カメラオフライン、来客急増等の通知が含まれます。</p>
+      </div>
+    </div>
+
+    <!-- GET /api/v1/stores/me/alerts/count -->
+    <div class="endpoint-card" id="ep-alerts-count">
+      <div class="endpoint-row" onclick="toggleDetail('ep-alerts-count')">
+        <span class="method method-get">GET</span>
+        <span class="path">/api/v1/stores/me/alerts/count</span>
+        <span class="desc">未読アラート数</span>
+      </div>
+      <div class="endpoint-detail">
+        <h4>説明</h4>
+        <p>未読アラートの件数を返します。ダッシュボードのバッジ表示等に使用できます。</p>
+      </div>
+    </div>
+
+    <!-- PATCH /api/v1/alerts/:alert_id/read -->
+    <div class="endpoint-card" id="ep-alert-read">
+      <div class="endpoint-row" onclick="toggleDetail('ep-alert-read')">
+        <span class="method method-patch">PATCH</span>
+        <span class="path">/api/v1/alerts/:alert_id/read</span>
+        <span class="desc">アラート既読</span>
+      </div>
+      <div class="endpoint-detail">
+        <h4>説明</h4>
+        <p>指定したアラートを既読にします。<code>:alert_id</code> にはアラートのIDを指定してください。</p>
+      </div>
+    </div>
+
+    <!-- POST /api/v1/alerts/read-all -->
+    <div class="endpoint-card" id="ep-alerts-readall">
+      <div class="endpoint-row" onclick="toggleDetail('ep-alerts-readall')">
+        <span class="method method-post">POST</span>
+        <span class="path">/api/v1/alerts/read-all</span>
+        <span class="desc">全アラート既読</span>
+      </div>
+      <div class="endpoint-detail">
+        <h4>説明</h4>
+        <p>すべての未読アラートを一括で既読にします。</p>
+      </div>
+    </div>
+
+    <!-- GET /api/v1/stores/me/export/csv -->
+    <div class="endpoint-card" id="ep-csv">
+      <div class="endpoint-row" onclick="toggleDetail('ep-csv')">
+        <span class="method method-get">GET</span>
+        <span class="path">/api/v1/stores/me/export/csv</span>
+        <span class="desc">CSV出力</span>
+        <span class="tier">Pro以上</span>
+      </div>
+      <div class="endpoint-detail">
+        <h4>説明</h4>
+        <p>統計データをCSV形式でエクスポートします。Pro プラン以上で利用可能です。クエリパラメータ <code>from</code>、<code>to</code> で期間を指定できます。</p>
+        <h4>リクエスト例</h4>
+<pre class="code-block"><span class="comment"># CSV出力（Pro以上）</span>
+curl https://api.miseban.ai/api/v1/stores/me/export/csv?from=2026-02-01&amp;to=2026-02-23 \
+  -H <span class="string">"Authorization: Bearer &lt;token&gt;"</span> \
+  -o report.csv</pre>
+        <h4>レスポンス例 (200 OK)</h4>
+<pre class="code-block"><span class="comment"># Content-Type: text/csv</span>
+date,visitors,peak_hour,avg_stay_minutes
+2026-02-01,135,12:00,17.2
+2026-02-02,142,13:00,18.5
+2026-02-03,98,11:00,15.8
+...</pre>
+        <h4>エラー例 (403 Forbidden)</h4>
+<pre class="code-block">{
+  <span class="key">"error"</span>: <span class="string">"plan_upgrade_required"</span>,
+  <span class="key">"message"</span>: <span class="string">"CSV出力にはProプラン以上が必要です"</span>
+}</pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- Billing endpoints -->
+  <h2 id="billing">課金管理エンドポイント (Billing)</h2>
+  <p>サブスクリプション管理と決済に関するエンドポイントです。すべて <code>Authorization</code> ヘッダーが必要です。</p>
+
+  <div class="endpoint-group">
+    <!-- POST /api/v1/billing/checkout -->
+    <div class="endpoint-card" id="ep-checkout">
+      <div class="endpoint-row" onclick="toggleDetail('ep-checkout')">
+        <span class="method method-post">POST</span>
+        <span class="path">/api/v1/billing/checkout</span>
+        <span class="desc">Stripe決済開始</span>
+      </div>
+      <div class="endpoint-detail">
+        <h4>説明</h4>
+        <p>Stripe Checkout セッションを作成し、決済URLを返します。クライアント側でこのURLにリダイレクトしてください。</p>
+      </div>
+    </div>
+
+    <!-- POST /api/v1/billing/portal -->
+    <div class="endpoint-card" id="ep-portal">
+      <div class="endpoint-row" onclick="toggleDetail('ep-portal')">
+        <span class="method method-post">POST</span>
+        <span class="path">/api/v1/billing/portal</span>
+        <span class="desc">顧客ポータル</span>
+      </div>
+      <div class="endpoint-detail">
+        <h4>説明</h4>
+        <p>Stripe カスタマーポータルのURLを返します。利用者はポータルでプラン変更、支払い方法の更新、請求書の確認が可能です。</p>
+      </div>
+    </div>
+
+    <!-- GET /api/v1/billing/subscription -->
+    <div class="endpoint-card" id="ep-subscription">
+      <div class="endpoint-row" onclick="toggleDetail('ep-subscription')">
+        <span class="method method-get">GET</span>
+        <span class="path">/api/v1/billing/subscription</span>
+        <span class="desc">サブスクリプション情報</span>
+      </div>
+      <div class="endpoint-detail">
+        <h4>説明</h4>
+        <p>現在のサブスクリプションの状態（プラン名、ステータス、次回請求日等）を返します。</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Error responses -->
+  <h2 id="errors">エラーレスポンス</h2>
+  <p>APIはエラー時に適切なHTTPステータスコードと以下の形式のJSONレスポンスを返します。</p>
+<pre class="code-block">{
+  <span class="key">"error"</span>: <span class="string">"error_code"</span>,
+  <span class="key">"message"</span>: <span class="string">"人間が読めるエラーメッセージ"</span>
+}</pre>
+
+  <h3>主なステータスコード</h3>
+  <ul>
+    <li><code>400</code> Bad Request - リクエストの形式が不正</li>
+    <li><code>401</code> Unauthorized - 認証トークンが無効または未指定</li>
+    <li><code>403</code> Forbidden - プランの制限によりアクセス不可</li>
+    <li><code>404</code> Not Found - リソースが見つからない</li>
+    <li><code>429</code> Too Many Requests - レート制限超過</li>
+    <li><code>500</code> Internal Server Error - サーバー内部エラー</li>
+  </ul>
+
+</main>
+
+<footer class="footer">
+  <div class="container">
+    <div class="footer-inner">
+      <div class="footer-brand">ミセバン<span class="logo-ai">AI</span></div>
+      <div class="footer-links">
+        <a href="/">トップ</a>
+        <a href="/blog/">ブログ</a>
+        <a href="/docs.html">API ドキュメント</a>
+        <a href="/privacy.html">プライバシーポリシー</a>
+        <a href="/terms.html">利用規約</a>
+        <a href="/legal.html">特定商取引法に基づく表記</a>
+      </div>
+    </div>
+    <div class="footer-copy">&copy; 2026 MisebanAI. All rights reserved.</div>
+  </div>
+</footer>
+
+<script>
+function toggleDetail(id) {
+  var card = document.getElementById(id);
+  if (card) {
+    card.classList.toggle('open');
+  }
+}
+</script>
+
+</body>
+</html>

@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>プライバシーポリシー｜ミセバンAI</title>
+<meta name="description" content="ミセバンAIのプライバシーポリシー。個人情報の取り扱い、カメラ映像データの管理方針、利用者の権利について。">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://miseban.ai/privacy.html">
+
+<!-- Favicon -->
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%234f46e5'/><text x='50%25' y='54%25' dominant-baseline='middle' text-anchor='middle' fill='white' font-size='18' font-weight='bold' font-family='sans-serif'>M</text></svg>">
+
+<!-- Google Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
+
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --white:#ffffff;
+  --gray-50:#f8fafc;
+  --gray-100:#f1f5f9;
+  --gray-200:#e2e8f0;
+  --gray-300:#cbd5e1;
+  --gray-400:#94a3b8;
+  --gray-500:#64748b;
+  --slate-600:#475569;
+  --slate-700:#334155;
+  --slate-800:#1e293b;
+  --slate-900:#0f172a;
+  --indigo-50:#eef2ff;
+  --indigo-100:#e0e7ff;
+  --indigo-500:#6366f1;
+  --indigo-600:#4f46e5;
+  --indigo-700:#4338ca;
+  --indigo-900:#312e81;
+  --indigo-950:#1e1b4b;
+  --radius-sm:8px;
+  --radius:12px;
+  --radius-lg:16px;
+  --shadow-sm:0 1px 3px rgba(0,0,0,.1),0 1px 2px rgba(0,0,0,.06);
+}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+body{font-family:'Noto Sans JP','Inter',system-ui,-apple-system,sans-serif;color:var(--slate-900);background:var(--white);line-height:1.8;overflow-x:hidden;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
+a{text-decoration:none;color:inherit;transition:color .2s}
+.container{max-width:1200px;margin:0 auto;padding:0 24px}
+
+/* Header */
+.header{background:var(--white);border-bottom:1px solid var(--gray-200);position:sticky;top:0;z-index:100}
+.header-inner{display:flex;align-items:center;justify-content:space-between;height:72px}
+.logo{display:flex;align-items:center;gap:2px;font-size:1.25rem;font-weight:700;color:var(--slate-900)}
+.logo-ai{color:var(--indigo-600);font-weight:700}
+.nav{display:flex;align-items:center;gap:24px}
+.nav a{font-size:.875rem;font-weight:400;color:var(--slate-600);transition:color .2s}
+.nav a:hover{color:var(--indigo-600)}
+
+/* Page Header */
+.page-header{background:linear-gradient(165deg,var(--slate-900) 0%,#1a1647 50%,var(--indigo-950) 100%);padding:80px 0 48px;color:var(--white)}
+.page-header h1{font-size:clamp(1.75rem,4vw,2.5rem);font-weight:700;line-height:1.4;margin-bottom:8px}
+.page-header p{font-size:.9375rem;color:rgba(255,255,255,.7)}
+
+/* Content */
+.legal-content{max-width:800px;margin:0 auto;padding:56px 24px 80px}
+.legal-content h2{font-size:1.375rem;font-weight:700;color:var(--slate-900);margin-top:48px;margin-bottom:16px;padding-bottom:8px;border-bottom:2px solid var(--indigo-100)}
+.legal-content h3{font-size:1.125rem;font-weight:700;color:var(--slate-800);margin-top:32px;margin-bottom:12px}
+.legal-content p{font-size:.9375rem;color:var(--slate-700);line-height:1.9;margin-bottom:16px}
+.legal-content ul,.legal-content ol{margin:12px 0 20px 24px;font-size:.9375rem;color:var(--slate-700);line-height:1.9}
+.legal-content ul li,.legal-content ol li{margin-bottom:6px}
+.legal-content ul{list-style:disc}
+.legal-content ol{list-style:decimal}
+.legal-content table{width:100%;border-collapse:collapse;margin:16px 0 24px;font-size:.875rem}
+.legal-content table th,.legal-content table td{padding:12px 16px;border:1px solid var(--gray-200);text-align:left}
+.legal-content table th{background:var(--gray-50);font-weight:700;color:var(--slate-800)}
+.legal-content table td{color:var(--slate-700)}
+.legal-content .effective-date{display:inline-block;background:var(--indigo-50);color:var(--indigo-600);font-size:.875rem;font-weight:600;padding:6px 16px;border-radius:100px;margin-bottom:32px}
+
+/* Footer */
+.footer{background:var(--slate-900);color:rgba(255,255,255,.7);padding:48px 0 32px;border-top:1px solid rgba(255,255,255,.06)}
+.footer-inner{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px}
+.footer-brand{font-size:1rem;font-weight:700;color:var(--white)}
+.footer-brand .logo-ai{color:var(--indigo-500)}
+.footer-links{display:flex;gap:24px;flex-wrap:wrap}
+.footer-links a{font-size:.8125rem;color:rgba(255,255,255,.6);transition:color .2s}
+.footer-links a:hover{color:var(--white)}
+.footer-copy{width:100%;text-align:center;font-size:.75rem;color:rgba(255,255,255,.4);margin-top:24px;padding-top:24px;border-top:1px solid rgba(255,255,255,.06)}
+
+@media(max-width:640px){
+  .page-header{padding:64px 0 36px}
+  .legal-content{padding:40px 20px 60px}
+  .legal-content h2{font-size:1.25rem;margin-top:36px}
+  .footer-inner{flex-direction:column;text-align:center}
+  .footer-links{justify-content:center}
+  .nav{gap:16px}
+}
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="container">
+    <div class="header-inner">
+      <a href="/" class="logo">ミセバン<span class="logo-ai">AI</span></a>
+      <nav class="nav">
+        <a href="/">トップ</a>
+        <a href="/blog/">ブログ</a>
+        <a href="/terms.html">利用規約</a>
+        <a href="/legal.html">特商法表記</a>
+      </nav>
+    </div>
+  </div>
+</header>
+
+<div class="page-header">
+  <div class="container">
+    <h1>プライバシーポリシー</h1>
+    <p>個人情報の取り扱いについて</p>
+  </div>
+</div>
+
+<main class="legal-content">
+  <span class="effective-date">施行日: 2026年2月23日</span>
+
+  <p>EnablerHQ（以下「当社」）は、「ミセバンAI」（以下「本サービス」）における利用者の個人情報の取り扱いについて、以下のとおりプライバシーポリシー（以下「本ポリシー」）を定めます。</p>
+
+  <h2>第1条（個人情報の定義）</h2>
+  <p>本ポリシーにおいて「個人情報」とは、個人情報保護法に定める個人情報を指し、生存する個人に関する情報であって、当該情報に含まれる氏名、メールアドレスその他の記述等により特定の個人を識別できるものをいいます。</p>
+
+  <h2>第2条（収集する情報）</h2>
+  <p>当社は、本サービスの提供にあたり、以下の情報を収集することがあります。</p>
+  <ul>
+    <li><strong>氏名・店舗名</strong>：アカウント登録および本人確認のため</li>
+    <li><strong>メールアドレス</strong>：アカウント管理、サービスに関する通知のため</li>
+    <li><strong>カメラ映像データ</strong>：AI分析（来客カウント、動線分析等）のため</li>
+    <li><strong>アクセスログ</strong>：IPアドレス、ブラウザ情報、アクセス日時等のサービス改善のため</li>
+    <li><strong>決済情報</strong>：クレジットカード情報（Stripe社が管理。当社は直接保持しません）</li>
+  </ul>
+
+  <h2>第3条（利用目的）</h2>
+  <p>当社は、収集した個人情報を以下の目的で利用します。</p>
+  <ol>
+    <li>本サービスの提供、運営、維持</li>
+    <li>来客分析、売上予測等のAI分析機能の提供</li>
+    <li>サービスの改善および新機能の開発</li>
+    <li>利用状況の分析、統計データの作成</li>
+    <li>サービスに関するお知らせ、アップデート情報の通知</li>
+    <li>お問い合わせへの対応</li>
+    <li>利用規約に違反する行為への対処</li>
+  </ol>
+
+  <h2>第4条（第三者提供）</h2>
+  <p>当社は、以下の場合を除き、利用者の同意なく個人情報を第三者に提供しません。</p>
+  <ul>
+    <li><strong>Stripe, Inc.</strong>：決済処理のため、決済に必要な情報を提供します</li>
+    <li><strong>LINE株式会社</strong>：LINE通知機能をご利用の場合、通知の配信に必要な情報を提供します</li>
+    <li><strong>法令に基づく場合</strong>：法令の規定に基づき開示が求められた場合</li>
+    <li><strong>人の生命・身体・財産の保護のために必要な場合</strong>：本人の同意を得ることが困難であるとき</li>
+  </ul>
+
+  <h2>第5条（カメラ映像の取り扱い）</h2>
+  <p>カメラ映像データの取り扱いについて、当社は以下の方針を遵守します。</p>
+  <h3>5-1. 映像データの処理</h3>
+  <p>カメラ映像はAIによるリアルタイム分析（来客数カウント、動線分析、客層推定等）に使用します。分析処理後は、統計データ（数値・グラフ等、個人を特定できない情報）のみを保持し、映像そのものは所定の保持期間経過後に自動的に削除されます。</p>
+  <h3>5-2. 個人の特定について</h3>
+  <p>当社のAI分析は統計的な傾向把握を目的としており、特定の個人を識別・追跡する目的では使用しません。</p>
+
+  <h2>第6条（データ保持期間）</h2>
+  <p>映像データおよび分析データの保持期間は、ご利用のプランに応じて以下のとおりです。</p>
+  <table>
+    <thead>
+      <tr>
+        <th>プラン</th>
+        <th>映像データ保持期間</th>
+        <th>統計データ保持期間</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Free</td>
+        <td>7日間</td>
+        <td>7日間</td>
+      </tr>
+      <tr>
+        <td>Starter</td>
+        <td>30日間</td>
+        <td>30日間</td>
+      </tr>
+      <tr>
+        <td>Pro</td>
+        <td>90日間</td>
+        <td>90日間</td>
+      </tr>
+      <tr>
+        <td>Enterprise</td>
+        <td>個別設定（最大10年）</td>
+        <td>個別設定（最大10年）</td>
+      </tr>
+    </tbody>
+  </table>
+  <p>保持期間経過後、データは自動的に削除されます。利用者はいつでもデータの早期削除を請求できます。</p>
+
+  <h2>第7条（セキュリティ対策）</h2>
+  <p>当社は、個人情報の漏えい、滅失、毀損の防止のため、以下のセキュリティ対策を実施しています。</p>
+  <ul>
+    <li><strong>通信の暗号化</strong>：すべてのデータ通信はSSL/TLSにより暗号化されています</li>
+    <li><strong>データの暗号化</strong>：保存データはAES-256等の暗号化方式により保護されています</li>
+    <li><strong>アクセス制御</strong>：個人情報へのアクセスは、業務上必要な担当者のみに限定しています</li>
+    <li><strong>定期的な見直し</strong>：セキュリティ対策は定期的に見直し、改善しています</li>
+  </ul>
+
+  <h2>第8条（Cookieの使用）</h2>
+  <p>本サービスでは、利用者の利便性向上およびサービス改善のためにCookieを使用しています。</p>
+  <ul>
+    <li><strong>Google Analytics</strong>：サイトの利用状況を分析するため、Google Analyticsを利用しています。Google Analyticsでは、Cookieを使用してデータを収集しますが、個人を特定する情報は含まれません。詳細はGoogleのプライバシーポリシーをご確認ください。</li>
+  </ul>
+  <p>利用者はブラウザの設定によりCookieを無効にすることができますが、その場合、本サービスの一部の機能が利用できなくなる場合があります。</p>
+
+  <h2>第9条（利用者の権利）</h2>
+  <p>利用者は、当社が保有する自己の個人情報について、以下の権利を有します。</p>
+  <ul>
+    <li><strong>開示請求</strong>：当社が保有する個人情報の開示を請求できます</li>
+    <li><strong>訂正請求</strong>：個人情報の内容が事実でない場合、訂正を請求できます</li>
+    <li><strong>削除請求</strong>：個人情報の削除を請求できます</li>
+    <li><strong>利用停止請求</strong>：個人情報の利用停止を請求できます</li>
+  </ul>
+  <p>上記の請求は、以下のお問い合わせ先までご連絡ください。本人確認を行ったうえで、合理的な期間内に対応いたします。</p>
+
+  <h2>第10条（本ポリシーの変更）</h2>
+  <p>当社は、法令の改正やサービス内容の変更等に伴い、本ポリシーを変更することがあります。変更後のプライバシーポリシーは、以下のいずれかの方法により利用者に通知します。</p>
+  <ul>
+    <li>本ページ上での掲載</li>
+    <li>登録メールアドレスへの通知</li>
+    <li>本サービス内でのお知らせ</li>
+  </ul>
+  <p>重要な変更がある場合は、変更の効力発生日の少なくとも14日前までに通知いたします。</p>
+
+  <h2>第11条（お問い合わせ）</h2>
+  <p>個人情報の取り扱いに関するお問い合わせは、以下の窓口までご連絡ください。</p>
+  <ul>
+    <li><strong>サービス名</strong>：ミセバンAI</li>
+    <li><strong>運営</strong>：<a href="https://enablerhq.com" style="color:var(--indigo-600)">EnablerHQ</a></li>
+    <li><strong>メール</strong>：<a href="mailto:support@miseban.ai" style="color:var(--indigo-600)">support@miseban.ai</a></li>
+    <li><strong>URL</strong>：<a href="https://miseban.ai" style="color:var(--indigo-600)">https://miseban.ai</a></li>
+  </ul>
+</main>
+
+<footer class="footer">
+  <div class="container">
+    <div class="footer-inner">
+      <div class="footer-brand">ミセバン<span class="logo-ai">AI</span></div>
+      <div class="footer-links">
+        <a href="/">トップ</a>
+        <a href="/blog/">ブログ</a>
+        <a href="/privacy.html">プライバシーポリシー</a>
+        <a href="/terms.html">利用規約</a>
+        <a href="/legal.html">特定商取引法に基づく表記</a>
+      </div>
+    </div>
+    <div class="footer-copy">運営: <a href="https://enablerhq.com" style="color:var(--indigo-500)">EnablerHQ</a> &middot; &copy; 2026 MisebanAI. All rights reserved.</div>
+  </div>
+</footer>
+
+</body>
+</html>

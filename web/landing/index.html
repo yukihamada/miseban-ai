@@ -3,15 +3,16 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ミセバンAI｜既存カメラが、AI店長に変わる</title>
-<meta name="description" content="既存の防犯カメラやスマホを接続するだけ。売上予測・シフト最適化・防犯アラート・AIアドバイスを月額4,980円から。工事不要・初期費用0円。">
+<title>ミセバンAI｜防犯カメラで来客分析・売上予測。月額0円から</title>
+<meta name="description" content="今ある防犯カメラを繋ぐだけ。AIが来客数・客層・ピーク時間を自動分析し、LINEに毎日レポート。初期費用0円・工事不要・月額0円から。14日間無料トライアル。">
 <meta name="keywords" content="AI店舗分析,来客カウント,防犯カメラAI,飲食店DX,小売店分析,ヒートマップ,ミセバンAI">
 <meta name="robots" content="index, follow">
+<meta name="referrer" content="strict-origin-when-cross-origin">
 <link rel="canonical" href="https://miseban.ai/">
 
 <!-- OGP -->
 <meta property="og:title" content="ミセバンAI｜既存カメラが、AI店長に変わる">
-<meta property="og:description" content="工事不要・初期費用0円。既存カメラが売上予測・シフト最適化・AIアドバイスの司令塔に。月額4,980円から。">
+<meta property="og:description" content="工事不要・初期費用0円。既存カメラが売上予測・シフト最適化・AIアドバイスの司令塔に。月額0円から。14日間無料トライアル。">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://miseban.ai/">
 <meta property="og:image" content="https://miseban.ai/ogp.png">
@@ -21,7 +22,7 @@
 <!-- Twitter Card -->
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="ミセバンAI｜既存カメラが、AI店長に変わる">
-<meta name="twitter:description" content="工事不要・初期費用0円。既存カメラが売上予測・シフト最適化・AIアドバイスの司令塔に。月額4,980円から。">
+<meta name="twitter:description" content="工事不要・初期費用0円。既存カメラが売上予測・シフト最適化・AIアドバイスの司令塔に。月額0円から。14日間無料トライアル。">
 <meta name="twitter:image" content="https://miseban.ai/ogp.png">
 
 <!-- Google Analytics 4 -->
@@ -44,7 +45,7 @@
 <!-- Google Fonts -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
 
 <style>
 /* ===== Reset & Custom Properties ===== */
@@ -92,7 +93,7 @@ ul{list-style:none}
 
 /* ===== Typography ===== */
 .section-label{display:inline-flex;align-items:center;gap:6px;font-size:.8125rem;font-weight:600;letter-spacing:.02em;color:var(--indigo-600);background:var(--indigo-50);padding:6px 16px;border-radius:100px;margin-bottom:16px}
-.section-title{font-size:clamp(1.75rem,4vw,2.5rem);font-weight:700;line-height:1.4;margin-bottom:16px;letter-spacing:-.01em}
+.section-title{font-size:clamp(1.75rem,4vw,2.5rem);font-weight:700;line-height:1.4;margin-bottom:16px;letter-spacing:.02em}
 .section-subtitle{font-size:1.0625rem;color:var(--slate-600);max-width:640px;margin:0 auto 56px;line-height:1.8}
 .text-center{text-align:center}
 
@@ -103,9 +104,11 @@ ul{list-style:none}
 .btn-white{background:var(--white);color:var(--slate-900);font-weight:700}
 .btn-white:hover{background:var(--gray-100);transform:translateY(-1px)}
 .btn-outline-white{background:transparent;color:var(--white);border:1.5px solid rgba(255,255,255,.3)}
-.btn-outline-white:hover{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.5)}
+.btn-outline-white:hover{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.7)}
 .btn-outline{background:transparent;color:var(--indigo-600);border:1.5px solid var(--indigo-600)}
 .btn-outline:hover{background:var(--indigo-600);color:var(--white)}
+.btn-primary:active{transform:translateY(1px);box-shadow:0 1px 2px rgba(79,70,229,.2)}
+.btn-white:active{transform:translateY(1px)}
 .btn-sm{padding:10px 20px;font-size:.875rem}
 .btn-lg{padding:16px 36px;font-size:1rem}
 
@@ -118,7 +121,7 @@ ul{list-style:none}
 .logo-ai{color:var(--indigo-500);font-weight:700}
 .header.scrolled .logo-ai{color:var(--indigo-600)}
 .nav{display:flex;align-items:center;gap:32px}
-.nav a{font-size:.875rem;font-weight:500;color:rgba(255,255,255,.7);transition:color .2s}
+.nav a{font-size:.875rem;font-weight:400;color:rgba(255,255,255,.7);transition:color .2s}
 .nav a:hover{color:var(--white)}
 .header.scrolled .nav a{color:var(--slate-600)}
 .header.scrolled .nav a:hover{color:var(--slate-900)}
@@ -128,7 +131,7 @@ ul{list-style:none}
 .header.scrolled .mobile-toggle span{background:var(--slate-900)}
 .mobile-menu{display:none;position:fixed;inset:0;background:var(--white);z-index:999;flex-direction:column;align-items:center;justify-content:center;gap:28px}
 .mobile-menu.open{display:flex}
-.mobile-menu a{font-size:1.125rem;color:var(--slate-900);font-weight:500}
+.mobile-menu a{font-size:1.125rem;color:var(--slate-900);font-weight:400}
 .mobile-close{position:absolute;top:24px;right:24px;background:none;border:none;color:var(--slate-600);font-size:1.5rem;cursor:pointer;width:40px;height:40px;display:flex;align-items:center;justify-content:center;border-radius:50%;transition:background .2s}
 .mobile-close:hover{background:var(--gray-100)}
 
@@ -141,14 +144,14 @@ ul{list-style:none}
 .hero{position:relative;background:linear-gradient(165deg,var(--slate-900) 0%,#1a1647 50%,var(--indigo-950) 100%);padding:150px 0 100px;overflow:hidden;color:var(--white)}
 .hero::before{content:'';position:absolute;top:0;left:0;right:0;bottom:0;background:radial-gradient(ellipse 80% 50% at 50% -20%,rgba(99,102,241,.15),transparent),radial-gradient(ellipse 60% 40% at 80% 60%,rgba(16,185,129,.06),transparent);pointer-events:none}
 .hero-content{position:relative;z-index:1;max-width:800px;margin:0 auto;text-align:center}
-.hero-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.1);padding:8px 20px;border-radius:100px;font-size:.875rem;font-weight:500;color:rgba(255,255,255,.9);margin-bottom:32px;backdrop-filter:blur(8px)}
+.hero-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.1);padding:8px 20px;border-radius:100px;font-size:.875rem;font-weight:400;color:rgba(255,255,255,.9);margin-bottom:32px;backdrop-filter:blur(8px)}
 .hero-badge-glow{width:6px;height:6px;background:var(--emerald-400);border-radius:50%;box-shadow:0 0 8px var(--emerald-400);animation:glow-pulse 2s ease-in-out infinite}
 @keyframes glow-pulse{0%,100%{opacity:1;box-shadow:0 0 8px var(--emerald-400)}50%{opacity:.5;box-shadow:0 0 4px var(--emerald-400)}}
-.hero h1{font-size:clamp(2.25rem,5.5vw,3.75rem);font-weight:700;line-height:1.25;margin-bottom:24px;letter-spacing:-.02em}
-.hero-sub{font-size:clamp(1rem,1.5vw,1.125rem);color:rgba(255,255,255,.65);margin-bottom:40px;line-height:1.9;max-width:600px;margin-left:auto;margin-right:auto}
+.hero h1{font-size:clamp(2.25rem,5.5vw,3.75rem);font-weight:700;line-height:1.25;margin-bottom:24px;letter-spacing:.01em}
+.hero-sub{font-size:clamp(1rem,1.5vw,1.125rem);color:rgba(255,255,255,.82);margin-bottom:40px;line-height:1.9;max-width:600px;margin-left:auto;margin-right:auto}
 .hero-actions{display:flex;gap:16px;justify-content:center;flex-wrap:wrap;margin-bottom:56px}
 .hero-trust{display:flex;align-items:center;justify-content:center;gap:32px;flex-wrap:wrap}
-.hero-trust-item{display:flex;align-items:center;gap:8px;font-size:.8125rem;font-weight:500;color:rgba(255,255,255,.5);padding:8px 16px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06);border-radius:var(--radius-sm)}
+.hero-trust-item{display:flex;align-items:center;gap:8px;font-size:.8125rem;font-weight:400;color:rgba(255,255,255,.7);padding:8px 16px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06);border-radius:var(--radius-sm)}
 .hero-trust-item .nums{font-weight:700;color:rgba(255,255,255,.8);font-size:.9375rem}
 
 @media(max-width:640px){
@@ -249,15 +252,6 @@ ul{list-style:none}
 
 /* ===== Pricing ===== */
 .pricing{padding:100px 0;background:var(--gray-50)}
-.pricing-toggle{display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:48px}
-.pricing-toggle-label{font-size:.875rem;color:var(--slate-600)}
-.pricing-toggle-label.active{color:var(--slate-900);font-weight:600}
-.toggle-switch{position:relative;width:48px;height:28px;background:var(--gray-300);border-radius:100px;cursor:pointer;transition:background .2s}
-.toggle-switch.on{background:var(--indigo-600)}
-.toggle-switch::after{content:'';position:absolute;top:3px;left:3px;width:22px;height:22px;background:var(--white);border-radius:50%;transition:transform .2s;box-shadow:var(--shadow-xs)}
-.toggle-switch.on::after{transform:translateX(20px)}
-.toggle-discount{font-size:.6875rem;font-weight:700;background:var(--emerald-500);color:var(--white);padding:2px 8px;border-radius:100px}
-
 .pricing-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:20px}
 .price-card{background:var(--white);border:1px solid var(--gray-200);border-radius:var(--radius-lg);padding:32px 24px;position:relative;transition:all .3s}
 .price-card:hover{box-shadow:var(--shadow-xl)}
@@ -286,7 +280,12 @@ ul{list-style:none}
   .pricing-grid{grid-template-columns:1fr;max-width:400px;margin-left:auto;margin-right:auto}
 }
 
-.pricing-notes{display:flex;flex-direction:column;gap:8px;align-items:center;margin-top:32px}
+.pricing-trust{display:flex;align-items:center;justify-content:center;gap:32px;flex-wrap:wrap;margin-top:40px;margin-bottom:8px}
+.trust-item{display:flex;align-items:center;gap:8px;font-size:.875rem;font-weight:500;color:var(--slate-600)}
+@media(max-width:640px){
+  .pricing-trust{gap:16px;flex-direction:column}
+}
+.pricing-notes{display:flex;flex-direction:column;gap:8px;align-items:center;margin-top:24px}
 .pricing-note{font-size:.8125rem;color:var(--slate-600);display:flex;align-items:center;gap:6px}
 
 /* ===== Comparison ===== */
@@ -297,7 +296,7 @@ ul{list-style:none}
 .comp-label{font-size:.8125rem;font-weight:600;color:var(--slate-600);margin-bottom:16px}
 .comp-ours{margin-bottom:8px}
 .comp-ours .val{font-size:2rem;font-weight:700;color:var(--indigo-600);font-family:'Inter','Noto Sans JP',sans-serif}
-.comp-ours .unit{font-size:.875rem;font-weight:500;color:var(--indigo-600)}
+.comp-ours .unit{font-size:.875rem;font-weight:400;color:var(--indigo-600)}
 .comp-vs{font-size:.75rem;color:var(--gray-400);margin-bottom:2px}
 .comp-theirs{font-size:.875rem;color:var(--gray-400);text-decoration:line-through}
 
@@ -309,16 +308,16 @@ ul{list-style:none}
 .partner{padding:100px 0;background:var(--slate-900);color:var(--white)}
 .partner-layout{display:grid;grid-template-columns:1fr 1fr;gap:64px;align-items:center}
 .partner-title{font-size:clamp(1.75rem,3.5vw,2.25rem);font-weight:700;margin-bottom:16px;line-height:1.3}
-.partner-subtitle{font-size:1rem;color:rgba(255,255,255,.5);margin-bottom:40px;line-height:1.8}
+.partner-subtitle{font-size:1rem;color:rgba(255,255,255,.7);margin-bottom:40px;line-height:1.8}
 .partner-benefits{display:flex;flex-direction:column;gap:24px}
 .partner-benefit{display:flex;gap:16px;align-items:flex-start}
 .partner-benefit-icon{flex-shrink:0;width:40px;height:40px;background:rgba(99,102,241,.15);border:1px solid rgba(99,102,241,.25);border-radius:var(--radius);display:flex;align-items:center;justify-content:center;color:var(--indigo-500)}
 .partner-benefit h4{font-size:.9375rem;font-weight:600;margin-bottom:4px}
-.partner-benefit p{font-size:.8125rem;color:rgba(255,255,255,.5);line-height:1.7}
+.partner-benefit p{font-size:.8125rem;color:rgba(255,255,255,.7);line-height:1.7}
 .partner-cta-box{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:var(--radius-xl);padding:48px;text-align:center}
 .partner-cta-box h3{font-size:1.25rem;font-weight:700;margin-bottom:24px}
 .partner-revenue{font-size:3rem;font-weight:700;background:linear-gradient(135deg,var(--indigo-500),var(--emerald-400));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;font-family:'Inter','Noto Sans JP',sans-serif;margin-bottom:8px}
-.partner-revenue-label{font-size:.8125rem;color:rgba(255,255,255,.4);margin-bottom:32px}
+.partner-revenue-label{font-size:.8125rem;color:rgba(255,255,255,.6);margin-bottom:32px}
 
 @media(max-width:768px){
   .partner-layout{grid-template-columns:1fr}
@@ -341,18 +340,18 @@ ul{list-style:none}
 .final-cta::before{content:'';position:absolute;top:0;left:0;right:0;bottom:0;background:radial-gradient(ellipse 60% 50% at 30% 80%,rgba(16,185,129,.1),transparent),radial-gradient(ellipse 50% 50% at 70% 20%,rgba(255,255,255,.04),transparent);pointer-events:none}
 .final-cta-content{position:relative;z-index:1;max-width:560px;margin:0 auto;text-align:center}
 .final-cta h2{font-size:clamp(1.75rem,4vw,2.25rem);font-weight:700;margin-bottom:12px;line-height:1.4}
-.final-cta-sub{font-size:1rem;color:rgba(255,255,255,.65);margin-bottom:40px}
+.final-cta-sub{font-size:1rem;color:rgba(255,255,255,.82);margin-bottom:40px}
 .final-cta-form{background:rgba(255,255,255,.08);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.1);border-radius:var(--radius-xl);padding:36px;text-align:left}
 .final-cta-form .form-group{margin-bottom:16px}
-.final-cta-form label{display:block;font-size:.8125rem;font-weight:500;color:rgba(255,255,255,.7);margin-bottom:6px}
+.final-cta-form label{display:block;font-size:.8125rem;font-weight:400;color:rgba(255,255,255,.7);margin-bottom:6px}
 .final-cta-form input,.final-cta-form select{width:100%;padding:12px 16px;border:1px solid rgba(255,255,255,.15);border-radius:var(--radius-sm);font-family:inherit;font-size:.9375rem;outline:none;transition:border-color .2s;background:rgba(255,255,255,.06);color:var(--white)}
 .final-cta-form input::placeholder{color:rgba(255,255,255,.3)}
-.final-cta-form input:focus,.final-cta-form select:focus{border-color:rgba(255,255,255,.4);background:rgba(255,255,255,.1)}
+.final-cta-form input:focus,.final-cta-form select:focus{border-color:rgba(255,255,255,.6);background:rgba(255,255,255,.1)}
 .final-cta-form select{-webkit-appearance:none;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='rgba(255,255,255,0.5)' d='M6 8L1 3h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;padding-right:36px}
 .final-cta-form select option{background:var(--slate-900);color:var(--white)}
 .final-cta-form .form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .final-cta-form .btn{width:100%;margin-top:8px}
-.final-cta-note{font-size:.75rem;color:rgba(255,255,255,.4);margin-top:16px;text-align:center}
+.final-cta-note{font-size:.75rem;color:rgba(255,255,255,.6);margin-top:16px;text-align:center}
 
 @media(max-width:640px){
   .final-cta-form .form-row{grid-template-columns:1fr}
@@ -360,7 +359,7 @@ ul{list-style:none}
 }
 
 /* ===== Footer ===== */
-.footer{background:var(--slate-900);color:rgba(255,255,255,.5);padding:64px 0 32px;border-top:1px solid rgba(255,255,255,.06)}
+.footer{background:var(--slate-900);color:rgba(255,255,255,.7);padding:64px 0 32px;border-top:1px solid rgba(255,255,255,.06)}
 .footer-grid{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:40px;margin-bottom:48px}
 .footer-brand{font-size:1.125rem;font-weight:700;color:var(--white);margin-bottom:8px}
 .footer-brand .logo-ai{color:var(--indigo-500)}
@@ -392,6 +391,16 @@ ul{list-style:none}
 /* ===== Utility ===== */
 .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border-width:0}
 </style>
+<noscript><style>.reveal{opacity:1!important;transform:none!important;transition:none!important}</style></noscript>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"Organization","name":"ミセバンAI","url":"https://miseban.ai","logo":"https://miseban.ai/ogp.png","email":"info@miseban.ai","description":"既存の防犯カメラやスマホを接続するだけ。AIが来客数・客層・ピーク時間を自動分析し、LINEに毎日レポート。"}
+</script>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"どんなカメラに対応していますか？","acceptedAnswer":{"@type":"Answer","text":"RTSP対応のIPカメラであれば、メーカーを問わず接続可能です。Hikvision、Dahua、TP-Link、Reolink、AXIS等の主要ブランド200機種以上に対応。SwitchBot Pan/Tilt Cam Plus等のRTSP対応コンシューマーカメラにも対応しています。"}},{"@type":"Question","name":"映像のプライバシーは大丈夫ですか？","acceptedAnswer":{"@type":"Answer","text":"映像データはAI処理後に即座に破棄されます。クラウドに保存されるのは来客数・滞在時間などの統計データのみです。個人を特定できる情報は一切保存しません。"}},{"@type":"Question","name":"初期費用はかかりますか？","acceptedAnswer":{"@type":"Answer","text":"初期費用は一切かかりません。今お使いの防犯カメラやスマートフォンを利用するため、追加のハードウェア購入も不要です。月額0円のFreeプランから始められます。"}}]}
+</script>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"SoftwareApplication","name":"ミセバンAI","applicationCategory":"BusinessApplication","operatingSystem":"Web","offers":[{"@type":"Offer","name":"Free","price":"0","priceCurrency":"JPY"},{"@type":"Offer","name":"Starter","price":"9800","priceCurrency":"JPY"},{"@type":"Offer","name":"Pro","price":"29800","priceCurrency":"JPY"},{"@type":"Offer","name":"Enterprise","price":"49800","priceCurrency":"JPY"}]}
+</script>
 </head>
 <body>
 
@@ -408,7 +417,8 @@ ul{list-style:none}
       <a href="/cameras.html">対応カメラ</a>
       <a href="/blog/">ブログ</a>
       <a href="#faq">FAQ</a>
-      <a href="#cta" class="btn btn-primary btn-sm nav-cta">無料で始める</a>
+      <a href="/team.html">チーム</a>
+      <a href="/dashboard/" class="btn btn-primary btn-sm nav-cta">無料で始める</a>
     </nav>
     <button class="mobile-toggle" id="mobileToggle" aria-label="メニューを開く">
       <span></span><span></span><span></span>
@@ -427,25 +437,27 @@ ul{list-style:none}
   <a href="/cameras.html" class="mobile-link">対応カメラ</a>
   <a href="/blog/" class="mobile-link">ブログ</a>
   <a href="#faq" class="mobile-link">FAQ</a>
+  <a href="/team.html" class="mobile-link">チーム</a>
   <a href="#partner" class="mobile-link">パートナー募集</a>
-  <a href="#cta" class="btn btn-primary">無料で始める</a>
+  <a href="/dashboard/" class="btn btn-primary">無料で始める</a>
 </div>
 
+<main>
 <!-- Hero -->
 <section class="hero" id="hero">
   <div class="container">
     <div class="hero-content">
       <div class="hero-badge">
         <span class="hero-badge-glow"></span>
-        <span class="nums">月額4,980円</span>から
+        14日間無料トライアル実施中
       </div>
-      <h1>既存カメラが、<br>経営判断を変える。</h1>
-      <p class="hero-sub">工事不要。初期費用0円。今あるカメラに繋ぐだけで、<br>売上予測・スタッフ最適化・AIアドバイスが始まる。</p>
+      <h1>あなたの店に、<br>もう一人の店長を。</h1>
+      <p class="hero-sub">今あるカメラをつなぐだけ。来客予測、シフト提案、防犯通知。<br>24時間休まないAI店長が、月額0円から。</p>
       <div class="hero-actions">
-        <a href="#cta" class="btn btn-white btn-lg">無料で始める
+        <a href="/dashboard/" class="btn btn-white btn-lg">14日間無料トライアル
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
         </a>
-        <a href="#how-it-works" class="btn btn-outline-white btn-lg">仕組みを見る
+        <a href="#how-it-works" class="btn btn-outline-white btn-lg">3分でわかる仕組み
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
         </a>
       </div>
@@ -487,6 +499,32 @@ ul{list-style:none}
         </div>
       </div>
     </div>
+  </div>
+</section>
+
+<!-- Pain Points -->
+<section class="pain" style="padding:80px 0;background:var(--white)">
+  <div class="container" style="max-width:800px;text-align:center">
+    <div class="section-label">こんなお悩みありませんか？</div>
+    <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:20px;margin-top:40px;text-align:left">
+      <div style="background:var(--gray-50);border:1px solid var(--gray-200);border-radius:var(--radius-lg);padding:24px">
+        <div style="font-size:1.5rem;margin-bottom:8px">📊</div>
+        <p style="font-size:.9375rem;color:var(--slate-700);line-height:1.8;margin:0"><strong style="color:var(--slate-900)">「今日は何人来た？」に答えられない</strong><br>忙しかった体感はあるのに、実際の来客数は分からない</p>
+      </div>
+      <div style="background:var(--gray-50);border:1px solid var(--gray-200);border-radius:var(--radius-lg);padding:24px">
+        <div style="font-size:1.5rem;margin-bottom:8px">👥</div>
+        <p style="font-size:.9375rem;color:var(--slate-700);line-height:1.8;margin:0"><strong style="color:var(--slate-900)">シフトがいつも多すぎるか足りない</strong><br>ピーク時間が読めないから、人員配置が勘頼り</p>
+      </div>
+      <div style="background:var(--gray-50);border:1px solid var(--gray-200);border-radius:var(--radius-lg);padding:24px">
+        <div style="font-size:1.5rem;margin-bottom:8px">📹</div>
+        <p style="font-size:.9375rem;color:var(--slate-700);line-height:1.8;margin:0"><strong style="color:var(--slate-900)">防犯カメラ、録画してるだけ</strong><br>月額料金を払っているのに、映像を見返す時間がない</p>
+      </div>
+      <div style="background:var(--gray-50);border:1px solid var(--gray-200);border-radius:var(--radius-lg);padding:24px">
+        <div style="font-size:1.5rem;margin-bottom:8px">🏪</div>
+        <p style="font-size:.9375rem;color:var(--slate-700);line-height:1.8;margin:0"><strong style="color:var(--slate-900)">大手チェーンのようなデータ分析は無理</strong><br>月16万円のAI分析サービスなんて、個人店には手が出ない</p>
+      </div>
+    </div>
+    <p style="margin-top:40px;font-size:1.0625rem;color:var(--slate-700);line-height:1.8"><strong style="color:var(--indigo-600)">ミセバンAI</strong>なら、今ある防犯カメラがこの全てを解決します。</p>
   </div>
 </section>
 
@@ -558,7 +596,7 @@ ul{list-style:none}
         <p>エージェント内蔵のオリジナルカメラ。箱を開けてWi-Fiに繋ぐだけ。PCもスマホも不要。</p>
         <div class="coming-soon-specs nums">2K画質 / AI処理内蔵 / WiFi / PoE対応 / 防水IP66</div>
         <div class="coming-soon-price">想定価格: <span class="nums">14,800</span>円</div>
-        <a href="#cta" class="btn btn-outline btn-sm">先行予約を申し込む
+        <a href="/dashboard/" class="btn btn-outline btn-sm">先行予約を申し込む
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
         </a>
       </div>
@@ -572,7 +610,6 @@ ul{list-style:none}
     <div class="text-center">
       <span class="section-label">仕組み</span>
       <h2 class="section-title">たった3ステップで、店舗がデータドリブンに</h2>
-      <p class="section-subtitle"></p>
     </div>
     <div class="steps">
       <div class="step reveal">
@@ -635,7 +672,6 @@ ul{list-style:none}
     <div class="text-center">
       <span class="section-label">機能</span>
       <h2 class="section-title">見えなかったものが、見えるようになる</h2>
-      <p class="section-subtitle"></p>
     </div>
     <div class="features-grid">
       <div class="feature-card reveal">
@@ -708,88 +744,97 @@ ul{list-style:none}
     <div class="text-center">
       <span class="section-label">料金</span>
       <h2 class="section-title">まずは無料で。効果を実感してからアップグレード。</h2>
-      <p class="section-subtitle"></p>
-    </div>
-
-    <div class="pricing-toggle" id="pricingToggle">
-      <span class="pricing-toggle-label active" data-plan="monthly">月払い</span>
-      <div class="toggle-switch" id="toggleSwitch"></div>
-      <span class="pricing-toggle-label" data-plan="annual">年払い</span>
-      <span class="toggle-discount nums">17%OFF</span>
     </div>
 
     <div class="pricing-grid">
       <!-- Free -->
       <div class="price-card reveal">
         <span class="price-card-badge first">まずはこちら</span>
-        <div class="price-name">Free</div>
+        <div class="price-name">フリー</div>
         <div class="price-desc">まずは試したい方に</div>
         <div class="price-amount">
-          <span class="currency">&#165;</span><span class="value nums" data-monthly="0" data-annual="0">0</span><span class="period">/月</span>
+          <span class="currency">&#165;</span><span class="value nums">0</span><span class="period">/月</span>
         </div>
         <div class="price-annual">&nbsp;</div>
         <div class="price-divider"></div>
         <ul class="price-features">
           <li><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="8" fill="#ecfdf5"/><path d="M5 8l2 2 4-4" stroke="#10b981" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>カメラ1台</li>
-          <li><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="8" fill="#ecfdf5"/><path d="M5 8l2 2 4-4" stroke="#10b981" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>来客カウント</li>
           <li><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="8" fill="#ecfdf5"/><path d="M5 8l2 2 4-4" stroke="#10b981" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>データ保存 7日間</li>
-          <li><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="8" fill="#ecfdf5"/><path d="M5 8l2 2 4-4" stroke="#10b981" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>通知 5件/日</li>
+          <li><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="8" fill="#ecfdf5"/><path d="M5 8l2 2 4-4" stroke="#10b981" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>基本来客カウント</li>
+          <li><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="8" fill="#ecfdf5"/><path d="M5 8l2 2 4-4" stroke="#10b981" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>日次レポート</li>
         </ul>
-        <a href="#cta" class="btn btn-outline btn-sm">無料で始める</a>
+        <a href="/dashboard/" class="btn btn-outline btn-sm">無料で始める</a>
       </div>
       <!-- Starter -->
-      <div class="price-card reveal reveal-d1">
-        <div class="price-name">Starter</div>
+      <div class="price-card recommended reveal reveal-d1">
+        <span class="price-card-badge popular">おすすめ</span>
+        <div class="price-name">スターター</div>
         <div class="price-desc">個人店オーナーに</div>
         <div class="price-amount">
-          <span class="currency">&#165;</span><span class="value nums" data-monthly="4,980" data-annual="3,980">4,980</span><span class="period">/月</span>
+          <span class="currency">&#165;</span><span class="value nums">9,800</span><span class="period">/月</span>
         </div>
-        <div class="price-annual nums" data-monthly="" data-annual="年額 47,760円"><!-- dynamic -->&nbsp;</div>
+        <div class="price-annual">&nbsp;</div>
         <div class="price-divider"></div>
         <ul class="price-features">
-          <li><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="8" fill="#ecfdf5"/><path d="M5 8l2 2 4-4" stroke="#10b981" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>カメラ1台</li>
-          <li><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="8" fill="#ecfdf5"/><path d="M5 8l2 2 4-4" stroke="#10b981" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>来客カウント + 属性推定</li>
-          <li><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="8" fill="#ecfdf5"/><path d="M5 8l2 2 4-4" stroke="#10b981" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>LINE通知 無制限</li>
-          <li><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="8" fill="#ecfdf5"/><path d="M5 8l2 2 4-4" stroke="#10b981" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>データ保存 7日間</li>
+          <li><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="8" fill="#ecfdf5"/><path d="M5 8l2 2 4-4" stroke="#10b981" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>カメラ4台まで</li>
+          <li><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="8" fill="#ecfdf5"/><path d="M5 8l2 2 4-4" stroke="#10b981" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>データ保存 30日間</li>
+          <li><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="8" fill="#ecfdf5"/><path d="M5 8l2 2 4-4" stroke="#10b981" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>属性分析</li>
+          <li><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="8" fill="#ecfdf5"/><path d="M5 8l2 2 4-4" stroke="#10b981" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>LINEアラート</li>
+          <li><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="8" fill="#ecfdf5"/><path d="M5 8l2 2 4-4" stroke="#10b981" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>日次レポート</li>
         </ul>
-        <a href="#cta" class="btn btn-primary btn-sm">申し込む</a>
+        <a href="/dashboard/" class="btn btn-primary btn-sm">14日間無料トライアル</a>
       </div>
       <!-- Pro -->
-      <div class="price-card recommended reveal reveal-d2">
-        <span class="price-card-badge popular">人気No.1</span>
-        <div class="price-name">Pro</div>
+      <div class="price-card reveal reveal-d2">
+        <div class="price-name">プロ</div>
         <div class="price-desc">本格的に活用したい方</div>
         <div class="price-amount">
-          <span class="currency">&#165;</span><span class="value nums" data-monthly="9,800" data-annual="7,840">9,800</span><span class="period">/月</span>
+          <span class="currency">&#165;</span><span class="value nums">29,800</span><span class="period">/月</span>
         </div>
-        <div class="price-annual nums" data-monthly="" data-annual="年額 94,080円">&nbsp;</div>
+        <div class="price-annual">&nbsp;</div>
         <div class="price-divider"></div>
         <ul class="price-features">
-          <li><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="8" fill="#ecfdf5"/><path d="M5 8l2 2 4-4" stroke="#10b981" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>カメラ3台まで</li>
-          <li><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="8" fill="#ecfdf5"/><path d="M5 8l2 2 4-4" stroke="#10b981" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>Starter全機能 + ヒートマップ</li>
-          <li><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="8" fill="#ecfdf5"/><path d="M5 8l2 2 4-4" stroke="#10b981" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>防犯アラート</li>
-          <li><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="8" fill="#ecfdf5"/><path d="M5 8l2 2 4-4" stroke="#10b981" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>AIアドバイス</li>
-          <li><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="8" fill="#ecfdf5"/><path d="M5 8l2 2 4-4" stroke="#10b981" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>データ保存 30日間 / API連携</li>
+          <li><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="8" fill="#ecfdf5"/><path d="M5 8l2 2 4-4" stroke="#10b981" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>カメラ16台まで</li>
+          <li><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="8" fill="#ecfdf5"/><path d="M5 8l2 2 4-4" stroke="#10b981" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>データ保存 90日間</li>
+          <li><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="8" fill="#ecfdf5"/><path d="M5 8l2 2 4-4" stroke="#10b981" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>ヒートマップ</li>
+          <li><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="8" fill="#ecfdf5"/><path d="M5 8l2 2 4-4" stroke="#10b981" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>リアルタイムアラート</li>
+          <li><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="8" fill="#ecfdf5"/><path d="M5 8l2 2 4-4" stroke="#10b981" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>CSV出力 / APIアクセス</li>
         </ul>
-        <a href="#cta" class="btn btn-primary btn-sm">申し込む</a>
+        <a href="/dashboard/" class="btn btn-primary btn-sm">14日間無料トライアル</a>
       </div>
       <!-- Enterprise -->
       <div class="price-card reveal reveal-d3">
-        <div class="price-name">Enterprise</div>
+        <div class="price-name">エンタープライズ</div>
         <div class="price-desc">多店舗展開の方に</div>
         <div class="price-amount">
-          <span class="currency">&#165;</span><span class="value nums" data-monthly="19,800" data-annual="15,840">19,800</span><span class="period">/月</span>
+          <span class="currency">&#165;</span><span class="value nums">49,800</span><span class="period">/月</span>
         </div>
-        <div class="price-annual nums" data-monthly="" data-annual="年額 190,080円">&nbsp;</div>
+        <div class="price-annual">&nbsp;</div>
         <div class="price-divider"></div>
         <ul class="price-features">
-          <li><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="8" fill="#ecfdf5"/><path d="M5 8l2 2 4-4" stroke="#10b981" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>カメラ10台まで</li>
-          <li><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="8" fill="#ecfdf5"/><path d="M5 8l2 2 4-4" stroke="#10b981" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>Pro全機能 + POS連携</li>
-          <li><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="8" fill="#ecfdf5"/><path d="M5 8l2 2 4-4" stroke="#10b981" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>マルチ店舗ダッシュボード</li>
-          <li><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="8" fill="#ecfdf5"/><path d="M5 8l2 2 4-4" stroke="#10b981" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>データ保存 90日間</li>
-          <li><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="8" fill="#ecfdf5"/><path d="M5 8l2 2 4-4" stroke="#10b981" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>専用サポート担当</li>
+          <li><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="8" fill="#ecfdf5"/><path d="M5 8l2 2 4-4" stroke="#10b981" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>カメラ無制限</li>
+          <li><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="8" fill="#ecfdf5"/><path d="M5 8l2 2 4-4" stroke="#10b981" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>データ保存 無制限</li>
+          <li><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="8" fill="#ecfdf5"/><path d="M5 8l2 2 4-4" stroke="#10b981" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>カスタムモデル</li>
+          <li><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="8" fill="#ecfdf5"/><path d="M5 8l2 2 4-4" stroke="#10b981" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>専任サポート / SLA保証</li>
+          <li><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="8" fill="#ecfdf5"/><path d="M5 8l2 2 4-4" stroke="#10b981" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>オンプレミス対応</li>
         </ul>
-        <a href="#cta" class="btn btn-outline btn-sm">お問い合わせ</a>
+        <a href="mailto:enterprise@miseban.ai" class="btn btn-outline btn-sm">お問い合わせ</a>
+      </div>
+    </div>
+
+    <!-- Trust signals -->
+    <div class="pricing-trust">
+      <div class="trust-item">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--slate-600)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+        <span>クレジットカード不要</span>
+      </div>
+      <div class="trust-item">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--slate-600)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        <span>セットアップ5分</span>
+      </div>
+      <div class="trust-item">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--slate-600)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        <span>いつでもキャンセル可能</span>
       </div>
     </div>
 
@@ -812,16 +857,15 @@ ul{list-style:none}
     <div class="text-center">
       <span class="section-label">比較</span>
       <h2 class="section-title">選ばれる理由</h2>
-      <p class="section-subtitle"></p>
     </div>
     <div class="comp-cards">
       <div class="comp-card reveal">
         <div class="comp-label">月額料金</div>
         <div class="comp-ours">
-          <span class="val">&#165;4,980</span>
+          <span class="val">&#165;9,800〜</span>
         </div>
         <div class="comp-vs">vs</div>
-        <div class="comp-theirs nums">業界平均 &#165;16,000</div>
+        <div class="comp-theirs nums">業界平均 &#165;30,000</div>
       </div>
       <div class="comp-card reveal reveal-d1">
         <div class="comp-label">導入時間</div>
@@ -899,7 +943,6 @@ ul{list-style:none}
     <div class="text-center">
       <span class="section-label">FAQ</span>
       <h2 class="section-title">よくあるご質問</h2>
-      <p class="section-subtitle"></p>
     </div>
     <div class="faq-list">
       <div class="faq-item">
@@ -916,11 +959,11 @@ ul{list-style:none}
       </div>
       <div class="faq-item">
         <button class="faq-q" type="button">IT導入補助金は利用できますか？<span class="faq-q-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span></button>
-        <div class="faq-a"><div class="faq-a-inner">ミセバンAIはIT導入補助金の対象サービスとして準備中です。補助率は最大75%で、Starterプランの場合は実質月額約1,245円で利用可能になります。IT導入支援事業者登録が完了次第、申請から交付までの手続きを無料でサポートいたします。</div></div>
+        <div class="faq-a"><div class="faq-a-inner">ミセバンAIはIT導入補助金の対象サービスとして準備中です。補助率は最大75%で、スタータープランの場合は実質月額約2,450円で利用可能になります。IT導入支援事業者登録が完了次第、申請から交付までの手続きを無料でサポートいたします。</div></div>
       </div>
       <div class="faq-item">
         <button class="faq-q" type="button">契約期間の縛りはありますか？<span class="faq-q-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span></button>
-        <div class="faq-a"><div class="faq-a-inner">月額プランに契約期間の縛りはありません。いつでもプラン変更・解約が可能です。年間契約を選択いただくと17%OFFの割引価格が適用されます。まずは無料プランからお試しください。</div></div>
+        <div class="faq-a"><div class="faq-a-inner">月額プランに契約期間の縛りはありません。いつでもプラン変更・解約が可能です。全有料プランに14日間の無料トライアルが付きます。まずは無料プランからお試しください。</div></div>
       </div>
       <div class="faq-item">
         <button class="faq-q" type="button">設置にどれくらい時間がかかりますか？<span class="faq-q-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span></button>
@@ -943,39 +986,17 @@ ul{list-style:none}
   <div class="container">
     <div class="final-cta-content">
       <h2>今日から、店舗のデータが<br>見えるようになる</h2>
-      <p class="final-cta-sub">無料プランでまずは試してみませんか。</p>
-      <div class="final-cta-form">
-        <form id="waitlistForm" action="https://formspree.io/f/FORM_ID" method="POST">
-          <input type="hidden" name="_subject" value="ミセバンAI 新規登録">
-          <div class="form-group">
-            <label for="email">メールアドレス *</label>
-            <input type="email" id="email" name="email" placeholder="you@example.com" required>
-          </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label for="store_name">店舗名（任意）</label>
-              <input type="text" id="store_name" name="store_name" placeholder="例: カフェABC">
-            </div>
-            <div class="form-group">
-              <label for="store_type">業種</label>
-              <select id="store_type" name="store_type">
-                <option value="" disabled selected>選択してください</option>
-                <option value="飲食店">飲食店</option>
-                <option value="小売店">小売店</option>
-                <option value="美容院・サロン">美容院・サロン</option>
-                <option value="クリニック">クリニック</option>
-                <option value="その他">その他</option>
-              </select>
-            </div>
-          </div>
-          <!-- UTM hidden fields dynamically injected by JS -->
-          <button type="submit" class="btn btn-white btn-lg">無料で始める</button>
-        </form>
-        <p class="final-cta-note">クレジットカード不要。14日間のフルトライアル付き。</p>
+      <p class="final-cta-sub">14日間無料トライアル。クレジットカード不要。</p>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:16px">
+        <a href="/dashboard/" class="btn btn-white btn-lg">14日間無料トライアル
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        </a>
+        <p class="final-cta-note">セットアップ5分。いつでもキャンセル可能。</p>
       </div>
     </div>
   </div>
 </section>
+</main>
 
 <!-- Footer -->
 <footer class="footer">
@@ -999,9 +1020,9 @@ ul{list-style:none}
       <div>
         <h4>法的情報</h4>
         <ul>
-          <li><a href="#">利用規約</a></li>
-          <li><a href="#">プライバシーポリシー</a></li>
-          <li><a href="#">特定商取引法に基づく表記</a></li>
+          <li><a href="/terms.html">利用規約</a></li>
+          <li><a href="/privacy.html">プライバシーポリシー</a></li>
+          <li><a href="/legal.html">特定商取引法に基づく表記</a></li>
         </ul>
       </div>
       <div>
@@ -1013,6 +1034,7 @@ ul{list-style:none}
       </div>
     </div>
     <div class="footer-bottom">
+      <p>運営: <a href="https://enablerhq.com" style="color:var(--indigo-500)">EnablerHQ</a></p>
       <p>&copy; 2026 MisebanAI. All rights reserved.</p>
     </div>
   </div>
@@ -1077,40 +1099,7 @@ ul{list-style:none}
   });
 })();
 
-/* ===== Pricing toggle (monthly / annual) ===== */
-(function(){
-  var sw = document.getElementById('toggleSwitch');
-  var labels = document.querySelectorAll('.pricing-toggle-label');
-  var values = document.querySelectorAll('.price-amount .value');
-  var annuals = document.querySelectorAll('.price-annual');
-  var isAnnual = false;
-
-  function update(){
-    sw.classList.toggle('on', isAnnual);
-    labels.forEach(function(l){
-      l.classList.toggle('active', (isAnnual && l.dataset.plan === 'annual') || (!isAnnual && l.dataset.plan === 'monthly'));
-    });
-    values.forEach(function(v){
-      v.textContent = isAnnual ? v.dataset.annual : v.dataset.monthly;
-    });
-    annuals.forEach(function(a){
-      if(a.dataset){
-        a.textContent = isAnnual ? (a.dataset.annual || '\u00a0') : (a.dataset.monthly || '\u00a0');
-      }
-    });
-  }
-
-  sw.addEventListener('click', function(){
-    isAnnual = !isAnnual;
-    update();
-  });
-  labels.forEach(function(l){
-    l.addEventListener('click', function(){
-      isAnnual = l.dataset.plan === 'annual';
-      update();
-    });
-  });
-})();
+/* Pricing toggle removed - static pricing only */
 
 /* ===== Smooth scroll for anchor links ===== */
 (function(){

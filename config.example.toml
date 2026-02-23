@@ -1,0 +1,44 @@
+# ============================================================================
+# MisebanAI Camera Agent Configuration
+# ============================================================================
+# Copy this file to one of:
+#   ~/.miseban/config.toml
+#   /etc/miseban/config.toml
+# Or specify with: miseban-agent --config /path/to/config.toml
+# ============================================================================
+
+[server]
+# Cloud API endpoint URL
+endpoint = "https://api.miseban.ai/v1/frames"
+# API token (get this from your dashboard at https://miseban-ai.fly.dev/dashboard/)
+token = "your-api-token-here"
+
+# ----------------------------------------------------------------------------
+# Cameras — Add one [[cameras]] block per camera
+# ----------------------------------------------------------------------------
+
+# Example 1: IP camera with HTTP snapshot
+[[cameras]]
+id = "cam-entrance"
+name = "入口カメラ"
+mode = "snapshot"                              # "snapshot" or "rtsp"
+url = "http://192.168.1.100/snap.jpg"          # HTTP URL for snapshot capture
+interval_secs = 5                              # Seconds between captures
+# username = "admin"                           # Optional: HTTP Basic Auth
+# password = "password123"                     # Optional: HTTP Basic Auth
+
+# Example 2: IP camera with RTSP stream
+[[cameras]]
+id = "cam-register"
+name = "レジカメラ"
+mode = "rtsp"
+url = "rtsp://admin:password@192.168.1.101/stream1"
+interval_secs = 10
+
+# Example 3: SwitchBot camera (RTSP enabled)
+# [[cameras]]
+# id = "cam-shelf"
+# name = "棚カメラ"
+# mode = "rtsp"
+# url = "rtsp://192.168.1.102:8554/unicast"   # SwitchBot RTSP URL
+# interval_secs = 15

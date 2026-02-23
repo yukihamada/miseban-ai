@@ -1,0 +1,3131 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ダッシュボード｜ミセバンAI</title>
+<meta name="robots" content="noindex, nofollow">
+
+<!-- Favicon (same as LP) -->
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%234f46e5'/><text x='50%25' y='54%25' dominant-baseline='middle' text-anchor='middle' fill='white' font-size='18' font-weight='bold' font-family='sans-serif'>M</text></svg>">
+
+<!-- Google Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<!-- Supabase JS -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+/* ===== Reset & Variables ===== */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --white: #ffffff;
+  --gray-50: #f8fafc;
+  --gray-100: #f1f5f9;
+  --gray-200: #e2e8f0;
+  --gray-300: #cbd5e1;
+  --gray-400: #94a3b8;
+  --gray-500: #64748b;
+  --gray-600: #475569;
+  --gray-700: #334155;
+  --gray-800: #1e293b;
+  --gray-900: #0f172a;
+  --slate-800: #1e293b;
+  --slate-900: #0f172a;
+  --indigo-50: #eef2ff;
+  --indigo-100: #e0e7ff;
+  --indigo-500: #6366f1;
+  --indigo-600: #4f46e5;
+  --indigo-700: #4338ca;
+  --red-50: #fef2f2;
+  --red-500: #ef4444;
+  --red-600: #dc2626;
+  --green-50: #f0fdf4;
+  --green-500: #22c55e;
+  --green-600: #16a34a;
+  --amber-50: #fffbeb;
+  --amber-500: #f59e0b;
+  --amber-600: #d97706;
+  --font-sans: 'Noto Sans JP', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --sidebar-width: 260px;
+  --header-height: 64px;
+  --radius-sm: 6px;
+  --radius: 10px;
+  --radius-lg: 14px;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.04);
+  --shadow: 0 4px 6px -1px rgba(0,0,0,.08), 0 2px 4px -2px rgba(0,0,0,.04);
+  --shadow-lg: 0 10px 15px -3px rgba(0,0,0,.08), 0 4px 6px -4px rgba(0,0,0,.04);
+  --transition: 200ms cubic-bezier(.4,0,.2,1);
+}
+
+html { font-size: 14px; }
+body {
+  font-family: var(--font-sans);
+  background: var(--gray-50);
+  color: var(--gray-800);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ===== Utility ===== */
+.hidden { display: none !important; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); }
+
+/* ===== Login Screen ===== */
+#login-screen {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--slate-900) 0%, #1a1a3e 50%, var(--indigo-700) 100%);
+  padding: 1rem;
+}
+
+.login-card {
+  background: var(--white);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  padding: 2.5rem 2rem;
+  width: 100%;
+  max-width: 400px;
+}
+
+.login-brand {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.login-brand-logo {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  background: var(--indigo-600);
+  border-radius: var(--radius);
+  color: var(--white);
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 0.75rem;
+}
+
+.login-brand h1 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--gray-900);
+}
+
+.login-brand p {
+  font-size: 0.875rem;
+  color: var(--gray-500);
+  margin-top: 0.25rem;
+}
+
+.form-group {
+  margin-bottom: 1.25rem;
+}
+
+.form-label {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--gray-700);
+  margin-bottom: 0.375rem;
+}
+
+.form-input {
+  width: 100%;
+  padding: 0.625rem 0.875rem;
+  border: 1px solid var(--gray-300);
+  border-radius: var(--radius-sm);
+  font-size: 0.9375rem;
+  font-family: var(--font-sans);
+  color: var(--gray-800);
+  background: var(--white);
+  transition: border-color var(--transition), box-shadow var(--transition);
+  outline: none;
+}
+
+.form-input:focus {
+  border-color: var(--indigo-500);
+  box-shadow: 0 0 0 3px rgba(79,70,229,.15);
+}
+
+.form-input::placeholder { color: var(--gray-400); }
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1.25rem;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  font-family: var(--font-sans);
+  cursor: pointer;
+  transition: background var(--transition), transform var(--transition), box-shadow var(--transition);
+  outline: none;
+}
+
+.btn:active { transform: scale(0.98); }
+
+.btn-primary {
+  background: var(--indigo-600);
+  color: var(--white);
+  width: 100%;
+}
+
+.btn-primary:hover { background: var(--indigo-700); }
+
+.btn-outline {
+  background: transparent;
+  color: var(--gray-600);
+  border: 1px solid var(--gray-300);
+}
+
+.btn-outline:hover {
+  background: var(--gray-50);
+  border-color: var(--gray-400);
+}
+
+.btn-sm {
+  padding: 0.375rem 0.875rem;
+  font-size: 0.8125rem;
+}
+
+.btn-danger {
+  background: var(--red-600);
+  color: var(--white);
+}
+
+.btn-danger:hover { background: var(--red-500); }
+
+.login-footer {
+  text-align: center;
+  margin-top: 1.5rem;
+  font-size: 0.8125rem;
+  color: var(--gray-500);
+}
+
+.login-footer a {
+  color: var(--indigo-600);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.login-footer a:hover { text-decoration: underline; }
+
+.login-toggle {
+  text-align: center;
+  margin-top: 1rem;
+  font-size: 0.875rem;
+  color: var(--gray-500);
+}
+
+.login-toggle button {
+  background: none;
+  border: none;
+  color: var(--indigo-600);
+  font-weight: 600;
+  cursor: pointer;
+  font-family: var(--font-sans);
+  font-size: 0.875rem;
+}
+
+.login-toggle button:hover { text-decoration: underline; }
+
+.login-error {
+  background: var(--red-50);
+  color: var(--red-600);
+  padding: 0.625rem 0.875rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.8125rem;
+  margin-bottom: 1rem;
+  display: none;
+}
+
+/* ===== Dashboard Layout ===== */
+#dashboard-screen { display: none; }
+#dashboard-screen.active { display: flex; min-height: 100vh; }
+
+/* Sidebar */
+.sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: var(--sidebar-width);
+  background: var(--slate-900);
+  color: var(--white);
+  display: flex;
+  flex-direction: column;
+  z-index: 100;
+  transition: transform var(--transition);
+}
+
+.sidebar-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid rgba(255,255,255,.08);
+}
+
+.sidebar-logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  background: var(--indigo-600);
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 1.125rem;
+  flex-shrink: 0;
+}
+
+.sidebar-brand {
+  font-size: 1.0625rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.sidebar-nav {
+  flex: 1;
+  padding: 1rem 0.75rem;
+  overflow-y: auto;
+}
+
+.nav-section-label {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: rgba(255,255,255,.35);
+  padding: 0.75rem 0.75rem 0.375rem;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.625rem 0.75rem;
+  border-radius: var(--radius-sm);
+  color: rgba(255,255,255,.65);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background var(--transition), color var(--transition);
+  border: none;
+  background: none;
+  width: 100%;
+  text-align: left;
+  font-family: var(--font-sans);
+}
+
+.nav-item:hover {
+  background: rgba(255,255,255,.06);
+  color: rgba(255,255,255,.9);
+}
+
+.nav-item.active {
+  background: rgba(79,70,229,.35);
+  color: var(--white);
+}
+
+.nav-item svg {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  opacity: 0.7;
+}
+
+.nav-item.active svg { opacity: 1; }
+
+.sidebar-footer {
+  padding: 1rem 1.25rem;
+  border-top: 1px solid rgba(255,255,255,.08);
+}
+
+.sidebar-user {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.sidebar-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--indigo-600);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 0.875rem;
+  flex-shrink: 0;
+}
+
+.sidebar-user-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.sidebar-user-name {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sidebar-user-plan {
+  font-size: 0.6875rem;
+  color: rgba(255,255,255,.45);
+}
+
+.sidebar-logout {
+  background: none;
+  border: none;
+  color: rgba(255,255,255,.45);
+  cursor: pointer;
+  padding: 0.375rem;
+  border-radius: var(--radius-sm);
+  transition: color var(--transition), background var(--transition);
+}
+
+.sidebar-logout:hover {
+  color: var(--white);
+  background: rgba(255,255,255,.08);
+}
+
+/* Main Content */
+.main-content {
+  margin-left: var(--sidebar-width);
+  flex: 1;
+  min-width: 0;
+}
+
+.main-header {
+  position: sticky;
+  top: 0;
+  background: rgba(255,255,255,.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--gray-200);
+  height: var(--header-height);
+  display: flex;
+  align-items: center;
+  padding: 0 2rem;
+  z-index: 50;
+}
+
+.hamburger {
+  display: none;
+  background: none;
+  border: none;
+  color: var(--gray-600);
+  cursor: pointer;
+  padding: 0.5rem;
+  margin-right: 0.75rem;
+  border-radius: var(--radius-sm);
+}
+
+.hamburger:hover { background: var(--gray-100); }
+
+.main-header h2 {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--gray-900);
+}
+
+.header-right {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.header-date {
+  font-size: 0.8125rem;
+  color: var(--gray-500);
+}
+
+.main-body {
+  padding: 1.5rem 2rem 3rem;
+}
+
+/* Mobile overlay */
+.sidebar-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.5);
+  z-index: 90;
+}
+
+/* ===== Tab Panels ===== */
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
+/* ===== Stat Cards ===== */
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.25rem;
+  margin-bottom: 1.75rem;
+}
+
+.stat-card {
+  background: var(--white);
+  border-radius: var(--radius);
+  padding: 1.25rem 1.5rem;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--gray-200);
+  transition: box-shadow var(--transition);
+}
+
+.stat-card:hover { box-shadow: var(--shadow); }
+
+.stat-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+}
+
+.stat-card-label {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--gray-500);
+}
+
+.stat-card-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.stat-card-icon svg { width: 20px; height: 20px; }
+
+.stat-card-icon.indigo { background: var(--indigo-50); color: var(--indigo-600); }
+.stat-card-icon.green { background: var(--green-50); color: var(--green-600); }
+.stat-card-icon.amber { background: var(--amber-50); color: var(--amber-600); }
+.stat-card-icon.red { background: var(--red-50); color: var(--red-500); }
+
+.stat-card-value {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--gray-900);
+  line-height: 1.2;
+}
+
+.stat-card-change {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  margin-top: 0.375rem;
+  padding: 0.125rem 0.5rem;
+  border-radius: 999px;
+}
+
+.stat-card-change.up { background: var(--green-50); color: var(--green-600); }
+.stat-card-change.down { background: var(--red-50); color: var(--red-600); }
+
+/* ===== Chart Cards ===== */
+.chart-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
+  margin-bottom: 1.75rem;
+}
+
+.card {
+  background: var(--white);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--gray-200);
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.25rem 1.5rem 0;
+}
+
+.card-title {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: var(--gray-900);
+}
+
+.card-subtitle {
+  font-size: 0.75rem;
+  color: var(--gray-500);
+}
+
+.card-body { padding: 1rem 1.5rem 1.25rem; }
+
+/* ===== Alert List ===== */
+.alert-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.alert-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.875rem 1rem;
+  border-radius: var(--radius-sm);
+  background: var(--gray-50);
+  border: 1px solid var(--gray-100);
+}
+
+.alert-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-top: 0.375rem;
+  flex-shrink: 0;
+}
+
+.alert-dot.info { background: var(--indigo-500); }
+.alert-dot.warn { background: var(--amber-500); }
+.alert-dot.error { background: var(--red-500); }
+.alert-dot.success { background: var(--green-500); }
+
+.alert-text {
+  flex: 1;
+  font-size: 0.8125rem;
+  color: var(--gray-700);
+  line-height: 1.5;
+}
+
+.alert-time {
+  font-size: 0.6875rem;
+  color: var(--gray-400);
+  white-space: nowrap;
+  margin-top: 0.125rem;
+}
+
+/* ===== Camera Management ===== */
+.camera-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1.25rem;
+  margin-bottom: 1.75rem;
+}
+
+.camera-card {
+  background: var(--white);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--gray-200);
+  overflow: hidden;
+}
+
+.camera-preview {
+  height: 180px;
+  background: var(--gray-800);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--gray-500);
+  font-size: 0.8125rem;
+  position: relative;
+}
+
+.camera-status-badge {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.25rem 0.625rem;
+  border-radius: 999px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+}
+
+.camera-status-badge.online { background: rgba(34,197,94,.15); color: var(--green-500); }
+.camera-status-badge.offline { background: rgba(239,68,68,.15); color: var(--red-500); }
+
+.camera-status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.camera-status-badge.online .camera-status-dot { background: var(--green-500); }
+.camera-status-badge.offline .camera-status-dot { background: var(--red-500); }
+
+.camera-info {
+  padding: 1rem 1.25rem;
+}
+
+.camera-name {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--gray-900);
+  margin-bottom: 0.25rem;
+}
+
+.camera-location {
+  font-size: 0.75rem;
+  color: var(--gray-500);
+  margin-bottom: 0.75rem;
+}
+
+.camera-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.camera-stat-item {
+  text-align: center;
+  padding: 0.5rem;
+  background: var(--gray-50);
+  border-radius: var(--radius-sm);
+}
+
+.camera-stat-value {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--gray-900);
+}
+
+.camera-stat-label {
+  font-size: 0.6875rem;
+  color: var(--gray-500);
+}
+
+/* Add Camera Form */
+.add-camera-card {
+  background: var(--white);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--gray-200);
+  padding: 1.5rem;
+}
+
+.add-camera-card h3 {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--gray-900);
+  margin-bottom: 1.25rem;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.form-group { margin-bottom: 1rem; }
+
+/* ===== Report Tab ===== */
+.report-controls {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.75rem;
+  flex-wrap: wrap;
+}
+
+.report-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.25rem;
+  margin-bottom: 1.75rem;
+}
+
+.report-summary-card {
+  background: var(--white);
+  border-radius: var(--radius);
+  padding: 1.5rem;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--gray-200);
+  text-align: center;
+}
+
+.report-summary-value {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--gray-900);
+}
+
+.report-summary-label {
+  font-size: 0.8125rem;
+  color: var(--gray-500);
+  margin-top: 0.25rem;
+}
+
+/* ===== Settings Tab ===== */
+.settings-section {
+  background: var(--white);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--gray-200);
+  padding: 1.5rem;
+  margin-bottom: 1.25rem;
+}
+
+.settings-section h3 {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--gray-900);
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--gray-100);
+}
+
+.plan-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.375rem 0.875rem;
+  border-radius: 999px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.plan-badge.free { background: var(--gray-100); color: var(--gray-600); }
+.plan-badge.starter { background: var(--indigo-50); color: var(--indigo-600); }
+.plan-badge.pro { background: var(--amber-50); color: var(--amber-600); }
+
+.toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid var(--gray-100);
+}
+
+.toggle-row:last-child { border-bottom: none; }
+
+.toggle-label {
+  font-size: 0.875rem;
+  color: var(--gray-700);
+}
+
+.toggle-desc {
+  font-size: 0.75rem;
+  color: var(--gray-500);
+  margin-top: 0.125rem;
+}
+
+/* Toggle Switch */
+.toggle-switch {
+  position: relative;
+  width: 44px;
+  height: 24px;
+  flex-shrink: 0;
+}
+
+.toggle-switch input { opacity: 0; width: 0; height: 0; }
+
+.toggle-slider {
+  position: absolute;
+  inset: 0;
+  background: var(--gray-300);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background var(--transition);
+}
+
+.toggle-slider::before {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 20px;
+  height: 20px;
+  background: var(--white);
+  border-radius: 50%;
+  transition: transform var(--transition);
+  box-shadow: 0 1px 3px rgba(0,0,0,.15);
+}
+
+.toggle-switch input:checked + .toggle-slider { background: var(--indigo-600); }
+.toggle-switch input:checked + .toggle-slider::before { transform: translateX(20px); }
+
+/* ===== Responsive ===== */
+@media (max-width: 1024px) {
+  .stat-grid { grid-template-columns: repeat(2, 1fr); }
+  .chart-grid { grid-template-columns: 1fr; }
+  .report-summary-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 768px) {
+  .sidebar { transform: translateX(-100%); }
+  .sidebar.open { transform: translateX(0); }
+  .sidebar-overlay.open { display: block; }
+  .main-content { margin-left: 0; }
+  .hamburger { display: block; }
+  .main-body { padding: 1.25rem 1rem 2rem; }
+  .main-header { padding: 0 1rem; }
+  .stat-grid { grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+  .form-row { grid-template-columns: 1fr; }
+  .report-controls { flex-direction: column; align-items: stretch; }
+  .report-summary-grid { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 480px) {
+  .stat-grid { grid-template-columns: 1fr; }
+}
+
+/* ===== Loading Spinner ===== */
+.spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid rgba(255,255,255,.3);
+  border-top-color: var(--white);
+  border-radius: 50%;
+  animation: spin .6s linear infinite;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ===== Scrollbar ===== */
+.sidebar-nav::-webkit-scrollbar { width: 4px; }
+.sidebar-nav::-webkit-scrollbar-track { background: transparent; }
+.sidebar-nav::-webkit-scrollbar-thumb { background: rgba(255,255,255,.15); border-radius: 999px; }
+
+/* Alert improvements */
+.alert-item.unread { background: rgba(99, 102, 241, 0.08); border-left: 3px solid var(--indigo-600); }
+.alert-item { cursor: pointer; transition: background 0.2s; border-left: 3px solid transparent; }
+.alert-item:hover { background: rgba(0,0,0,0.02); }
+.alert-content { flex: 1; min-width: 0; }
+.alert-label { font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--gray-500); margin-bottom: 2px; }
+.alert-empty { text-align: center; padding: 24px; color: var(--gray-500); font-size: 0.875rem; }
+
+/* Unread badge */
+.alert-badge { display: none; align-items: center; justify-content: center; min-width: 18px; height: 18px; padding: 0 5px; background: #ef4444; color: white; font-size: 0.625rem; font-weight: 700; border-radius: 100px; margin-left: 8px; }
+
+/* LINE linking */
+.line-connect-btn { display: inline-flex; align-items: center; gap: 8px; background: #06C755; color: white; border: none; padding: 12px 24px; border-radius: 8px; font-size: 0.9375rem; font-weight: 600; cursor: pointer; transition: all 0.2s; font-family: var(--font-sans); }
+.line-connect-btn:hover { background: #05b34d; transform: translateY(-1px); }
+.line-connect-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+.line-connected { display: flex; align-items: center; gap: 12px; padding: 16px; background: rgba(6, 199, 85, 0.1); border: 1px solid rgba(6, 199, 85, 0.3); border-radius: 8px; }
+.line-connected-icon { width: 40px; height: 40px; background: #06C755; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+.line-status-text { font-size: 0.875rem; color: var(--gray-500); }
+.line-status-text strong { color: var(--gray-800); display: block; margin-bottom: 2px; }
+
+/* Toast notification */
+.toast-notification { position: fixed; bottom: 24px; right: 24px; background: var(--white); border: 1px solid var(--gray-200); padding: 14px 20px; border-radius: 12px; display: flex; align-items: center; gap: 10px; font-size: 0.875rem; color: var(--gray-800); box-shadow: 0 8px 32px rgba(0,0,0,0.12); transform: translateY(120%); opacity: 0; transition: all 0.3s ease; z-index: 10000; max-width: 360px; }
+.toast-notification.show { transform: translateY(0); opacity: 1; }
+.toast-icon { font-size: 1.25rem; }
+
+/* Modal overlay */
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 9999; backdrop-filter: blur(4px); }
+.modal-content { background: var(--white); border: 1px solid var(--gray-200); border-radius: 16px; padding: 32px; }
+
+/* ===== Billing Tab ===== */
+.billing-current { display: flex; align-items: center; justify-content: space-between; background: var(--white); border: 1px solid var(--gray-200); border-radius: 12px; padding: 20px 24px; margin-bottom: 32px; box-shadow: var(--shadow-sm); }
+.billing-current-info { display: flex; align-items: center; gap: 16px; }
+.billing-current-info h3 { font-size: 1rem; margin-bottom: 2px; color: var(--gray-900); }
+.billing-current-info p { font-size: 0.8125rem; color: var(--gray-500); }
+.btn-manage-billing { background: transparent; border: 1px solid var(--gray-300); color: var(--gray-700); padding: 8px 16px; border-radius: 8px; font-size: 0.8125rem; cursor: pointer; transition: all 0.2s; font-family: var(--font-sans); }
+.btn-manage-billing:hover { background: var(--gray-50); border-color: var(--indigo-500); color: var(--indigo-600); }
+
+.pricing-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+@media (max-width: 1024px) { .pricing-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 640px) { .pricing-grid { grid-template-columns: 1fr; } }
+
+.pricing-card { background: var(--white); border: 1px solid var(--gray-200); border-radius: 12px; padding: 24px; display: flex; flex-direction: column; position: relative; transition: all 0.2s; box-shadow: var(--shadow-sm); }
+.pricing-card:hover { border-color: rgba(99,102,241,0.3); transform: translateY(-2px); box-shadow: var(--shadow); }
+.pricing-card.recommended { border-color: var(--indigo-500); box-shadow: 0 0 0 1px var(--indigo-500), 0 8px 24px rgba(99,102,241,0.15); }
+.pricing-badge { position: absolute; top: -10px; left: 50%; transform: translateX(-50%); background: var(--indigo-600); color: white; font-size: 0.6875rem; font-weight: 700; padding: 3px 12px; border-radius: 100px; letter-spacing: 0.03em; }
+
+.pricing-header { margin-bottom: 20px; }
+.pricing-header h3 { font-size: 1.0625rem; margin-bottom: 8px; color: var(--gray-900); }
+.pricing-price { display: flex; align-items: baseline; gap: 2px; }
+.pricing-amount { font-size: 1.75rem; font-weight: 700; font-family: 'Inter', sans-serif; color: var(--gray-900); }
+.pricing-period { font-size: 0.8125rem; color: var(--gray-500); }
+
+.pricing-features { list-style: none; padding: 0; margin: 0 0 24px; flex: 1; }
+.pricing-features li { font-size: 0.8125rem; color: var(--gray-600); padding: 6px 0; padding-left: 20px; position: relative; }
+.pricing-features li::before { content: '\2713'; position: absolute; left: 0; color: var(--green-500); font-weight: 700; }
+
+.pricing-btn { width: 100%; padding: 10px; border-radius: 8px; font-size: 0.875rem; font-weight: 600; cursor: pointer; transition: all 0.2s; border: none; font-family: var(--font-sans); }
+.pricing-btn.current { background: var(--gray-100); color: var(--gray-500); cursor: default; }
+.pricing-btn.upgrade { background: var(--indigo-600); color: white; }
+.pricing-btn.upgrade:hover { background: var(--indigo-700); transform: translateY(-1px); }
+
+.billing-usage { }
+.usage-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+@media (max-width: 768px) { .usage-grid { grid-template-columns: 1fr; } }
+.usage-card { background: var(--white); border: 1px solid var(--gray-200); border-radius: 12px; padding: 20px; box-shadow: var(--shadow-sm); }
+.usage-label { font-size: 0.75rem; color: var(--gray-500); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em; }
+.usage-value { font-size: 1.25rem; font-weight: 700; font-family: 'Inter', sans-serif; color: var(--gray-900); }
+.usage-bar { height: 6px; background: var(--gray-100); border-radius: 3px; margin-top: 12px; overflow: hidden; }
+.usage-bar-fill { height: 100%; background: var(--indigo-600); border-radius: 3px; transition: width 0.3s; }
+
+/* ===== Onboarding Wizard ===== */
+.onboarding-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 20000;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+.onboarding-card {
+  background: var(--white);
+  border-radius: 20px;
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.25);
+  padding: 2.5rem 2rem 2rem;
+  width: 100%;
+  max-width: 520px;
+  position: relative;
+  animation: onboardingFadeIn 0.3s ease;
+}
+
+@keyframes onboardingFadeIn {
+  from { opacity: 0; transform: translateY(20px) scale(0.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.onboarding-steps {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  margin-bottom: 2rem;
+}
+
+.onboarding-step-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--gray-200);
+  transition: background 0.3s, transform 0.3s;
+  flex-shrink: 0;
+}
+
+.onboarding-step-dot.active {
+  background: var(--indigo-600);
+  transform: scale(1.25);
+}
+
+.onboarding-step-dot.done {
+  background: var(--green-500);
+}
+
+.onboarding-step-line {
+  width: 40px;
+  height: 2px;
+  background: var(--gray-200);
+  transition: background 0.3s;
+}
+
+.onboarding-step-line.done {
+  background: var(--green-500);
+}
+
+.onboarding-body {
+  min-height: 200px;
+}
+
+.onboarding-body h2 {
+  font-size: 1.375rem;
+  font-weight: 700;
+  color: var(--gray-900);
+  text-align: center;
+  margin-bottom: 0.75rem;
+}
+
+.onboarding-body p {
+  font-size: 0.9375rem;
+  color: var(--gray-600);
+  text-align: center;
+  line-height: 1.7;
+  margin-bottom: 1.5rem;
+}
+
+.onboarding-body .form-group {
+  margin-bottom: 1.25rem;
+}
+
+.onboarding-icon {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1.25rem;
+}
+
+.onboarding-icon-circle {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: var(--indigo-50);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--indigo-600);
+}
+
+.onboarding-icon-circle svg {
+  width: 32px;
+  height: 32px;
+}
+
+.onboarding-actions {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.onboarding-actions .btn {
+  min-width: 120px;
+}
+
+.onboarding-code-block {
+  background: var(--gray-800);
+  color: var(--green-500);
+  font-family: 'Courier New', monospace;
+  font-size: 0.8125rem;
+  padding: 1rem 1.25rem;
+  border-radius: var(--radius);
+  margin-bottom: 1rem;
+  word-break: break-all;
+  line-height: 1.6;
+}
+
+/* Confetti CSS animation */
+.confetti-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  overflow: hidden;
+  border-radius: 20px;
+}
+
+.confetti-piece {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  top: -10px;
+  opacity: 0;
+  animation: confettiFall 2.5s ease-in forwards;
+}
+
+.confetti-piece:nth-child(1) { left: 10%; background: var(--indigo-500); animation-delay: 0s; border-radius: 50%; }
+.confetti-piece:nth-child(2) { left: 20%; background: var(--green-500); animation-delay: 0.15s; border-radius: 2px; }
+.confetti-piece:nth-child(3) { left: 30%; background: var(--amber-500); animation-delay: 0.3s; border-radius: 50%; }
+.confetti-piece:nth-child(4) { left: 40%; background: var(--red-500); animation-delay: 0.1s; border-radius: 2px; }
+.confetti-piece:nth-child(5) { left: 50%; background: var(--indigo-600); animation-delay: 0.25s; border-radius: 50%; }
+.confetti-piece:nth-child(6) { left: 60%; background: var(--green-600); animation-delay: 0.05s; border-radius: 2px; }
+.confetti-piece:nth-child(7) { left: 70%; background: var(--amber-600); animation-delay: 0.35s; border-radius: 50%; }
+.confetti-piece:nth-child(8) { left: 80%; background: var(--red-600); animation-delay: 0.2s; border-radius: 2px; }
+.confetti-piece:nth-child(9) { left: 15%; background: var(--indigo-500); animation-delay: 0.4s; width: 8px; height: 8px; border-radius: 50%; }
+.confetti-piece:nth-child(10) { left: 45%; background: var(--green-500); animation-delay: 0.12s; width: 8px; height: 8px; border-radius: 2px; }
+.confetti-piece:nth-child(11) { left: 65%; background: var(--amber-500); animation-delay: 0.28s; width: 12px; height: 6px; border-radius: 2px; }
+.confetti-piece:nth-child(12) { left: 85%; background: var(--indigo-600); animation-delay: 0.08s; width: 6px; height: 12px; border-radius: 2px; }
+
+@keyframes confettiFall {
+  0% { opacity: 1; top: -10px; transform: translateX(0) rotate(0deg); }
+  100% { opacity: 0; top: 110%; transform: translateX(80px) rotate(720deg); }
+}
+
+.confetti-piece:nth-child(even) {
+  animation-name: confettiFallAlt;
+}
+
+@keyframes confettiFallAlt {
+  0% { opacity: 1; top: -10px; transform: translateX(0) rotate(0deg); }
+  100% { opacity: 0; top: 110%; transform: translateX(-60px) rotate(-540deg); }
+}
+
+/* ===== Session Toast ===== */
+.session-toast {
+  position: fixed;
+  top: 24px;
+  right: 24px;
+  background: var(--red-50);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  padding: 14px 20px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.875rem;
+  color: var(--red-600);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+  transform: translateY(-120%);
+  opacity: 0;
+  transition: all 0.3s ease;
+  z-index: 30000;
+  max-width: 420px;
+  font-weight: 500;
+}
+
+.session-toast.show {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+/* ===== Dashboard Footer ===== */
+.dashboard-footer {
+  padding: 2rem 2rem 1.5rem;
+  text-align: center;
+  border-top: 1px solid var(--gray-200);
+  margin-top: 2rem;
+}
+
+.footer-links {
+  display: flex;
+  justify-content: center;
+  gap: 1.5rem;
+  margin-bottom: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.footer-links a {
+  font-size: 0.75rem;
+  color: var(--gray-400);
+  text-decoration: none;
+  transition: color var(--transition);
+}
+
+.footer-links a:hover {
+  color: var(--gray-600);
+  text-decoration: underline;
+}
+
+.dashboard-footer p {
+  font-size: 0.6875rem;
+  color: var(--gray-400);
+}
+
+/* ===== Keyboard Shortcuts Overlay ===== */
+.shortcuts-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 25000;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  animation: shortcutsFadeIn 0.15s ease;
+}
+
+@keyframes shortcutsFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.shortcuts-card {
+  background: var(--white);
+  border-radius: 16px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
+  padding: 2rem;
+  width: 100%;
+  max-width: 380px;
+}
+
+.shortcuts-card h3 {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--gray-900);
+  margin-bottom: 1.25rem;
+  text-align: center;
+}
+
+.shortcut-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.625rem 0;
+  border-bottom: 1px solid var(--gray-100);
+}
+
+.shortcut-row:last-child {
+  border-bottom: none;
+}
+
+.shortcut-label {
+  font-size: 0.875rem;
+  color: var(--gray-700);
+}
+
+.shortcut-key {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 28px;
+  height: 28px;
+  padding: 0 8px;
+  background: var(--gray-100);
+  border: 1px solid var(--gray-200);
+  border-radius: 6px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--gray-700);
+  font-family: 'Inter', monospace;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.shortcuts-close {
+  display: block;
+  margin: 1.25rem auto 0;
+  background: none;
+  border: none;
+  color: var(--gray-500);
+  font-size: 0.8125rem;
+  cursor: pointer;
+  font-family: var(--font-sans);
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius-sm);
+  transition: background var(--transition), color var(--transition);
+}
+
+.shortcuts-close:hover {
+  background: var(--gray-100);
+  color: var(--gray-700);
+}
+
+@media (max-width: 768px) {
+  .onboarding-card { margin: 1rem; padding: 2rem 1.5rem 1.5rem; }
+  .shortcuts-card { margin: 1rem; }
+  .dashboard-footer { padding: 1.5rem 1rem 1rem; }
+}
+</style>
+</head>
+<body>
+
+<!-- ===== LOGIN SCREEN ===== -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-brand">
+      <div class="login-brand-logo">M</div>
+      <h1>ミセバンAI</h1>
+      <p id="login-subtitle">ダッシュボードにログイン</p>
+    </div>
+
+    <div class="login-error" id="login-error"></div>
+
+    <form id="login-form" autocomplete="on">
+      <div class="form-group">
+        <label class="form-label" for="email">メールアドレス</label>
+        <input class="form-input" type="email" id="email" placeholder="you@example.com" required autocomplete="email">
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="password">パスワード</label>
+        <input class="form-input" type="password" id="password" placeholder="8文字以上" required minlength="8" autocomplete="current-password">
+      </div>
+      <button class="btn btn-primary" type="submit" id="login-btn">
+        <span id="login-btn-text">ログイン</span>
+      </button>
+    </form>
+
+    <div class="login-toggle">
+      <span id="toggle-text">アカウントをお持ちでない方は</span>
+      <button id="toggle-auth-mode" type="button">新規登録</button>
+    </div>
+
+    <div class="login-footer">
+      <a href="/">ミセバンAI トップページへ戻る</a>
+    </div>
+  </div>
+</div>
+
+<!-- ===== DASHBOARD SCREEN ===== -->
+<div id="dashboard-screen">
+
+  <!-- Sidebar Overlay (mobile) -->
+  <div class="sidebar-overlay" id="sidebar-overlay"></div>
+
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-logo">M</div>
+      <span class="sidebar-brand">ミセバンAI</span>
+    </div>
+
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">メニュー</div>
+
+      <button class="nav-item active" data-tab="overview">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 0 1 6 3.75h2.25A2.25 2.25 0 0 1 10.5 6v2.25a2.25 2.25 0 0 1-2.25 2.25H6a2.25 2.25 0 0 1-2.25-2.25V6ZM3.75 15.75A2.25 2.25 0 0 1 6 13.5h2.25a2.25 2.25 0 0 1 2.25 2.25V18a2.25 2.25 0 0 1-2.25 2.25H6A2.25 2.25 0 0 1 3.75 18v-2.25ZM13.5 6a2.25 2.25 0 0 1 2.25-2.25H18A2.25 2.25 0 0 1 20.25 6v2.25A2.25 2.25 0 0 1 18 10.5h-2.25a2.25 2.25 0 0 1-2.25-2.25V6ZM13.5 15.75a2.25 2.25 0 0 1 2.25-2.25H18a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 18 20.25h-2.25A2.25 2.25 0 0 1 13.5 18v-2.25Z"/></svg>
+        ダッシュボード
+      </button>
+
+      <button class="nav-item" data-tab="cameras">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m15.75 10.5 4.72-4.72a.75.75 0 0 1 1.28.53v11.38a.75.75 0 0 1-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 0 0 2.25-2.25v-9a2.25 2.25 0 0 0-2.25-2.25h-9A2.25 2.25 0 0 0 2.25 7.5v9a2.25 2.25 0 0 0 2.25 2.25Z"/></svg>
+        カメラ管理
+      </button>
+
+      <button class="nav-item" data-tab="reports">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 0 1 3 19.875v-6.75ZM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V8.625ZM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V4.125Z"/></svg>
+        レポート
+      </button>
+
+      <div class="nav-section-label" style="margin-top: 0.5rem;">システム</div>
+
+      <button class="nav-item" data-tab="settings">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.325.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 0 1 1.37.49l1.296 2.247a1.125 1.125 0 0 1-.26 1.431l-1.003.827c-.293.241-.438.613-.43.992a7.723 7.723 0 0 1 0 .255c-.008.378.137.75.43.991l1.004.827c.424.35.534.955.26 1.43l-1.298 2.247a1.125 1.125 0 0 1-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.47 6.47 0 0 1-.22.128c-.331.183-.581.495-.644.869l-.213 1.281c-.09.543-.56.94-1.11.94h-2.594c-.55 0-1.019-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 0 1-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 0 1-1.369-.49l-1.297-2.247a1.125 1.125 0 0 1 .26-1.431l1.004-.827c.292-.24.437-.613.43-.991a6.932 6.932 0 0 1 0-.255c.007-.38-.138-.751-.43-.992l-1.004-.827a1.125 1.125 0 0 1-.26-1.43l1.297-2.247a1.125 1.125 0 0 1 1.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.086.22-.128.332-.183.582-.495.644-.869l.214-1.28Z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/></svg>
+        設定
+      </button>
+
+      <button class="nav-item" data-tab="billing">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+        料金・請求
+      </button>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="sidebar-user">
+        <div class="sidebar-avatar" id="user-avatar">U</div>
+        <div class="sidebar-user-info">
+          <div class="sidebar-user-name" id="user-display-name">ユーザー</div>
+          <div class="sidebar-user-plan">Free プラン</div>
+        </div>
+        <button class="sidebar-logout" id="logout-btn" title="ログアウト">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="18" height="18"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15m3 0 3-3m0 0-3-3m3 3H9"/></svg>
+        </button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="main-content">
+    <header class="main-header">
+      <button class="hamburger" id="hamburger-btn">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="24" height="24"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"/></svg>
+      </button>
+      <h2 id="page-title">ダッシュボード</h2>
+      <div class="header-right">
+        <span class="header-date" id="header-date"></span>
+      </div>
+    </header>
+
+    <div class="main-body">
+
+      <!-- ===== OVERVIEW TAB ===== -->
+      <div class="tab-panel active" id="tab-overview">
+
+        <!-- Stat Cards -->
+        <div class="stat-grid">
+          <div class="stat-card">
+            <div class="stat-card-header">
+              <span class="stat-card-label">本日の来客数</span>
+              <div class="stat-card-icon indigo">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z"/></svg>
+              </div>
+            </div>
+            <div class="stat-card-value" id="stat-today">143</div>
+            <span class="stat-card-change up">+12.6% 昨日比</span>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-card-header">
+              <span class="stat-card-label">昨日の来客数</span>
+              <div class="stat-card-icon green">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18 9 11.25l4.306 4.306a11.95 11.95 0 0 1 5.814-5.518l2.74-1.22m0 0-5.94-2.281m5.94 2.28-2.28 5.941"/></svg>
+              </div>
+            </div>
+            <div class="stat-card-value" id="stat-yesterday">127</div>
+            <span class="stat-card-change up">+6.7% 前日比</span>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-card-header">
+              <span class="stat-card-label">ピーク時間帯</span>
+              <div class="stat-card-icon amber">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/></svg>
+              </div>
+            </div>
+            <div class="stat-card-value" id="stat-peak">12:00</div>
+            <span class="stat-card-change" style="background:var(--amber-50);color:var(--amber-600);">12:00〜13:00</span>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-card-header">
+              <span class="stat-card-label">カメラ稼働状況</span>
+              <div class="stat-card-icon" id="camera-status-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m15.75 10.5 4.72-4.72a.75.75 0 0 1 1.28.53v11.38a.75.75 0 0 1-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 0 0 2.25-2.25v-9a2.25 2.25 0 0 0-2.25-2.25h-9A2.25 2.25 0 0 0 2.25 7.5v9a2.25 2.25 0 0 0 2.25 2.25Z"/></svg>
+              </div>
+            </div>
+            <div class="stat-card-value"><span id="stat-cameras-online">2</span><span style="font-size:1rem;color:var(--gray-400);font-weight:400;"> / 3</span></div>
+            <span class="stat-card-change" style="background:var(--red-50);color:var(--red-600);">1台オフライン</span>
+          </div>
+        </div>
+
+        <!-- Charts -->
+        <div class="chart-grid">
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <div class="card-title">来客数推移</div>
+                <div class="card-subtitle">過去7日間</div>
+              </div>
+            </div>
+            <div class="card-body">
+              <canvas id="chart-weekly" height="240"></canvas>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <div class="card-title">時間帯別来客数</div>
+                <div class="card-subtitle">本日</div>
+              </div>
+            </div>
+            <div class="card-body">
+              <canvas id="chart-hourly" height="240"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- Recent Alerts -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">最近のアラート</div>
+          </div>
+          <div class="card-body">
+            <div class="alert-list" id="alert-list">
+              <!-- Populated by JS -->
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== CAMERAS TAB ===== -->
+      <div class="tab-panel" id="tab-cameras">
+
+        <div class="camera-grid" id="camera-list">
+          <!-- Populated by JS -->
+        </div>
+
+        <div class="add-camera-card">
+          <h3>カメラを追加</h3>
+          <form id="add-camera-form">
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">カメラ名</label>
+                <input class="form-input" type="text" placeholder="例: 入口カメラ" id="cam-name">
+              </div>
+              <div class="form-group">
+                <label class="form-label">設置場所</label>
+                <input class="form-input" type="text" placeholder="例: 正面入口" id="cam-location">
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">RTSP URL</label>
+              <input class="form-input" type="url" placeholder="rtsp://192.168.1.100:554/stream" id="cam-rtsp">
+            </div>
+            <button class="btn btn-primary" type="submit" style="width:auto;">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+              カメラを追加
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <!-- ===== REPORTS TAB ===== -->
+      <div class="tab-panel" id="tab-reports">
+
+        <div class="report-controls">
+          <div class="form-group" style="margin-bottom:0;">
+            <label class="form-label">開始日</label>
+            <input class="form-input" type="date" id="report-start" style="width:180px;">
+          </div>
+          <div class="form-group" style="margin-bottom:0;">
+            <label class="form-label">終了日</label>
+            <input class="form-input" type="date" id="report-end" style="width:180px;">
+          </div>
+          <div style="display:flex;align-items:flex-end;gap:0.5rem;padding-top:0.25rem;">
+            <button class="btn btn-primary btn-sm" id="report-generate-btn">レポート生成</button>
+            <button class="btn btn-outline btn-sm" id="report-csv-btn">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3"/></svg>
+              CSV出力
+            </button>
+          </div>
+        </div>
+
+        <div class="report-summary-grid">
+          <div class="report-summary-card">
+            <div class="report-summary-value" id="report-total">812</div>
+            <div class="report-summary-label">期間中の総来客数</div>
+          </div>
+          <div class="report-summary-card">
+            <div class="report-summary-value" id="report-avg">116</div>
+            <div class="report-summary-label">1日あたりの平均</div>
+          </div>
+          <div class="report-summary-card">
+            <div class="report-summary-value" id="report-peak-day">木曜日</div>
+            <div class="report-summary-label">最も来客の多い曜日</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">期間内の来客推移</div>
+          </div>
+          <div class="card-body">
+            <canvas id="chart-report" height="300"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== SETTINGS TAB ===== -->
+      <div class="tab-panel" id="tab-settings">
+
+        <div class="settings-section">
+          <h3>店舗情報</h3>
+          <div class="form-group">
+            <label class="form-label">店舗名</label>
+            <input class="form-input" type="text" id="setting-store-name" placeholder="例: サンプルカフェ 渋谷店" value="サンプルカフェ 渋谷店">
+          </div>
+          <div class="form-group">
+            <label class="form-label">業種</label>
+            <select class="form-input" id="setting-industry">
+              <option value="cafe">カフェ・喫茶</option>
+              <option value="restaurant">レストラン・飲食</option>
+              <option value="retail">小売・物販</option>
+              <option value="salon">サロン・美容</option>
+              <option value="clinic">クリニック・医療</option>
+              <option value="other">その他</option>
+            </select>
+          </div>
+          <button class="btn btn-primary btn-sm" style="width:auto;">保存</button>
+        </div>
+
+        <div class="settings-section">
+          <h3>ご利用プラン</h3>
+          <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1rem;">
+            <span class="plan-badge free" id="current-plan-badge">Free プラン</span>
+            <span style="font-size:0.8125rem;color:var(--gray-500);">カメラ3台まで・基本分析</span>
+          </div>
+          <div style="display:flex;gap:0.75rem;">
+            <button class="btn btn-primary btn-sm" style="width:auto;" onclick="alert('プランアップグレードは近日公開予定です')">
+              アップグレード
+            </button>
+            <button class="btn btn-outline btn-sm" style="width:auto;">プラン詳細</button>
+          </div>
+        </div>
+
+        <div class="settings-section">
+          <h3>通知設定</h3>
+          <div class="toggle-row">
+            <div>
+              <div class="toggle-label">日次レポート</div>
+              <div class="toggle-desc">毎日21:00に本日の集計レポートを送信</div>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" checked>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+          <div class="toggle-row">
+            <div>
+              <div class="toggle-label">カメラオフライン通知</div>
+              <div class="toggle-desc">カメラの接続が切れた際に通知</div>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" checked>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+          <div class="toggle-row">
+            <div>
+              <div class="toggle-label">異常検知アラート</div>
+              <div class="toggle-desc">通常と異なる来客パターンを検知した際に通知</div>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox">
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+          <div class="toggle-row">
+            <div>
+              <div class="toggle-label">週次サマリー</div>
+              <div class="toggle-desc">毎週月曜日に先週の分析レポートを送信</div>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" checked>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+        </div>
+
+        <div class="settings-section">
+          <h3>LINE連携</h3>
+          <p class="settings-desc" style="font-size:0.875rem;color:var(--gray-600);margin-bottom:1rem;">LINEアカウントを連携すると、アラートや日次レポートをLINEで受け取れます。</p>
+          <div id="line-status">
+            <button class="line-connect-btn" onclick="connectLine()">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M19.365 9.863c.349 0 .63.285.63.631 0 .345-.281.63-.63.63H17.61v1.125h1.755c.349 0 .63.283.63.63 0 .344-.281.629-.63.629h-2.386c-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63h2.386c.346 0 .627.285.627.63 0 .349-.281.63-.63.63H17.61v1.125h1.755zm-3.855 3.016c0 .27-.174.51-.432.596-.064.021-.133.031-.199.031-.211 0-.391-.09-.51-.25l-2.443-3.317v2.94c0 .344-.279.629-.631.629-.346 0-.626-.285-.626-.629V8.108c0-.27.173-.51.43-.595.06-.023.136-.033.194-.033.195 0 .375.104.495.254l2.462 3.33V8.108c0-.345.282-.63.63-.63.345 0 .63.285.63.63v4.771zm-5.741 0c0 .344-.282.629-.631.629-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63.346 0 .628.285.628.63v4.771zm-2.466.629H4.917c-.345 0-.63-.285-.63-.629V8.108c0-.345.285-.63.63-.63.348 0 .63.285.63.63v4.141h1.756c.348 0 .629.283.629.63 0 .344-.282.629-.629.629M24 10.314C24 4.943 18.615.572 12 .572S0 4.943 0 10.314c0 4.811 4.27 8.842 10.035 9.608.391.082.923.258 1.058.59.12.301.079.766.038 1.08l-.164 1.02c-.045.301-.24 1.186 1.049.645 1.291-.539 6.916-4.078 9.436-6.975C23.176 14.393 24 12.458 24 10.314"/></svg>
+              LINEで連携する
+            </button>
+          </div>
+        </div>
+
+        <div class="settings-section" style="border-color:var(--red-500);border-width:1px;">
+          <h3 style="color:var(--red-600);">危険な操作</h3>
+          <p style="font-size:0.875rem;color:var(--gray-600);margin-bottom:1rem;">アカウントを削除すると、全てのデータが完全に消去されます。この操作は取り消せません。</p>
+          <button class="btn btn-danger btn-sm" style="width:auto;" onclick="alert('アカウント削除は設定画面から近日実装予定です')">アカウントを削除</button>
+        </div>
+      </div>
+
+      <!-- ===== BILLING TAB ===== -->
+      <div class="tab-panel" id="tab-billing">
+        <h2 style="margin-bottom:24px;">料金プラン</h2>
+
+        <!-- Current Plan Banner -->
+        <div class="billing-current" id="billing-current-plan">
+          <div class="billing-current-info">
+            <span class="plan-badge free" id="billing-plan-badge">Free</span>
+            <div>
+              <h3 id="billing-plan-name">フリープラン</h3>
+              <p id="billing-plan-desc">1台のカメラ、基本来客カウント</p>
+            </div>
+          </div>
+          <button class="btn-manage-billing" id="btn-manage-billing" onclick="openCustomerPortal()" style="display:none;">
+            請求管理
+          </button>
+        </div>
+
+        <!-- Pricing Cards -->
+        <div class="pricing-grid" id="pricing-grid">
+          <!-- Free -->
+          <div class="pricing-card">
+            <div class="pricing-header">
+              <h3>フリー</h3>
+              <div class="pricing-price"><span class="pricing-amount">¥0</span><span class="pricing-period">/月</span></div>
+            </div>
+            <ul class="pricing-features">
+              <li>カメラ 1台</li>
+              <li>基本来客カウント</li>
+              <li>7日間データ保持</li>
+              <li>日次レポート</li>
+            </ul>
+            <button class="pricing-btn current" disabled>現在のプラン</button>
+          </div>
+
+          <!-- Starter -->
+          <div class="pricing-card recommended">
+            <div class="pricing-badge">おすすめ</div>
+            <div class="pricing-header">
+              <h3>スターター</h3>
+              <div class="pricing-price"><span class="pricing-amount">¥9,800</span><span class="pricing-period">/月</span></div>
+            </div>
+            <ul class="pricing-features">
+              <li>カメラ 4台まで</li>
+              <li>来客カウント + 属性分析</li>
+              <li>30日間データ保持</li>
+              <li>日次レポート</li>
+              <li>LINE アラート</li>
+            </ul>
+            <button class="pricing-btn upgrade" onclick="startCheckout('starter')">アップグレード</button>
+          </div>
+
+          <!-- Pro -->
+          <div class="pricing-card">
+            <div class="pricing-header">
+              <h3>プロ</h3>
+              <div class="pricing-price"><span class="pricing-amount">¥29,800</span><span class="pricing-period">/月</span></div>
+            </div>
+            <ul class="pricing-features">
+              <li>カメラ 16台まで</li>
+              <li>全分析機能</li>
+              <li>90日間データ保持</li>
+              <li>ヒートマップ</li>
+              <li>リアルタイムアラート</li>
+              <li>CSV出力</li>
+              <li>API アクセス</li>
+            </ul>
+            <button class="pricing-btn upgrade" onclick="startCheckout('pro')">アップグレード</button>
+          </div>
+
+          <!-- Enterprise -->
+          <div class="pricing-card">
+            <div class="pricing-header">
+              <h3>エンタープライズ</h3>
+              <div class="pricing-price"><span class="pricing-amount">¥49,800</span><span class="pricing-period">/月</span></div>
+            </div>
+            <ul class="pricing-features">
+              <li>カメラ 無制限</li>
+              <li>全機能</li>
+              <li>無制限データ保持</li>
+              <li>カスタムモデル</li>
+              <li>専任サポート</li>
+              <li>SLA保証</li>
+              <li>オンプレミス対応</li>
+            </ul>
+            <button class="pricing-btn upgrade" onclick="contactEnterprise()">お問い合わせ</button>
+          </div>
+        </div>
+
+        <!-- Usage Section -->
+        <div class="billing-usage" style="margin-top:32px;">
+          <h3 style="margin-bottom:16px;">利用状況</h3>
+          <div class="usage-grid">
+            <div class="usage-card">
+              <div class="usage-label">カメラ使用数</div>
+              <div class="usage-value"><span id="usage-cameras">0</span> / <span id="usage-cameras-max">1</span></div>
+              <div class="usage-bar"><div class="usage-bar-fill" id="usage-cameras-bar" style="width:0%"></div></div>
+            </div>
+            <div class="usage-card">
+              <div class="usage-label">データ保持期間</div>
+              <div class="usage-value" id="usage-retention">7日間</div>
+            </div>
+            <div class="usage-card">
+              <div class="usage-label">今月のAPI呼出</div>
+              <div class="usage-value" id="usage-api-calls">0</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- .main-body -->
+
+    <!-- ===== FOOTER ===== -->
+    <footer class="dashboard-footer">
+      <div class="footer-links">
+        <a href="/privacy.html">プライバシーポリシー</a>
+        <a href="/terms.html">利用規約</a>
+        <a href="/legal.html">特定商取引法</a>
+      </div>
+      <p>&copy; 2026 ミセバンAI</p>
+    </footer>
+  </main>
+</div><!-- #dashboard-screen -->
+
+<!-- ===== ONBOARDING WIZARD ===== -->
+<div class="onboarding-overlay hidden" id="onboarding-overlay">
+  <div class="onboarding-card">
+    <div class="confetti-container hidden" id="confetti-container">
+      <div class="confetti-piece"></div>
+      <div class="confetti-piece"></div>
+      <div class="confetti-piece"></div>
+      <div class="confetti-piece"></div>
+      <div class="confetti-piece"></div>
+      <div class="confetti-piece"></div>
+      <div class="confetti-piece"></div>
+      <div class="confetti-piece"></div>
+      <div class="confetti-piece"></div>
+      <div class="confetti-piece"></div>
+      <div class="confetti-piece"></div>
+      <div class="confetti-piece"></div>
+    </div>
+
+    <!-- Step Indicator -->
+    <div class="onboarding-steps">
+      <div class="onboarding-step-dot active" data-step="1"></div>
+      <div class="onboarding-step-line" data-line="1"></div>
+      <div class="onboarding-step-dot" data-step="2"></div>
+      <div class="onboarding-step-line" data-line="2"></div>
+      <div class="onboarding-step-dot" data-step="3"></div>
+      <div class="onboarding-step-line" data-line="3"></div>
+      <div class="onboarding-step-dot" data-step="4"></div>
+    </div>
+
+    <!-- Step 1: Welcome -->
+    <div class="onboarding-body" id="onboarding-step-1">
+      <div class="onboarding-icon">
+        <div class="onboarding-icon-circle">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 21v-8.25M15.75 21v-8.25M8.25 21v-8.25M3 9l9-6 9 6m-1.5 12V10.332A48.36 48.36 0 0 0 12 9.75c-2.551 0-5.056.2-7.5.582V21M3 21h18M12 6.75h.008v.008H12V6.75Z"/></svg>
+        </div>
+      </div>
+      <h2>ミセバンAIへようこそ！</h2>
+      <p>ミセバンAIは、お店のカメラ映像をAIで分析し、<br>来客数のカウントやピーク時間帯の把握、<br>異常検知をリアルタイムで行うサービスです。</p>
+      <p style="font-size:0.8125rem;color:var(--gray-400);margin-bottom:0;">かんたん3ステップで初期設定を完了しましょう。</p>
+      <div class="onboarding-actions" style="justify-content:flex-end;">
+        <button class="btn btn-primary" onclick="onboardingNext()">次へ</button>
+      </div>
+    </div>
+
+    <!-- Step 2: Store Info -->
+    <div class="onboarding-body hidden" id="onboarding-step-2">
+      <div class="onboarding-icon">
+        <div class="onboarding-icon-circle">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 21v-7.5a.75.75 0 0 1 .75-.75h3a.75.75 0 0 1 .75.75V21m-4.5 0H2.36m11.14 0H18m0 0h3.64m-1.39 0V9.349M3.75 21V9.349m0 0a3.001 3.001 0 0 0 3.75-.615A2.993 2.993 0 0 0 9.75 9.75c.896 0 1.7-.393 2.25-1.016a2.993 2.993 0 0 0 2.25 1.016c.896 0 1.7-.393 2.25-1.015a3.001 3.001 0 0 0 3.75.614m-16.5 0a3.004 3.004 0 0 1-.621-4.72l1.189-1.19A1.5 1.5 0 0 1 5.378 3h13.243a1.5 1.5 0 0 1 1.06.44l1.19 1.189a3 3 0 0 1-.621 4.72M6.75 18h3.75a.75.75 0 0 0 .75-.75V13.5a.75.75 0 0 0-.75-.75H6.75a.75.75 0 0 0-.75.75v3.75c0 .414.336.75.75.75Z"/></svg>
+        </div>
+      </div>
+      <h2>店舗情報を入力</h2>
+      <p>AIが最適な分析を行うために、お店の情報を教えてください。</p>
+      <div class="form-group">
+        <label class="form-label" for="onboarding-store-name">店舗名</label>
+        <input class="form-input" type="text" id="onboarding-store-name" placeholder="例: サンプルカフェ 渋谷店" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="onboarding-business-type">業種</label>
+        <select class="form-input" id="onboarding-business-type">
+          <option value="" disabled selected>選択してください</option>
+          <option value="restaurant">飲食店</option>
+          <option value="retail">小売店</option>
+          <option value="salon">サロン</option>
+          <option value="other">その他</option>
+        </select>
+      </div>
+      <div class="onboarding-actions">
+        <button class="btn btn-outline" onclick="onboardingPrev()">戻る</button>
+        <button class="btn btn-primary" onclick="onboardingSubmitStore()">次へ</button>
+      </div>
+    </div>
+
+    <!-- Step 3: First Camera -->
+    <div class="onboarding-body hidden" id="onboarding-step-3">
+      <div class="onboarding-icon">
+        <div class="onboarding-icon-circle">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m15.75 10.5 4.72-4.72a.75.75 0 0 1 1.28.53v11.38a.75.75 0 0 1-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 0 0 2.25-2.25v-9a2.25 2.25 0 0 0-2.25-2.25h-9A2.25 2.25 0 0 0 2.25 7.5v9a2.25 2.25 0 0 0 2.25 2.25Z"/></svg>
+        </div>
+      </div>
+      <h2>カメラを接続</h2>
+      <p>お使いのカメラのRTSP URLをダッシュボードの「カメラ管理」画面から追加できます。</p>
+      <div style="margin-bottom:1rem;">
+        <div class="form-label" style="margin-bottom:0.5rem;">RTSP URL の形式:</div>
+        <div class="onboarding-code-block">rtsp://[ユーザー名]:[パスワード]@[IPアドレス]:554/stream1</div>
+      </div>
+      <p style="font-size:0.8125rem;color:var(--gray-500);text-align:left;line-height:1.7;">
+        1. カメラの管理画面でRTSP配信を有効にします<br>
+        2. カメラのIPアドレスとポート番号を確認します<br>
+        3. ダッシュボードの「カメラ管理」で追加します
+      </p>
+      <div class="onboarding-actions">
+        <button class="btn btn-outline" onclick="onboardingPrev()">戻る</button>
+        <button class="btn btn-primary" onclick="onboardingNext()">次へ</button>
+      </div>
+    </div>
+
+    <!-- Step 4: Done -->
+    <div class="onboarding-body hidden" id="onboarding-step-4">
+      <div class="onboarding-icon">
+        <div class="onboarding-icon-circle" style="background:var(--green-50);color:var(--green-600);">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/></svg>
+        </div>
+      </div>
+      <h2>セットアップ完了！</h2>
+      <p>ミセバンAIの準備が整いました。<br>ダッシュボードから来客分析をはじめましょう。</p>
+      <p style="font-size:0.8125rem;color:var(--gray-400);margin-bottom:0;">
+        キーボードショートカット「?」でヘルプを表示できます。
+      </p>
+      <div class="onboarding-actions" style="justify-content:center;">
+        <button class="btn btn-primary" onclick="onboardingComplete()">ダッシュボードへ</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== KEYBOARD SHORTCUTS OVERLAY ===== -->
+<div class="shortcuts-overlay hidden" id="shortcuts-overlay">
+  <div class="shortcuts-card">
+    <h3>キーボードショートカット</h3>
+    <div class="shortcut-row">
+      <span class="shortcut-label">ホーム（ダッシュボード）</span>
+      <span class="shortcut-key">H</span>
+    </div>
+    <div class="shortcut-row">
+      <span class="shortcut-label">アラート（カメラ管理）</span>
+      <span class="shortcut-key">A</span>
+    </div>
+    <div class="shortcut-row">
+      <span class="shortcut-label">課金管理</span>
+      <span class="shortcut-key">B</span>
+    </div>
+    <div class="shortcut-row">
+      <span class="shortcut-label">ヘルプ表示 / 非表示</span>
+      <span class="shortcut-key">?</span>
+    </div>
+    <button class="shortcuts-close" onclick="toggleShortcuts(false)">閉じる（Escまたは?）</button>
+  </div>
+</div>
+
+<!-- ===== SESSION TIMEOUT TOAST ===== -->
+<div class="session-toast" id="session-toast">
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="20" height="20"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z"/></svg>
+  <span>セッションが期限切れです。再ログインしてください。</span>
+</div>
+
+<script>
+// ===== Supabase Configuration =====
+const SUPABASE_URL = 'YOUR_SUPABASE_URL';     // TODO: Replace with actual Supabase URL
+const SUPABASE_ANON_KEY = 'YOUR_ANON_KEY';   // TODO: Replace with actual Supabase anon key
+
+let supabase = null;
+try {
+  supabase = window.supabase
+    ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+    : null;
+} catch (e) {
+  console.warn('Supabase initialization skipped (demo mode):', e.message);
+}
+
+// ===== API Base URL =====
+const API_BASE = window.location.origin.includes('localhost')
+    ? 'http://localhost:3000'
+    : 'https://miseban-ai-api.fly.dev';
+
+// ===== State =====
+let currentUser = null;
+let currentStore = null;
+let currentTab = 'overview';
+let weeklyChart = null;
+let hourlyChart = null;
+let reportChart = null;
+
+// ===== DOM References =====
+const $ = (sel) => document.querySelector(sel);
+const $$ = (sel) => document.querySelectorAll(sel);
+
+const loginScreen = $('#login-screen');
+const dashboardScreen = $('#dashboard-screen');
+const loginForm = $('#login-form');
+const loginError = $('#login-error');
+const loginBtn = $('#login-btn');
+const loginBtnText = $('#login-btn-text');
+const loginSubtitle = $('#login-subtitle');
+const toggleAuthBtn = $('#toggle-auth-mode');
+const toggleText = $('#toggle-text');
+const logoutBtn = $('#logout-btn');
+const hamburgerBtn = $('#hamburger-btn');
+const sidebar = $('#sidebar');
+const sidebarOverlay = $('#sidebar-overlay');
+const pageTitle = $('#page-title');
+const headerDate = $('#header-date');
+
+let isSignupMode = false;
+
+// ===== Demo Data =====
+// TODO: Replace with Supabase queries throughout
+
+const DEMO_DATA = {
+  today: 143,
+  yesterday: 127,
+  changePercent: 12.6,
+  peakHour: '12:00〜13:00',
+  camerasOnline: 2,
+  camerasTotal: 3,
+  weeklyLabels: (function() {
+    const labels = [];
+    const days = ['日','月','火','水','木','金','土'];
+    const now = new Date();
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(now);
+      d.setDate(d.getDate() - i);
+      labels.push(`${d.getMonth()+1}/${d.getDate()}(${days[d.getDay()]})`);
+    }
+    return labels;
+  })(),
+  weeklyData: [89, 102, 95, 127, 134, 118, 143],
+  hourlyLabels: [
+    '6時','7時','8時','9時','10時','11時','12時','13時',
+    '14時','15時','16時','17時','18時','19時','20時','21時'
+  ],
+  hourlyData: [2, 5, 8, 12, 15, 22, 28, 24, 14, 10, 8, 11, 18, 21, 16, 9],
+  cameras: [
+    { id: 1, name: '入口カメラ', location: '正面入口', status: 'online', todayCount: 98, avgDaily: 85 },
+    { id: 2, name: 'レジ前カメラ', location: 'レジカウンター', status: 'online', todayCount: 67, avgDaily: 58 },
+    { id: 3, name: 'テラス席カメラ', location: '屋外テラス', status: 'offline', todayCount: 0, avgDaily: 32 },
+  ],
+  alerts: [
+    { type: 'error', text: 'テラス席カメラの接続が切れました', time: '14:23' },
+    { type: 'info', text: '本日の来客数が100人を超えました', time: '12:47' },
+    { type: 'warn', text: '12:00〜13:00のピーク時間帯に通常の1.5倍の来客がありました', time: '13:05' },
+    { type: 'success', text: '日次レポートをLINEに送信しました', time: '21:00 (昨日)' },
+    { type: 'info', text: '入口カメラのファームウェアが更新されました', time: '03:15 (昨日)' },
+  ],
+  reportWeeklyLabels: [],
+  reportWeeklyData: [],
+};
+
+// Generate report data (past 7 days)
+(function() {
+  const days = ['日','月','火','水','木','金','土'];
+  const now = new Date();
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(now);
+    d.setDate(d.getDate() - i);
+    DEMO_DATA.reportWeeklyLabels.push(`${d.getMonth()+1}/${d.getDate()}(${days[d.getDay()]})`);
+  }
+  DEMO_DATA.reportWeeklyData = DEMO_DATA.weeklyData.slice();
+})();
+
+// ===== Auth =====
+function showLoginError(msg) {
+  loginError.textContent = msg;
+  loginError.style.display = 'block';
+}
+
+function hideLoginError() {
+  loginError.style.display = 'none';
+}
+
+function setLoading(loading) {
+  loginBtn.disabled = loading;
+  loginBtnText.textContent = loading
+    ? (isSignupMode ? '登録中...' : 'ログイン中...')
+    : (isSignupMode ? '新規登録' : 'ログイン');
+}
+
+toggleAuthBtn.addEventListener('click', () => {
+  isSignupMode = !isSignupMode;
+  if (isSignupMode) {
+    loginSubtitle.textContent = '新しいアカウントを作成';
+    loginBtnText.textContent = '新規登録';
+    toggleText.textContent = 'すでにアカウントをお持ちの方は';
+    toggleAuthBtn.textContent = 'ログイン';
+    $('#password').autocomplete = 'new-password';
+  } else {
+    loginSubtitle.textContent = 'ダッシュボードにログイン';
+    loginBtnText.textContent = 'ログイン';
+    toggleText.textContent = 'アカウントをお持ちでない方は';
+    toggleAuthBtn.textContent = '新規登録';
+    $('#password').autocomplete = 'current-password';
+  }
+  hideLoginError();
+});
+
+loginForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  hideLoginError();
+  setLoading(true);
+
+  const email = $('#email').value.trim();
+  const password = $('#password').value;
+
+  if (!supabase) {
+    // Demo mode: skip actual auth
+    console.log('Demo mode: simulating login for', email);
+    currentUser = { email, id: 'demo-user-id' };
+    showDashboard();
+    setLoading(false);
+    return;
+  }
+
+  try {
+    let result;
+    if (isSignupMode) {
+      result = await supabase.auth.signUp({ email, password });
+    } else {
+      result = await supabase.auth.signInWithPassword({ email, password });
+    }
+
+    if (result.error) {
+      showLoginError(result.error.message);
+      setLoading(false);
+      return;
+    }
+
+    currentUser = result.data.user;
+    showDashboard();
+  } catch (err) {
+    showLoginError('接続エラーが発生しました。もう一度お試しください。');
+    console.error(err);
+  }
+  setLoading(false);
+});
+
+logoutBtn.addEventListener('click', async () => {
+  if (supabase) {
+    await supabase.auth.signOut();
+  }
+  currentUser = null;
+  showLogin();
+});
+
+// Check existing session
+async function checkSession() {
+  if (!supabase) return;
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session) {
+      currentUser = session.user;
+      showDashboard();
+    }
+  } catch (e) {
+    console.warn('Session check failed:', e);
+  }
+}
+
+// ===== View Switching =====
+function showLogin() {
+  loginScreen.style.display = 'flex';
+  dashboardScreen.classList.remove('active');
+  destroyCharts();
+}
+
+function showDashboard() {
+  loginScreen.style.display = 'none';
+  dashboardScreen.classList.add('active');
+  updateUserDisplay();
+  setHeaderDate();
+  loadCurrentStore();
+  switchTab('overview');
+  initCharts();
+  renderAlerts();
+  renderCameras();
+  initReportDates();
+  subscribeToAlerts();
+  checkCheckoutResult();
+}
+
+async function loadCurrentStore() {
+  if (!supabase || !currentUser) return;
+  try {
+    const { data, error } = await supabase
+      .from('stores')
+      .select('*')
+      .eq('owner_id', currentUser.id)
+      .limit(1)
+      .single();
+    if (!error && data) {
+      currentStore = data;
+    }
+  } catch (e) {
+    console.warn('Store load skipped (demo mode):', e);
+  }
+}
+
+function updateUserDisplay() {
+  if (!currentUser) return;
+  const email = currentUser.email || 'user@example.com';
+  const initial = email.charAt(0).toUpperCase();
+  $('#user-avatar').textContent = initial;
+  $('#user-display-name').textContent = email.split('@')[0];
+}
+
+function setHeaderDate() {
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = now.getMonth() + 1;
+  const d = now.getDate();
+  const days = ['日','月','火','水','木','金','土'];
+  headerDate.textContent = `${y}年${m}月${d}日(${days[now.getDay()]})`;
+}
+
+// ===== Tab Navigation =====
+const tabTitles = {
+  overview: 'ダッシュボード',
+  cameras: 'カメラ管理',
+  reports: 'レポート',
+  settings: '設定',
+  billing: '料金・請求',
+};
+
+function switchTab(tab) {
+  currentTab = tab;
+  $$('.nav-item').forEach(el => el.classList.toggle('active', el.dataset.tab === tab));
+  $$('.tab-panel').forEach(el => el.classList.toggle('active', el.id === `tab-${tab}`));
+  pageTitle.textContent = tabTitles[tab] || '';
+
+  // Close mobile sidebar
+  sidebar.classList.remove('open');
+  sidebarOverlay.classList.remove('open');
+
+  // Resize charts after tab switch
+  if (tab === 'overview') {
+    setTimeout(() => {
+      if (weeklyChart) weeklyChart.resize();
+      if (hourlyChart) hourlyChart.resize();
+    }, 50);
+  }
+  if (tab === 'reports') {
+    setTimeout(() => {
+      if (reportChart) reportChart.resize();
+    }, 50);
+  }
+  if (tab === 'billing') {
+    loadBillingInfo();
+  }
+}
+
+$$('.nav-item').forEach(el => {
+  el.addEventListener('click', () => switchTab(el.dataset.tab));
+});
+
+// ===== Mobile Sidebar =====
+hamburgerBtn.addEventListener('click', () => {
+  sidebar.classList.toggle('open');
+  sidebarOverlay.classList.toggle('open');
+});
+
+sidebarOverlay.addEventListener('click', () => {
+  sidebar.classList.remove('open');
+  sidebarOverlay.classList.remove('open');
+});
+
+// ===== Charts =====
+const chartColors = {
+  indigo: 'rgba(79, 70, 229, 1)',
+  indigoLight: 'rgba(79, 70, 229, 0.1)',
+  indigoBg: 'rgba(79, 70, 229, 0.08)',
+  gray: 'rgba(148, 163, 184, 1)',
+  grayLight: 'rgba(148, 163, 184, 0.15)',
+};
+
+const chartDefaults = {
+  responsive: true,
+  maintainAspectRatio: false,
+  plugins: {
+    legend: { display: false },
+    tooltip: {
+      backgroundColor: 'rgba(15, 23, 42, 0.9)',
+      titleFont: { family: "'Noto Sans JP', sans-serif", size: 12 },
+      bodyFont: { family: "'Noto Sans JP', sans-serif", size: 13, weight: '600' },
+      padding: { x: 12, y: 8 },
+      cornerRadius: 8,
+      displayColors: false,
+    },
+  },
+  scales: {
+    x: {
+      grid: { display: false },
+      ticks: { font: { family: "'Noto Sans JP', sans-serif", size: 11 }, color: '#94a3b8' },
+      border: { display: false },
+    },
+    y: {
+      grid: { color: 'rgba(226, 232, 240, 0.6)', drawBorder: false },
+      ticks: { font: { family: "'Noto Sans JP', sans-serif", size: 11 }, color: '#94a3b8', padding: 8 },
+      border: { display: false },
+      beginAtZero: true,
+    },
+  },
+};
+
+function destroyCharts() {
+  if (weeklyChart) { weeklyChart.destroy(); weeklyChart = null; }
+  if (hourlyChart) { hourlyChart.destroy(); hourlyChart = null; }
+  if (reportChart) { reportChart.destroy(); reportChart = null; }
+}
+
+function initCharts() {
+  destroyCharts();
+
+  // TODO: Replace with Supabase query — fetch daily visitor counts for past 7 days
+  const weeklyCtx = $('#chart-weekly').getContext('2d');
+  const weeklyGradient = weeklyCtx.createLinearGradient(0, 0, 0, 240);
+  weeklyGradient.addColorStop(0, 'rgba(79, 70, 229, 0.15)');
+  weeklyGradient.addColorStop(1, 'rgba(79, 70, 229, 0.01)');
+
+  weeklyChart = new Chart(weeklyCtx, {
+    type: 'line',
+    data: {
+      labels: DEMO_DATA.weeklyLabels,
+      datasets: [{
+        data: DEMO_DATA.weeklyData,
+        borderColor: chartColors.indigo,
+        backgroundColor: weeklyGradient,
+        borderWidth: 2.5,
+        fill: true,
+        tension: 0.35,
+        pointRadius: 4,
+        pointHoverRadius: 6,
+        pointBackgroundColor: chartColors.indigo,
+        pointBorderColor: '#fff',
+        pointBorderWidth: 2,
+      }],
+    },
+    options: {
+      ...chartDefaults,
+      plugins: {
+        ...chartDefaults.plugins,
+        tooltip: {
+          ...chartDefaults.plugins.tooltip,
+          callbacks: {
+            label: (ctx) => `${ctx.parsed.y} 人`,
+          },
+        },
+      },
+    },
+  });
+
+  // TODO: Replace with Supabase query — fetch hourly visitor counts for today
+  const hourlyCtx = $('#chart-hourly').getContext('2d');
+  hourlyChart = new Chart(hourlyCtx, {
+    type: 'bar',
+    data: {
+      labels: DEMO_DATA.hourlyLabels,
+      datasets: [{
+        data: DEMO_DATA.hourlyData,
+        backgroundColor: DEMO_DATA.hourlyData.map((v, i) => {
+          // Highlight peak hour
+          const maxVal = Math.max(...DEMO_DATA.hourlyData);
+          return v === maxVal ? chartColors.indigo : 'rgba(79, 70, 229, 0.25)';
+        }),
+        borderRadius: 4,
+        borderSkipped: false,
+        barPercentage: 0.7,
+      }],
+    },
+    options: {
+      ...chartDefaults,
+      plugins: {
+        ...chartDefaults.plugins,
+        tooltip: {
+          ...chartDefaults.plugins.tooltip,
+          callbacks: {
+            label: (ctx) => `${ctx.parsed.y} 人`,
+          },
+        },
+      },
+    },
+  });
+
+  // Report chart
+  initReportChart();
+}
+
+function initReportChart() {
+  if (reportChart) reportChart.destroy();
+
+  // TODO: Replace with Supabase query — fetch daily visitor counts for selected date range
+  const ctx = $('#chart-report').getContext('2d');
+  const gradient = ctx.createLinearGradient(0, 0, 0, 300);
+  gradient.addColorStop(0, 'rgba(79, 70, 229, 0.12)');
+  gradient.addColorStop(1, 'rgba(79, 70, 229, 0.01)');
+
+  reportChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: DEMO_DATA.reportWeeklyLabels,
+      datasets: [{
+        data: DEMO_DATA.reportWeeklyData,
+        borderColor: chartColors.indigo,
+        backgroundColor: gradient,
+        borderWidth: 2.5,
+        fill: true,
+        tension: 0.35,
+        pointRadius: 5,
+        pointHoverRadius: 7,
+        pointBackgroundColor: chartColors.indigo,
+        pointBorderColor: '#fff',
+        pointBorderWidth: 2,
+      }],
+    },
+    options: {
+      ...chartDefaults,
+      plugins: {
+        ...chartDefaults.plugins,
+        tooltip: {
+          ...chartDefaults.plugins.tooltip,
+          callbacks: {
+            label: (ctx) => `${ctx.parsed.y} 人`,
+          },
+        },
+      },
+    },
+  });
+}
+
+// ===== Alerts =====
+async function renderAlerts() {
+  const list = $('#alert-list');
+  if (!currentStore) {
+    // Fallback to demo data if no store is set
+    renderDemoAlerts();
+    return;
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from('alerts')
+      .select('*')
+      .eq('store_id', currentStore.id)
+      .order('created_at', { ascending: false })
+      .limit(10);
+
+    if (error) throw error;
+
+    if (!data || data.length === 0) {
+      list.innerHTML = '<div class="alert-empty">アラートはありません</div>';
+      return;
+    }
+
+    list.innerHTML = data.map(a => {
+      const typeClass = a.alert_type === 'intrusion' ? 'error' :
+                       a.alert_type === 'crowding' ? 'warn' : 'info';
+      const typeLabel = a.alert_type === 'intrusion' ? '侵入検知' :
+                       a.alert_type === 'crowding' ? '混雑検知' : '異常検知';
+      const time = new Date(a.created_at).toLocaleString('ja-JP', {hour:'2-digit', minute:'2-digit'});
+      const unreadClass = a.is_read ? '' : 'unread';
+      return `<div class="alert-item ${unreadClass}" data-id="${a.id}" onclick="markAlertRead('${a.id}')">
+          <div class="alert-dot ${typeClass}"></div>
+          <div class="alert-content">
+              <div class="alert-label">${typeLabel}</div>
+              <div class="alert-text">${a.message || typeLabel}</div>
+          </div>
+          <div class="alert-time">${time}</div>
+      </div>`;
+    }).join('');
+
+    // Update unread count badge
+    updateUnreadBadge(data.filter(a => !a.is_read).length);
+  } catch (e) {
+    console.error('Alert fetch error:', e);
+    // Fallback to demo data if Supabase not configured
+    renderDemoAlerts();
+  }
+}
+
+function renderDemoAlerts() {
+  const list = $('#alert-list');
+  list.innerHTML = DEMO_DATA.alerts.map(a => `
+    <div class="alert-item">
+      <div class="alert-dot ${a.type}"></div>
+      <div class="alert-text">${a.text}</div>
+      <div class="alert-time">${a.time}</div>
+    </div>
+  `).join('');
+}
+
+async function markAlertRead(alertId) {
+  try {
+    await supabase
+      .from('alerts')
+      .update({ is_read: true })
+      .eq('id', alertId);
+
+    const el = document.querySelector(`[data-id="${alertId}"]`);
+    if (el) el.classList.remove('unread');
+    updateUnreadBadge();
+  } catch (e) {
+    console.error('Mark read error:', e);
+  }
+}
+
+function updateUnreadBadge(count) {
+  let badge = document.querySelector('.alert-badge');
+  if (!badge) {
+    badge = document.createElement('span');
+    badge.className = 'alert-badge';
+    document.querySelector('[data-tab="overview"]')?.appendChild(badge);
+  }
+  if (typeof count === 'undefined') {
+    // Re-count from DOM
+    count = document.querySelectorAll('.alert-item.unread').length;
+  }
+  if (count > 0) {
+    badge.textContent = count > 99 ? '99+' : count;
+    badge.style.display = 'inline-flex';
+  } else {
+    badge.style.display = 'none';
+  }
+}
+
+// ===== Real-time Alert Subscription =====
+function subscribeToAlerts() {
+  if (!currentStore || !supabase) return;
+
+  supabase
+    .channel('alerts')
+    .on('postgres_changes', {
+      event: 'INSERT',
+      schema: 'public',
+      table: 'alerts',
+      filter: `store_id=eq.${currentStore.id}`
+    }, (payload) => {
+      // Re-render alerts when new one arrives
+      renderAlerts();
+      // Show toast notification
+      showToast(payload.new.message || 'New alert', payload.new.alert_type);
+    })
+    .subscribe();
+}
+
+function showToast(message, type) {
+  const toast = document.createElement('div');
+  toast.className = 'toast-notification';
+  const icon = type === 'intrusion' ? '\uD83D\uDEA8' : type === 'crowding' ? '\uD83D\uDC65' : '\u26A0\uFE0F';
+  toast.innerHTML = `<span class="toast-icon">${icon}</span><span>${message}</span>`;
+  document.body.appendChild(toast);
+
+  requestAnimationFrame(() => toast.classList.add('show'));
+  setTimeout(() => {
+    toast.classList.remove('show');
+    setTimeout(() => toast.remove(), 300);
+  }, 5000);
+}
+
+// ===== LINE Linking =====
+function connectLine() {
+  const botId = '@miseban-ai';
+  const addUrl = `https://line.me/R/ti/p/${botId}`;
+
+  const modal = document.createElement('div');
+  modal.className = 'modal-overlay';
+  modal.innerHTML = `
+    <div class="modal-content" style="max-width:400px; text-align:center;">
+      <h3 style="margin-bottom:16px; font-size:1.125rem; font-weight:700; color:var(--gray-900);">LINE連携</h3>
+      <p style="color:var(--gray-500); margin-bottom:20px; font-size:0.9rem;">
+        ミセバンAI公式LINEアカウントを友だち追加してください。<br>
+        追加後、LINEで受け取ったコードをここに入力してください。
+      </p>
+      <a href="${addUrl}" target="_blank" rel="noopener" class="line-connect-btn" style="text-decoration:none; margin-bottom:16px; display:inline-flex;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M19.365 9.863c.349 0 .63.285.63.631 0 .345-.281.63-.63.63H17.61v1.125h1.755c.349 0 .63.283.63.63 0 .344-.281.629-.63.629h-2.386c-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63h2.386c.346 0 .627.285.627.63 0 .349-.281.63-.63.63H17.61v1.125h1.755zm-3.855 3.016c0 .27-.174.51-.432.596-.064.021-.133.031-.199.031-.211 0-.391-.09-.51-.25l-2.443-3.317v2.94c0 .344-.279.629-.631.629-.346 0-.626-.285-.626-.629V8.108c0-.27.173-.51.43-.595.06-.023.136-.033.194-.033.195 0 .375.104.495.254l2.462 3.33V8.108c0-.345.282-.63.63-.63.345 0 .63.285.63.63v4.771zm-5.741 0c0 .344-.282.629-.631.629-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63.346 0 .628.285.628.63v4.771zm-2.466.629H4.917c-.345 0-.63-.285-.63-.629V8.108c0-.345.285-.63.63-.63.348 0 .63.285.63.63v4.141h1.756c.348 0 .629.283.629.63 0 .344-.282.629-.629.629M24 10.314C24 4.943 18.615.572 12 .572S0 4.943 0 10.314c0 4.811 4.27 8.842 10.035 9.608.391.082.923.258 1.058.59.12.301.079.766.038 1.08l-.164 1.02c-.045.301-.24 1.186 1.049.645 1.291-.539 6.916-4.078 9.436-6.975C23.176 14.393 24 12.458 24 10.314"/></svg>
+        友だち追加する
+      </a>
+      <div style="margin-top:16px;">
+        <input type="text" id="line-code-input" placeholder="認証コードを入力" style="width:100%; padding:10px 14px; background:var(--white); border:1px solid var(--gray-300); border-radius:8px; color:var(--gray-800); font-size:0.9rem; margin-bottom:12px; font-family:var(--font-sans);">
+        <button onclick="submitLineCode()" class="btn btn-primary" style="width:100%; padding:10px;">連携する</button>
+      </div>
+      <button onclick="this.closest('.modal-overlay').remove()" style="margin-top:12px; background:none; border:none; color:var(--gray-500); cursor:pointer; font-size:0.875rem; font-family:var(--font-sans);">閉じる</button>
+    </div>
+  `;
+  document.body.appendChild(modal);
+}
+
+async function submitLineCode() {
+  const code = document.getElementById('line-code-input')?.value?.trim();
+  if (!code) return;
+
+  // TODO: Send code to API for verification
+  alert('LINE連携機能は近日公開予定です。コード: ' + code);
+  document.querySelector('.modal-overlay')?.remove();
+}
+
+// ===== Cameras =====
+function renderCameras() {
+  // TODO: Replace with Supabase query — fetch cameras for this store
+  const grid = $('#camera-list');
+  grid.innerHTML = DEMO_DATA.cameras.map(cam => `
+    <div class="camera-card">
+      <div class="camera-preview">
+        <span class="camera-status-badge ${cam.status}">
+          <span class="camera-status-dot"></span>
+          ${cam.status === 'online' ? 'オンライン' : 'オフライン'}
+        </span>
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1" stroke="currentColor" width="48" height="48" style="opacity:0.3"><path stroke-linecap="round" stroke-linejoin="round" d="m15.75 10.5 4.72-4.72a.75.75 0 0 1 1.28.53v11.38a.75.75 0 0 1-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 0 0 2.25-2.25v-9a2.25 2.25 0 0 0-2.25-2.25h-9A2.25 2.25 0 0 0 2.25 7.5v9a2.25 2.25 0 0 0 2.25 2.25Z"/></svg>
+      </div>
+      <div class="camera-info">
+        <div class="camera-name">${cam.name}</div>
+        <div class="camera-location">${cam.location}</div>
+        <div class="camera-stats">
+          <div class="camera-stat-item">
+            <div class="camera-stat-value">${cam.todayCount}</div>
+            <div class="camera-stat-label">本日</div>
+          </div>
+          <div class="camera-stat-item">
+            <div class="camera-stat-value">${cam.avgDaily}</div>
+            <div class="camera-stat-label">日平均</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `).join('');
+
+  // Update camera status icon color on overview
+  const icon = $('#camera-status-icon');
+  const hasOffline = DEMO_DATA.cameras.some(c => c.status === 'offline');
+  icon.className = 'stat-card-icon ' + (hasOffline ? 'red' : 'green');
+}
+
+// Add camera form
+$('#add-camera-form').addEventListener('submit', (e) => {
+  e.preventDefault();
+  const name = $('#cam-name').value.trim();
+  const location = $('#cam-location').value.trim();
+  const rtsp = $('#cam-rtsp').value.trim();
+
+  if (!name || !rtsp) {
+    alert('カメラ名とRTSP URLを入力してください。');
+    return;
+  }
+
+  // TODO: Replace with Supabase insert — add camera to store's camera list
+  DEMO_DATA.cameras.push({
+    id: Date.now(),
+    name,
+    location: location || '未設定',
+    status: 'offline',
+    todayCount: 0,
+    avgDaily: 0,
+  });
+
+  renderCameras();
+  e.target.reset();
+  alert(`「${name}」を追加しました。接続確認中...`);
+});
+
+// ===== Reports =====
+function initReportDates() {
+  const now = new Date();
+  const end = now.toISOString().split('T')[0];
+  const start = new Date(now);
+  start.setDate(start.getDate() - 6);
+  $('#report-start').value = start.toISOString().split('T')[0];
+  $('#report-end').value = end;
+}
+
+$('#report-generate-btn').addEventListener('click', () => {
+  // TODO: Replace with Supabase query — fetch report data for selected date range
+  const total = DEMO_DATA.weeklyData.reduce((a, b) => a + b, 0);
+  const avg = Math.round(total / DEMO_DATA.weeklyData.length);
+  $('#report-total').textContent = total;
+  $('#report-avg').textContent = avg;
+  initReportChart();
+});
+
+$('#report-csv-btn').addEventListener('click', () => {
+  // TODO: Replace with actual CSV generation from Supabase data
+  const header = '日付,来客数\n';
+  const rows = DEMO_DATA.reportWeeklyLabels.map((label, i) =>
+    `${label},${DEMO_DATA.reportWeeklyData[i]}`
+  ).join('\n');
+  const csv = header + rows;
+  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `miseban-report-${$('#report-start').value}_${$('#report-end').value}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+});
+
+// ===== Billing =====
+async function startCheckout(tier) {
+    if (!currentUser) { alert('ログインが必要です'); return; }
+    if (!currentStore) { alert('ストアが見つかりません'); return; }
+
+    try {
+        const token = (await supabase.auth.getSession()).data.session?.access_token;
+        const resp = await fetch(`${API_BASE}/api/v1/billing/checkout`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+                tier: tier,
+                success_url: window.location.origin + '/dashboard/?checkout=success',
+                cancel_url: window.location.origin + '/dashboard/?checkout=cancel'
+            })
+        });
+
+        const data = await resp.json();
+        if (data.url) {
+            window.location.href = data.url;
+        } else {
+            alert('チェックアウトの作成に失敗しました');
+        }
+    } catch (e) {
+        console.error('Checkout error:', e);
+        alert('エラーが発生しました。後ほどお試しください。');
+    }
+}
+
+async function openCustomerPortal() {
+    if (!currentUser) return;
+
+    try {
+        const token = (await supabase.auth.getSession()).data.session?.access_token;
+        const resp = await fetch(`${API_BASE}/api/v1/billing/portal`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+                return_url: window.location.origin + '/dashboard/'
+            })
+        });
+
+        const data = await resp.json();
+        if (data.url) {
+            window.location.href = data.url;
+        }
+    } catch (e) {
+        console.error('Portal error:', e);
+    }
+}
+
+function contactEnterprise() {
+    window.open('mailto:enterprise@miseban.ai?subject=エンタープライズプランのお問い合わせ', '_blank');
+}
+
+async function loadBillingInfo() {
+    const tier = (currentStore && currentStore.plan_tier) ? currentStore.plan_tier : 'free';
+    const tierNames = { free: 'フリー', starter: 'スターター', pro: 'プロ', enterprise: 'エンタープライズ' };
+    const tierCameras = { free: 1, starter: 4, pro: 16, enterprise: 999 };
+    const tierRetention = { free: '7日間', starter: '30日間', pro: '90日間', enterprise: '無制限' };
+
+    // Update current plan display
+    const badge = document.getElementById('billing-plan-badge');
+    if (badge) {
+        badge.textContent = tierNames[tier] || 'Free';
+        badge.className = 'plan-badge ' + tier;
+    }
+
+    const planName = document.getElementById('billing-plan-name');
+    if (planName) planName.textContent = (tierNames[tier] || 'フリー') + 'プラン';
+
+    // Show manage billing button if paid
+    if (tier !== 'free') {
+        const manageBtn = document.getElementById('btn-manage-billing');
+        if (manageBtn) manageBtn.style.display = 'block';
+    }
+
+    // Update pricing card buttons
+    document.querySelectorAll('.pricing-btn').forEach(btn => btn.className = 'pricing-btn upgrade');
+    const cards = document.querySelectorAll('.pricing-card');
+    const tiers = ['free', 'starter', 'pro', 'enterprise'];
+    const currentIdx = tiers.indexOf(tier);
+    cards.forEach((card, i) => {
+        const btn = card.querySelector('.pricing-btn');
+        if (!btn) return;
+        if (i === currentIdx) {
+            btn.className = 'pricing-btn current';
+            btn.textContent = '現在のプラン';
+            btn.disabled = true;
+            btn.onclick = null;
+        } else if (i < currentIdx) {
+            btn.className = 'pricing-btn current';
+            btn.textContent = '含まれています';
+            btn.disabled = true;
+            btn.onclick = null;
+        }
+    });
+
+    // Update usage
+    try {
+        if (supabase && currentStore) {
+            const { data: cameras } = await supabase
+                .from('cameras')
+                .select('id')
+                .eq('store_id', currentStore.id);
+
+            const cameraCount = cameras?.length || 0;
+            const maxCameras = tierCameras[tier] || 1;
+
+            document.getElementById('usage-cameras').textContent = cameraCount;
+            document.getElementById('usage-cameras-max').textContent = maxCameras >= 999 ? '\u221E' : maxCameras;
+            document.getElementById('usage-retention').textContent = tierRetention[tier] || '7日間';
+
+            const bar = document.getElementById('usage-cameras-bar');
+            if (bar) bar.style.width = Math.min(100, (cameraCount / Math.min(maxCameras, 16)) * 100) + '%';
+        } else {
+            // Demo mode fallback
+            const demoCamCount = DEMO_DATA.cameras.length;
+            const maxCameras = tierCameras[tier] || 1;
+            document.getElementById('usage-cameras').textContent = demoCamCount;
+            document.getElementById('usage-cameras-max').textContent = maxCameras >= 999 ? '\u221E' : maxCameras;
+            document.getElementById('usage-retention').textContent = tierRetention[tier] || '7日間';
+
+            const bar = document.getElementById('usage-cameras-bar');
+            if (bar) bar.style.width = Math.min(100, (demoCamCount / Math.min(maxCameras, 16)) * 100) + '%';
+        }
+    } catch (e) {
+        console.error('Usage load error:', e);
+    }
+
+    // Also update sidebar plan badge
+    const sidebarPlan = document.querySelector('.sidebar-user-plan');
+    if (sidebarPlan) sidebarPlan.textContent = (tierNames[tier] || 'Free') + ' プラン';
+}
+
+// Check for checkout success/cancel in URL params
+function checkCheckoutResult() {
+    const params = new URLSearchParams(window.location.search);
+    const checkout = params.get('checkout');
+    if (checkout === 'success') {
+        showToast('プランのアップグレードが完了しました！', 'success');
+        // Remove param from URL
+        window.history.replaceState({}, '', window.location.pathname);
+    } else if (checkout === 'cancel') {
+        showToast('チェックアウトがキャンセルされました', 'info');
+        window.history.replaceState({}, '', window.location.pathname);
+    }
+}
+
+// ===== Onboarding Wizard =====
+let onboardingStep = 1;
+const TOTAL_ONBOARDING_STEPS = 4;
+
+function showOnboarding() {
+  const overlay = document.getElementById('onboarding-overlay');
+  if (overlay) overlay.classList.remove('hidden');
+  onboardingStep = 1;
+  updateOnboardingUI();
+}
+
+function hideOnboarding() {
+  const overlay = document.getElementById('onboarding-overlay');
+  if (overlay) overlay.classList.add('hidden');
+}
+
+function updateOnboardingUI() {
+  // Update step dots and lines
+  for (let i = 1; i <= TOTAL_ONBOARDING_STEPS; i++) {
+    const dot = document.querySelector(`.onboarding-step-dot[data-step="${i}"]`);
+    if (!dot) continue;
+    dot.classList.remove('active', 'done');
+    if (i === onboardingStep) dot.classList.add('active');
+    else if (i < onboardingStep) dot.classList.add('done');
+  }
+  for (let i = 1; i < TOTAL_ONBOARDING_STEPS; i++) {
+    const line = document.querySelector(`.onboarding-step-line[data-line="${i}"]`);
+    if (!line) continue;
+    line.classList.toggle('done', i < onboardingStep);
+  }
+
+  // Show/hide step bodies
+  for (let i = 1; i <= TOTAL_ONBOARDING_STEPS; i++) {
+    const body = document.getElementById(`onboarding-step-${i}`);
+    if (body) body.classList.toggle('hidden', i !== onboardingStep);
+  }
+
+  // Show confetti on step 4
+  const confetti = document.getElementById('confetti-container');
+  if (confetti) {
+    confetti.classList.toggle('hidden', onboardingStep !== 4);
+  }
+}
+
+function onboardingNext() {
+  if (onboardingStep < TOTAL_ONBOARDING_STEPS) {
+    onboardingStep++;
+    updateOnboardingUI();
+  }
+}
+
+function onboardingPrev() {
+  if (onboardingStep > 1) {
+    onboardingStep--;
+    updateOnboardingUI();
+  }
+}
+
+async function onboardingSubmitStore() {
+  const storeName = document.getElementById('onboarding-store-name').value.trim();
+  const businessType = document.getElementById('onboarding-business-type').value;
+
+  if (!storeName) {
+    alert('店舗名を入力してください。');
+    return;
+  }
+
+  if (!businessType) {
+    alert('業種を選択してください。');
+    return;
+  }
+
+  // Submit store creation to Supabase
+  if (supabase && currentUser) {
+    try {
+      const { data, error } = await supabase
+        .from('stores')
+        .insert({
+          owner_id: currentUser.id,
+          name: storeName,
+          business_type: businessType,
+          plan_tier: 'free'
+        })
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Store creation error:', error);
+        alert('店舗の作成中にエラーが発生しました: ' + error.message);
+        return;
+      }
+
+      if (data) {
+        currentStore = data;
+        // Update settings tab with new store info
+        const settingStoreName = document.getElementById('setting-store-name');
+        if (settingStoreName) settingStoreName.value = storeName;
+      }
+    } catch (e) {
+      console.error('Store creation error:', e);
+    }
+  } else {
+    // Demo mode: just update local state
+    currentStore = { name: storeName, business_type: businessType, plan_tier: 'free' };
+    const settingStoreName = document.getElementById('setting-store-name');
+    if (settingStoreName) settingStoreName.value = storeName;
+  }
+
+  onboardingNext();
+}
+
+function onboardingComplete() {
+  localStorage.setItem('onboarding_completed', 'true');
+  hideOnboarding();
+}
+
+function checkOnboarding() {
+  if (localStorage.getItem('onboarding_completed')) return;
+
+  // If Supabase is active, check if store exists
+  if (currentStore) return;
+
+  // Show onboarding wizard
+  showOnboarding();
+}
+
+// ===== Session Timeout Handling =====
+let sessionCheckInterval = null;
+
+function showSessionExpiredToast() {
+  const toast = document.getElementById('session-toast');
+  if (!toast) return;
+  toast.classList.add('show');
+  setTimeout(() => {
+    toast.classList.remove('show');
+    // Redirect to login after toast fades
+    setTimeout(() => {
+      currentUser = null;
+      showLogin();
+    }, 300);
+  }, 3000);
+}
+
+function handleSupabaseError(error) {
+  if (error && (error.status === 401 || error.message?.includes('JWT') || error.message?.includes('token'))) {
+    showSessionExpiredToast();
+    return true;
+  }
+  return false;
+}
+
+// Wrap Supabase calls to catch 401 errors globally
+function setupSessionCheck() {
+  if (!supabase) return;
+
+  // Check session validity every 5 minutes
+  sessionCheckInterval = setInterval(async () => {
+    try {
+      const { data: { session }, error } = await supabase.auth.getSession();
+      if (error || !session) {
+        if (currentUser) {
+          // Session has expired
+          showSessionExpiredToast();
+        }
+      }
+    } catch (e) {
+      console.warn('Session check error:', e);
+    }
+  }, 5 * 60 * 1000); // 5 minutes
+
+  // Listen for auth state changes (e.g., token refresh failure)
+  supabase.auth.onAuthStateChange((event, session) => {
+    if (event === 'SIGNED_OUT' || event === 'TOKEN_REFRESHED') {
+      if (event === 'SIGNED_OUT' && currentUser) {
+        showSessionExpiredToast();
+      }
+    }
+  });
+}
+
+function clearSessionCheck() {
+  if (sessionCheckInterval) {
+    clearInterval(sessionCheckInterval);
+    sessionCheckInterval = null;
+  }
+}
+
+// ===== Keyboard Shortcuts =====
+function toggleShortcuts(show) {
+  const overlay = document.getElementById('shortcuts-overlay');
+  if (!overlay) return;
+
+  if (typeof show === 'boolean') {
+    overlay.classList.toggle('hidden', !show);
+  } else {
+    overlay.classList.toggle('hidden');
+  }
+}
+
+document.addEventListener('keydown', (e) => {
+  // Ignore if user is typing in an input/textarea/select
+  const tag = e.target.tagName.toLowerCase();
+  if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
+
+  // Ignore if login screen is visible
+  if (loginScreen.style.display !== 'none') return;
+
+  const shortcutsOverlay = document.getElementById('shortcuts-overlay');
+  const isShortcutsOpen = shortcutsOverlay && !shortcutsOverlay.classList.contains('hidden');
+
+  // Escape closes any open overlay
+  if (e.key === 'Escape') {
+    if (isShortcutsOpen) {
+      toggleShortcuts(false);
+      return;
+    }
+    return;
+  }
+
+  // "?" toggles shortcuts help
+  if (e.key === '?') {
+    toggleShortcuts();
+    return;
+  }
+
+  // Don't process navigation shortcuts if shortcuts overlay is open
+  if (isShortcutsOpen) return;
+
+  const key = e.key.toLowerCase();
+
+  switch (key) {
+    case 'h':
+      switchTab('overview');
+      break;
+    case 'a':
+      switchTab('cameras');
+      break;
+    case 'b':
+      switchTab('billing');
+      break;
+  }
+});
+
+// Close shortcuts overlay when clicking outside
+document.getElementById('shortcuts-overlay')?.addEventListener('click', (e) => {
+  if (e.target.classList.contains('shortcuts-overlay')) {
+    toggleShortcuts(false);
+  }
+});
+
+// ===== Patched showDashboard =====
+const _originalShowDashboard = showDashboard;
+showDashboard = function() {
+  _originalShowDashboard();
+  setupSessionCheck();
+  // Check onboarding after store load attempt completes
+  setTimeout(() => checkOnboarding(), 500);
+};
+
+// ===== Patched showLogin =====
+const _originalShowLogin = showLogin;
+showLogin = function() {
+  clearSessionCheck();
+  _originalShowLogin();
+};
+
+// ===== Initialization =====
+document.addEventListener('DOMContentLoaded', () => {
+  checkSession();
+});
+</script>
+</body>
+</html>

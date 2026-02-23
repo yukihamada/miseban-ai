@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>マルチプロダクト戦略サマリー — 8つの意思決定と8週スプリント｜ミセバンAI Blog</title>
+<meta name="description" content="マルチプロダクト戦略会議の結論を8つの意思決定に集約。5プロダクト同時開発の8週スプリント計画とGo/No-Goゲートを定義。">
+<meta name="keywords" content="マルチプロダクト戦略,意思決定,スプリント計画,ショットガンアプローチ,MVP,ミセバンAI">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://miseban.ai/blog/011-multiproduct-decisions">
+
+<!-- OGP -->
+<meta property="og:title" content="マルチプロダクト戦略サマリー — 8つの意思決定と8週スプリント｜ミセバンAI Blog">
+<meta property="og:description" content="マルチプロダクト戦略会議の結論を8つの意思決定に集約。5プロダクト同時開発の8週スプリント計画を公開。">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://miseban.ai/blog/011-multiproduct-decisions">
+<meta property="og:image" content="https://miseban.ai/ogp.png">
+<meta property="og:site_name" content="ミセバンAI">
+<meta property="og:locale" content="ja_JP">
+<meta property="article:published_time" content="2026-02-23">
+<meta property="article:author" content="ミセバンAI チーム">
+<meta property="article:tag" content="マルチプロダクト戦略">
+<meta property="article:tag" content="意思決定サマリー">
+
+<!-- Twitter Card -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="マルチプロダクト戦略サマリー — 8つの意思決定と8週スプリント">
+<meta name="twitter:description" content="マルチプロダクト戦略会議の結論を8つの意思決定に集約。5プロダクト同時開発の8週スプリント計画を公開。">
+<meta name="twitter:image" content="https://miseban.ai/ogp.png">
+
+<!-- Favicon -->
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%234f46e5'/><text x='50%25' y='54%25' dominant-baseline='middle' text-anchor='middle' fill='white' font-size='18' font-weight='bold' font-family='sans-serif'>M</text></svg>">
+
+<!-- Google Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<style>
+/* ===== Reset & Custom Properties ===== */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --white:#ffffff;
+  --gray-50:#f8fafc;
+  --gray-100:#f1f5f9;
+  --gray-200:#e2e8f0;
+  --gray-300:#cbd5e1;
+  --gray-400:#94a3b8;
+  --gray-500:#64748b;
+  --slate-600:#475569;
+  --slate-700:#334155;
+  --slate-800:#1e293b;
+  --slate-900:#0f172a;
+  --indigo-50:#eef2ff;
+  --indigo-100:#e0e7ff;
+  --indigo-500:#6366f1;
+  --indigo-600:#4f46e5;
+  --indigo-700:#4338ca;
+  --indigo-900:#312e81;
+  --indigo-950:#1e1b4b;
+  --emerald-50:#ecfdf5;
+  --emerald-500:#10b981;
+  --emerald-600:#059669;
+  --amber-50:#fffbeb;
+  --amber-500:#f59e0b;
+  --amber-600:#d97706;
+  --rose-50:#fff1f2;
+  --rose-500:#f43f5e;
+  --rose-600:#e11d48;
+  --sky-50:#f0f9ff;
+  --sky-500:#0ea5e9;
+  --sky-600:#0284c7;
+  --purple-50:#faf5ff;
+  --purple-500:#a855f7;
+  --purple-600:#9333ea;
+  --teal-50:#f0fdfa;
+  --teal-500:#14b8a6;
+  --teal-600:#0d9488;
+  --radius-sm:8px;
+  --radius:12px;
+  --radius-lg:16px;
+  --radius-xl:24px;
+  --shadow-sm:0 1px 3px rgba(0,0,0,.1),0 1px 2px rgba(0,0,0,.06);
+  --shadow-md:0 4px 6px -1px rgba(0,0,0,.1),0 2px 4px -2px rgba(0,0,0,.1);
+  --shadow-lg:0 10px 15px -3px rgba(0,0,0,.1),0 4px 6px -4px rgba(0,0,0,.1);
+}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+body{font-family:'Noto Sans JP','Inter',system-ui,-apple-system,sans-serif;color:var(--slate-900);background:var(--white);line-height:1.8;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+img{max-width:100%;height:auto;display:block}
+a{text-decoration:none;color:inherit;transition:color .2s}
+ul,ol{list-style:none}
+.container{max-width:1200px;margin:0 auto;padding:0 24px}
+.nums{font-family:'Inter','Noto Sans JP',sans-serif}
+
+/* ===== Buttons ===== */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;font-family:inherit;font-size:.9375rem;font-weight:600;padding:14px 28px;border-radius:100px;border:none;cursor:pointer;transition:all .2s ease;white-space:nowrap;line-height:1.4}
+.btn-primary{background:var(--indigo-600);color:var(--white);box-shadow:0 1px 2px rgba(79,70,229,.3),0 4px 12px rgba(79,70,229,.2)}
+.btn-primary:hover{background:var(--indigo-700);transform:translateY(-1px)}
+.btn-sm{padding:10px 20px;font-size:.875rem}
+
+/* ===== Header ===== */
+.header{position:fixed;top:0;left:0;width:100%;z-index:1000;background:rgba(255,255,255,.92);backdrop-filter:blur(16px) saturate(180%);-webkit-backdrop-filter:blur(16px) saturate(180%);box-shadow:0 1px 3px rgba(0,0,0,.06);border-bottom:1px solid rgba(0,0,0,.04)}
+.header-inner{display:flex;align-items:center;justify-content:space-between;height:72px}
+.logo{display:flex;align-items:center;gap:2px;font-size:1.25rem;font-weight:700;color:var(--slate-900)}
+.logo-ai{color:var(--indigo-600);font-weight:700}
+.nav{display:flex;align-items:center;gap:32px}
+.nav a{font-size:.875rem;font-weight:500;color:var(--slate-600);transition:color .2s}
+.nav a:hover{color:var(--slate-900)}
+.nav-cta{margin-left:8px}
+.mobile-toggle{display:none;background:none;border:none;cursor:pointer;padding:8px}
+.mobile-toggle span{display:block;width:22px;height:2px;background:var(--slate-900);margin:5px 0;border-radius:1px;transition:.3s}
+.mobile-menu{display:none;position:fixed;inset:0;background:var(--white);z-index:999;flex-direction:column;align-items:center;justify-content:center;gap:28px}
+.mobile-menu.open{display:flex}
+.mobile-menu a{font-size:1.125rem;color:var(--slate-900);font-weight:500}
+.mobile-close{position:absolute;top:24px;right:24px;background:none;border:none;color:var(--slate-600);font-size:1.5rem;cursor:pointer;width:40px;height:40px;display:flex;align-items:center;justify-content:center;border-radius:50%;transition:background .2s}
+.mobile-close:hover{background:var(--gray-100)}
+
+@media(max-width:768px){
+  .nav{display:none}
+  .mobile-toggle{display:block}
+}
+
+/* ===== Article Hero ===== */
+.article-hero{background:linear-gradient(165deg,var(--slate-900) 0%,#1a1647 50%,var(--indigo-950) 100%);padding:140px 0 72px;color:var(--white);position:relative;overflow:hidden}
+.article-hero::before{content:'';position:absolute;top:0;left:0;right:0;bottom:0;background:radial-gradient(ellipse 80% 50% at 50% -20%,rgba(99,102,241,.15),transparent);pointer-events:none}
+.article-hero-content{position:relative;z-index:1;max-width:800px;margin:0 auto;text-align:center}
+.article-hero-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.1);padding:7px 18px;border-radius:100px;font-size:.8125rem;font-weight:500;color:rgba(255,255,255,.8);margin-bottom:24px;backdrop-filter:blur(8px)}
+.article-hero h1{font-size:clamp(1.75rem,4.5vw,2.5rem);font-weight:700;line-height:1.4;margin-bottom:20px;letter-spacing:-.02em}
+.article-hero-meta{display:flex;align-items:center;justify-content:center;gap:16px;font-size:.875rem;color:rgba(255,255,255,.5)}
+
+/* ===== Article Body ===== */
+.article-body{max-width:800px;margin:0 auto;padding:64px 24px 96px}
+.article-body h2{font-size:1.5rem;font-weight:700;color:var(--slate-900);margin:56px 0 24px;padding-bottom:12px;border-bottom:2px solid var(--indigo-100);letter-spacing:-.01em}
+.article-body h3{font-size:1.1875rem;font-weight:700;color:var(--slate-800);margin:40px 0 16px}
+.article-body p{font-size:.9375rem;color:var(--slate-700);line-height:2;margin-bottom:20px}
+.article-body ul,.article-body ol{margin:0 0 24px 0;padding-left:0}
+.article-body ul li,.article-body ol li{font-size:.9375rem;color:var(--slate-700);line-height:2;padding-left:24px;position:relative;margin-bottom:8px}
+.article-body ul li::before{content:'';position:absolute;left:6px;top:13px;width:6px;height:6px;border-radius:50%;background:var(--indigo-500)}
+.article-body ol{counter-reset:ol-counter}
+.article-body ol li{counter-increment:ol-counter}
+.article-body ol li::before{content:counter(ol-counter)'.';position:absolute;left:0;font-weight:700;color:var(--indigo-600);font-size:.875rem}
+.article-body strong{font-weight:700;color:var(--slate-900)}
+.article-body blockquote{border-left:4px solid var(--indigo-500);background:var(--indigo-50);padding:20px 24px;margin:24px 0;border-radius:0 var(--radius) var(--radius) 0}
+.article-body blockquote p{color:var(--indigo-900);margin-bottom:0;font-style:italic}
+.article-body code{font-family:'JetBrains Mono','Noto Sans JP',monospace;background:var(--gray-100);padding:2px 8px;border-radius:4px;font-size:.85em;color:var(--indigo-700)}
+.article-body pre{background:var(--slate-900);color:#e2e8f0;padding:24px;border-radius:var(--radius);margin:24px 0;overflow-x:auto;line-height:1.7}
+.article-body pre code{background:none;padding:0;color:inherit;font-size:.8125rem}
+
+/* ===== Back to blog ===== */
+.back-link{display:inline-flex;align-items:center;gap:8px;font-size:.875rem;font-weight:600;color:var(--indigo-600);margin-bottom:32px;transition:all .2s}
+.back-link:hover{color:var(--indigo-700);gap:10px}
+
+/* ===== Intro Box ===== */
+.intro-box{background:linear-gradient(135deg,var(--indigo-50),var(--purple-50));border:1px solid var(--indigo-100);border-radius:var(--radius-lg);padding:32px;margin:32px 0}
+.intro-box p{font-size:.9375rem;color:var(--slate-700);line-height:2;margin-bottom:12px}
+.intro-box p:last-child{margin-bottom:0}
+
+/* ===== Decision Card ===== */
+.decision-card{background:var(--white);border:1px solid var(--gray-200);border-radius:var(--radius-lg);padding:28px 32px;margin:24px 0;position:relative;transition:all .3s ease}
+.decision-card:hover{box-shadow:var(--shadow-md);border-color:var(--gray-300)}
+.decision-card::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;border-radius:var(--radius-lg) var(--radius-lg) 0 0}
+.decision-card.critical::before{background:linear-gradient(90deg,var(--rose-500),var(--rose-600))}
+.decision-card.high::before{background:linear-gradient(90deg,var(--amber-500),var(--amber-600))}
+.decision-card.strategic::before{background:linear-gradient(90deg,var(--indigo-500),var(--indigo-600))}
+.decision-card.security::before{background:linear-gradient(90deg,var(--teal-500),var(--teal-600))}
+
+.decision-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px}
+.decision-num{font-family:'Inter','Noto Sans JP',sans-serif;font-size:.75rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;padding:4px 12px;border-radius:100px}
+.critical .decision-num{background:var(--rose-50);color:var(--rose-600)}
+.high .decision-num{background:var(--amber-50);color:var(--amber-600)}
+.strategic .decision-num{background:var(--indigo-50);color:var(--indigo-600)}
+.security .decision-num{background:var(--teal-50);color:var(--teal-600)}
+.decision-title{font-size:1.125rem;font-weight:700;color:var(--slate-900);margin-bottom:12px}
+.decision-body{font-size:.9375rem;color:var(--slate-700);line-height:2}
+.decision-body p{margin-bottom:12px}
+.decision-body ul{margin:8px 0 16px}
+.decision-body ul li{padding-left:24px;position:relative;margin-bottom:6px;line-height:1.9;font-size:.9375rem;color:var(--slate-700)}
+.decision-body ul li::before{content:'';position:absolute;left:6px;top:12px;width:5px;height:5px;border-radius:50%;background:var(--indigo-500)}
+.decision-who{display:flex;align-items:center;gap:8px;margin-top:16px;padding-top:12px;border-top:1px solid var(--gray-100)}
+.decision-who-label{font-size:.75rem;font-weight:600;color:var(--gray-400);letter-spacing:.03em}
+.decision-who-name{font-size:.8125rem;font-weight:600;color:var(--slate-700)}
+.decision-deadline{font-size:.8125rem;font-weight:600;color:var(--rose-600);margin-left:auto}
+
+/* ===== Score Board ===== */
+.score-board{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin:32px 0}
+.score-item{background:var(--gray-50);border:1px solid var(--gray-200);border-radius:var(--radius);padding:20px;text-align:center}
+.score-value{font-family:'Inter','Noto Sans JP',sans-serif;font-size:2rem;font-weight:700;line-height:1.2}
+.score-value.red{color:var(--rose-600)}
+.score-value.amber{color:var(--amber-600)}
+.score-value.green{color:var(--emerald-600)}
+.score-value.indigo{color:var(--indigo-600)}
+.score-label{font-size:.75rem;color:var(--gray-500);margin-top:4px;font-weight:500}
+
+@media(max-width:640px){
+  .score-board{grid-template-columns:1fr 1fr}
+}
+@media(max-width:400px){
+  .score-board{grid-template-columns:1fr}
+}
+
+/* ===== Sprint Table ===== */
+.sprint-table{width:100%;border-collapse:collapse;margin:24px 0;font-size:.875rem}
+.sprint-table th{background:var(--slate-800);color:var(--white);padding:12px 16px;text-align:left;font-weight:600;font-size:.8125rem}
+.sprint-table td{padding:12px 16px;border-bottom:1px solid var(--gray-200);vertical-align:top}
+.sprint-table tr:nth-child(even){background:var(--gray-50)}
+.sprint-table .week-label{font-weight:700;color:var(--indigo-600);white-space:nowrap}
+.sprint-table .phase-label{font-weight:600;color:var(--slate-700);white-space:nowrap}
+.sprint-table .gate{background:var(--rose-50);font-weight:600;color:var(--rose-600)}
+
+@media(max-width:768px){
+  .sprint-table{font-size:.8125rem}
+  .sprint-table th,.sprint-table td{padding:8px 12px}
+}
+
+/* ===== Gate Box ===== */
+.gate-box{background:linear-gradient(135deg,var(--rose-50),var(--amber-50));border:2px solid var(--rose-200);border-radius:var(--radius-lg);padding:32px;margin:40px 0;text-align:center}
+.gate-box h3{font-size:1.25rem;font-weight:700;color:var(--rose-600);margin-bottom:16px}
+.gate-box p{font-size:.9375rem;color:var(--slate-700);line-height:2;margin-bottom:8px}
+.gate-box .gate-condition{font-size:1.0625rem;font-weight:700;color:var(--slate-900);margin:16px 0}
+
+/* ===== Retreat Line ===== */
+.retreat-box{background:var(--gray-50);border:1px solid var(--gray-300);border-radius:var(--radius-lg);padding:28px 32px;margin:32px 0}
+.retreat-box h3{font-size:1.0625rem;font-weight:700;color:var(--slate-800);margin-bottom:16px}
+.retreat-box ul li{padding-left:24px;position:relative;margin-bottom:8px;font-size:.9375rem;color:var(--slate-700);line-height:1.9}
+.retreat-box ul li::before{content:'';position:absolute;left:6px;top:12px;width:5px;height:5px;border-radius:50%;background:var(--rose-500)}
+
+/* ===== Bottom CTA ===== */
+.bottom-cta{background:linear-gradient(135deg,var(--indigo-50),var(--purple-50));border:1px solid var(--indigo-100);border-radius:var(--radius-lg);padding:32px;margin:40px 0;text-align:center}
+.bottom-cta p{font-size:.9375rem;color:var(--slate-700);line-height:2;margin-bottom:16px}
+.bottom-cta a.btn{font-size:.9375rem}
+
+/* ===== Footer ===== */
+.footer{background:var(--slate-900);color:rgba(255,255,255,.5);padding:64px 0 32px;border-top:1px solid rgba(255,255,255,.06)}
+.footer-grid{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:40px;margin-bottom:48px}
+.footer-brand{font-size:1.125rem;font-weight:700;color:var(--white);margin-bottom:8px}
+.footer-brand .logo-ai{color:var(--indigo-500)}
+.footer-tagline{font-size:.8125rem;line-height:1.8;margin-bottom:20px}
+.footer-email{font-size:.8125rem;color:var(--indigo-500);transition:color .2s}
+.footer-email:hover{color:var(--indigo-400)}
+.footer h4{font-size:.75rem;font-weight:600;color:rgba(255,255,255,.7);margin-bottom:16px;letter-spacing:.05em;text-transform:uppercase}
+.footer ul li{margin-bottom:8px}
+.footer ul a{font-size:.8125rem;transition:color .2s}
+.footer ul a:hover{color:var(--white)}
+.footer-bottom{border-top:1px solid rgba(255,255,255,.06);padding-top:24px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;font-size:.75rem}
+
+@media(max-width:768px){
+  .footer-grid{grid-template-columns:1fr 1fr;gap:32px}
+  .decision-card{padding:20px 24px}
+}
+@media(max-width:480px){
+  .footer-grid{grid-template-columns:1fr}
+}
+
+/* ===== Scroll Reveal ===== */
+.reveal{opacity:0;transform:translateY(20px);transition:opacity .5s ease,transform .5s ease}
+.reveal.visible{opacity:1;transform:none}
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<header class="header" id="header">
+  <div class="container header-inner">
+    <a href="/" class="logo">
+      ミセバン<span class="logo-ai">AI</span>
+    </a>
+    <nav class="nav">
+      <a href="/#setup">導入方法</a>
+      <a href="/#features">機能</a>
+      <a href="/#pricing">料金</a>
+      <a href="/cameras.html">対応カメラ</a>
+      <a href="/blog/">ブログ</a>
+      <a href="/#cta" class="btn btn-primary btn-sm nav-cta">無料で始める</a>
+    </nav>
+    <button class="mobile-toggle" id="mobileToggle" aria-label="メニューを開く">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</header>
+
+<!-- Mobile Menu -->
+<div class="mobile-menu" id="mobileMenu">
+  <button class="mobile-close" id="mobileClose" aria-label="メニューを閉じる">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+  </button>
+  <a href="/#setup">導入方法</a>
+  <a href="/#features">機能</a>
+  <a href="/#pricing">料金</a>
+  <a href="/cameras.html">対応カメラ</a>
+  <a href="/blog/">ブログ</a>
+  <a href="/#cta" class="btn btn-primary">無料で始める</a>
+</div>
+
+<!-- Article Hero -->
+<section class="article-hero">
+  <div class="container">
+    <div class="article-hero-content">
+      <div class="article-hero-badge">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+        意思決定サマリー
+      </div>
+      <h1>マルチプロダクト戦略サマリー — 8つの意思決定と8週スプリント</h1>
+      <div class="article-hero-meta">
+        <time datetime="2026-02-23">2026.02.23</time>
+        <span>|</span>
+        <span>ミセバンAI チーム</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Article Body -->
+<article class="article-body">
+
+<a href="/blog/" class="back-link">
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+  ブログ一覧へ戻る
+</a>
+
+<div class="intro-box">
+  <p><a href="./010-multiproduct-meeting.html" style="color:var(--indigo-600);font-weight:600">前回の記事</a>で、チーム全員が「マルチプロダクト戦略（ショットガンアプローチ）」の是非を議論した。</p>
+  <p>本記事では、その議論を<strong>8つの意思決定</strong>に集約し、<strong>5プロダクト同時開発の8週スプリント計画</strong>と<strong>Go/No-Goゲート</strong>を定義する。</p>
+</div>
+
+
+<!-- Score Board -->
+<div class="score-board reveal">
+  <div class="score-item">
+    <div class="score-value green">条件付きGo</div>
+    <div class="score-label">判定（全会一致）</div>
+  </div>
+  <div class="score-item">
+    <div class="score-value amber">8週間</div>
+    <div class="score-label">Phase 0: 1w / Phase 1: 4w / Phase 2: 1w / Buffer: 2w</div>
+  </div>
+  <div class="score-item">
+    <div class="score-value red">&yen;30万</div>
+    <div class="score-label">バッチ1予算（&yen;70万は勝者リザーブ）</div>
+  </div>
+  <div class="score-item">
+    <div class="score-value indigo">5本</div>
+    <div class="score-label">同時開発プロダクト数</div>
+  </div>
+</div>
+
+
+<h2>全員一致の結論</h2>
+
+<blockquote>
+  <p>「1プロダクトに全賭けするリスクより、5発同時に撃って当たりを見極める方がスタートアップとして合理的。ただし共通基盤なしの5並列は自殺行為。Phase 0の1週間が生命線。」 — CTO 山本</p>
+</blockquote>
+
+<p>全員が「条件付きGo」で一致。条件とは、Phase 0で共通基盤を確実に構築すること、そしてWeek 4のスコアカード判定で冷酷に勝者を選ぶことの2点。</p>
+
+
+<h2>8つの意思決定</h2>
+
+<!-- Decision 1 -->
+<div class="decision-card critical reveal">
+  <div class="decision-header">
+    <span class="decision-num">Decision #1 / Critical</span>
+  </div>
+  <div class="decision-title">共通基盤を最優先で構築</div>
+  <div class="decision-body">
+    <p>Phase 0で1週間かけてMonorepo共通基盤を構築する。5プロダクトが同じ認証・課金・AI・分析基盤を共有することで、1プロダクトあたりの立ち上げコストを劇的に削減する。</p>
+    <ul>
+      <li><code>common-auth</code> — 認証・ユーザー管理共通モジュール</li>
+      <li><code>common-billing</code> — Stripe課金・プラン管理</li>
+      <li><code>common-ai</code> — AI推論パイプライン共通化</li>
+      <li><code>common-analytics</code> — イベント計測・ダッシュボード基盤</li>
+      <li><code>create-product.sh</code> で15分スキャフォールド</li>
+    </ul>
+    <div class="decision-who">
+      <span class="decision-who-label">担当:</span>
+      <span class="decision-who-name">CTO 山本</span>
+      <span class="decision-deadline">Week 1</span>
+    </div>
+  </div>
+</div>
+
+<!-- Decision 2 -->
+<div class="decision-card critical reveal">
+  <div class="decision-header">
+    <span class="decision-num">Decision #2 / Critical</span>
+  </div>
+  <div class="decision-title">プロダクト選定 — Top 5確定</div>
+  <div class="decision-body">
+    <p>候補の中から市場規模・実装難易度・差別化要因を評価し、以下の5プロダクトを同時開発対象として確定した。</p>
+    <ul>
+      <li><strong>MisebanAI</strong> — 既存カメラAI来客分析（改善継続）</li>
+      <li><strong>ZenShot</strong> — EC出品者向けAI商品撮影（TAM最大、最優先）</li>
+      <li><strong>KuchiKomi Lens</strong> — 口コミ分析AIダッシュボード</li>
+      <li><strong>KanbanCam</strong> — 製造業向けカンバン方式AI管理</li>
+      <li><strong>SnapReceipt</strong> — レシート撮影→自動経費精算</li>
+    </ul>
+    <p><strong>YomuYomuは却下</strong>（市場が小さく、差別化が困難と判断）。</p>
+    <div class="decision-who">
+      <span class="decision-who-label">担当:</span>
+      <span class="decision-who-name">CEO 田中 + 高橋</span>
+      <span class="decision-deadline">Day 1</span>
+    </div>
+  </div>
+</div>
+
+<!-- Decision 3 -->
+<div class="decision-card high reveal">
+  <div class="decision-header">
+    <span class="decision-num">Decision #3 / High</span>
+  </div>
+  <div class="decision-title">LPファースト原則の徹底</div>
+  <div class="decision-body">
+    <p>各プロダクトのランディングページ（LP）を先行公開し、市場の反応を検証してからコードを書く。CVR 2%以上を開発Goの条件とする。</p>
+    <ul>
+      <li>72時間MVPパターン: <strong>Day1</strong> LP公開 → <strong>Day2</strong> コア機能実装 → <strong>Day3</strong> ローンチ</li>
+      <li>LP段階でメールアドレス収集、ウェイトリスト形成</li>
+      <li>コード着手はLP検証後 — 作ってから売るのではなく、売れることを確認してから作る</li>
+    </ul>
+    <div class="decision-who">
+      <span class="decision-who-label">担当:</span>
+      <span class="decision-who-name">渡辺</span>
+      <span class="decision-deadline">Phase 1 各プロダクト</span>
+    </div>
+  </div>
+</div>
+
+<!-- Decision 4 -->
+<div class="decision-card high reveal">
+  <div class="decision-header">
+    <span class="decision-num">Decision #4 / High</span>
+  </div>
+  <div class="decision-title">週次KPIレビュー体制</div>
+  <div class="decision-body">
+    <p>毎週月曜日にスコアカードレビューを実施。感情ではなくデータで判断する。</p>
+    <ul>
+      <li><strong>LP CVR</strong> — ランディングページのコンバージョン率</li>
+      <li><strong>週間登録数</strong> — 新規サインアップ数</li>
+      <li><strong>SNS言及数</strong> — Twitter/X、はてブ等での言及</li>
+      <li><strong>有料転換率</strong> — 無料→有料ユーザーの転換率</li>
+    </ul>
+    <p><strong>Kill条件: CVR &lt;1%、週間登録 &lt;10</strong> — この数字を下回ったプロダクトは即座に凍結検討。</p>
+    <div class="decision-who">
+      <span class="decision-who-label">担当:</span>
+      <span class="decision-who-name">CFO 鈴木</span>
+      <span class="decision-deadline">Weekly（毎週月曜）</span>
+    </div>
+  </div>
+</div>
+
+<!-- Decision 5 -->
+<div class="decision-card high reveal">
+  <div class="decision-header">
+    <span class="decision-num">Decision #5 / High</span>
+  </div>
+  <div class="decision-title">Twitter/X バズ戦略</div>
+  <div class="decision-body">
+    <p>各プロダクトの開発過程をTwitter/Xでリアルタイム公開し、「作ってみた」系のバズを狙う。ビルドインパブリック戦略。</p>
+    <ul>
+      <li>開発過程のスクリーンショット・動画をリアルタイムで投稿</li>
+      <li>「AIで○○を作ってみた」フォーマットでバズを狙う</li>
+      <li>Product Huntは英語LP準備して<strong>火曜AM9:00（PST）</strong>にローンチ</li>
+      <li>はてなブックマーク、Zenn、Qiitaでの技術記事も並行展開</li>
+    </ul>
+    <div class="decision-who">
+      <span class="decision-who-label">担当:</span>
+      <span class="decision-who-name">Growth Hacker 伊藤</span>
+      <span class="decision-deadline">各ローンチ前</span>
+    </div>
+  </div>
+</div>
+
+<!-- Decision 6 -->
+<div class="decision-card strategic reveal">
+  <div class="decision-header">
+    <span class="decision-num">Decision #6 / Strategic</span>
+  </div>
+  <div class="decision-title">予算キャップ &yen;30万厳守</div>
+  <div class="decision-body">
+    <p>バッチ1の5プロダクトには&yen;30万上限を設定。1プロダクトあたり&yen;6万。残りの&yen;70万は勝者プロダクトへの集中投資用にリザーブする。</p>
+    <ul>
+      <li>1プロダクトあたり&yen;6万（インフラ + API + ドメイン + 広告費）</li>
+      <li>&yen;70万は勝者プロダクトのスケール投資に集中</li>
+      <li>法人化はMRR &yen;5万超えてから検討（それまでは個人事業主で運用）</li>
+      <li>予算超過は即座にCFOがアラートを出す</li>
+    </ul>
+    <div class="decision-who">
+      <span class="decision-who-label">担当:</span>
+      <span class="decision-who-name">CFO 鈴木</span>
+      <span class="decision-deadline">常時</span>
+    </div>
+  </div>
+</div>
+
+<!-- Decision 7 -->
+<div class="decision-card strategic reveal">
+  <div class="decision-header">
+    <span class="decision-num">Decision #7 / Strategic</span>
+  </div>
+  <div class="decision-title">Week 4 Go/No-Go判定</div>
+  <div class="decision-body">
+    <p>Week 4時点でスコアカード評価を実施。上位2プロダクトに集中し、下位は凍結する。感情を排して数字で判断する。</p>
+    <ul>
+      <li><strong>集中判断基準:</strong></li>
+      <li>アクティベーション率 &gt;20%</li>
+      <li>リテンション 7日 &gt;30%</li>
+      <li>有料ユーザー &gt;5人</li>
+    </ul>
+    <p>上記を2つ以上満たすプロダクトが「勝者」。満たさないプロダクトは凍結し、リソースを勝者に集中投下する。</p>
+    <div class="decision-who">
+      <span class="decision-who-label">担当:</span>
+      <span class="decision-who-name">CEO 田中</span>
+      <span class="decision-deadline">Week 4</span>
+    </div>
+  </div>
+</div>
+
+<!-- Decision 8 -->
+<div class="decision-card high reveal">
+  <div class="decision-header">
+    <span class="decision-num">Decision #8 / High</span>
+  </div>
+  <div class="decision-title">ZenShot最優先開発</div>
+  <div class="decision-body">
+    <p>ZenShotは全プロダクト中TAM（Total Addressable Market）が最大。EC出品者全員がターゲットであり、市場規模は圧倒的。</p>
+    <ul>
+      <li>Shopify / BASEプラグインとして展開</li>
+      <li>&yen;980/月のフリーミアム（無料枠: 月10枚、有料: 無制限）</li>
+      <li>Phase 1 Week 1で最初にビルド開始</li>
+      <li>EC出品者コミュニティへの初期マーケティングを同時展開</li>
+    </ul>
+    <div class="decision-who">
+      <span class="decision-who-label">担当:</span>
+      <span class="decision-who-name">高橋</span>
+      <span class="decision-deadline">Phase 1 Week 1</span>
+    </div>
+  </div>
+</div>
+
+
+<h2>8週スプリント計画</h2>
+
+<table class="sprint-table reveal">
+  <thead>
+    <tr>
+      <th>Week</th>
+      <th>Phase</th>
+      <th>フォーカス</th>
+      <th>デリバラブル</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td class="week-label">W1</td>
+      <td class="phase-label">Phase 0</td>
+      <td>共通基盤構築</td>
+      <td>Monorepo + common crates + <code>create-product.sh</code></td>
+    </tr>
+    <tr>
+      <td class="week-label">W2</td>
+      <td class="phase-label">Phase 1</td>
+      <td>ZenShot</td>
+      <td>LP + Core MVP + Product Hunt</td>
+    </tr>
+    <tr>
+      <td class="week-label">W3</td>
+      <td class="phase-label">Phase 1</td>
+      <td>KuchiKomi Lens</td>
+      <td>LP + Core MVP + SNS campaign</td>
+    </tr>
+    <tr>
+      <td class="week-label">W4</td>
+      <td class="phase-label">Phase 1</td>
+      <td>KanbanCam + SnapReceipt</td>
+      <td>LP + Core MVP x 2</td>
+    </tr>
+    <tr>
+      <td class="week-label">W5</td>
+      <td class="phase-label">Phase 1</td>
+      <td>MisebanAI改善</td>
+      <td>エッジ推論 + Dashboard</td>
+    </tr>
+    <tr class="gate">
+      <td></td>
+      <td colspan="3">GATE: スコアカード判定 — 上位2プロダクトに集中、他は凍結</td>
+    </tr>
+    <tr>
+      <td class="week-label">W6</td>
+      <td class="phase-label">Phase 2</td>
+      <td>スコアカード判定</td>
+      <td>Go/No-Go → Top 2に集中</td>
+    </tr>
+    <tr>
+      <td class="week-label">W7</td>
+      <td class="phase-label">Buffer</td>
+      <td>勝者プロダクト強化</td>
+      <td>有料機能 + Onboarding</td>
+    </tr>
+    <tr>
+      <td class="week-label">W8</td>
+      <td class="phase-label">Buffer</td>
+      <td>スケール準備</td>
+      <td>Marketing + Sales pipeline</td>
+    </tr>
+  </tbody>
+</table>
+
+
+<!-- Go/No-Go Gate -->
+<div class="gate-box reveal">
+  <h3>Week 4 Go/No-Go ゲート</h3>
+  <p>Week 4終了時に全プロダクトのスコアカードを評価する：</p>
+  <div class="gate-condition">
+    LP CVR &gt;2% / 週間登録 &gt;50 / 有料転換 &gt;3%
+  </div>
+  <p><strong>判定者:</strong> CEO + CFO</p>
+  <p><strong>上位2プロダクトに集中</strong> — リソース・予算・マーケティングを勝者に全振り</p>
+  <p><strong>下位プロダクトは凍結</strong> — コードはアーカイブ、ドメイン・インフラは停止</p>
+</div>
+
+
+<h2>MVP定義</h2>
+
+<blockquote>
+  <p>各プロダクトのMVP = LP + コア機能1つ + Stripe課金。それ以上は作らない。</p>
+</blockquote>
+
+<p>72時間で出せないMVPは、MVPではない。Day1にLPを公開し、Day2にコア機能を1つだけ実装し、Day3にローンチする。フィーチャーを追加したい衝動と戦え。</p>
+
+
+<h2>撤退ライン</h2>
+
+<div class="retreat-box reveal">
+  <h3>以下のいずれかに該当した場合、戦略全体の見直しを行う</h3>
+  <ul>
+    <li>全プロダクトのCVR 1%未満が2週連続</li>
+    <li>8週間で有料ユーザー0人</li>
+    <li>月間バーンレートが&yen;15万を超過</li>
+  </ul>
+</div>
+
+
+<h2>次のステップ</h2>
+
+<p>8つの意思決定は出揃った。8週間のタイムラインも引いた。あとは実行するだけ。</p>
+
+<blockquote>
+  <p>Week 1の成果物は「共通基盤」と「create-product.sh」。この2つが完成すれば、5プロダクトの同時開発マシンが動き出す。</p>
+</blockquote>
+
+<div class="bottom-cta reveal">
+  <p>次の記事では、共通基盤の設計と<code>create-product.sh</code>の全貌を公開する。</p>
+  <p><strong>次の記事: 共通基盤の設計と<code>create-product.sh</code>の全貌</strong></p>
+</div>
+
+
+</article>
+
+<!-- Footer -->
+<footer class="footer">
+  <div class="container">
+    <div class="footer-grid">
+      <div>
+        <div class="footer-brand">ミセバン<span class="logo-ai">AI</span></div>
+        <p class="footer-tagline">既存カメラが、AI店長に変わる。<br>小規模店舗のための次世代AI分析。</p>
+        <a href="mailto:info@miseban.ai" class="footer-email">info@miseban.ai</a>
+      </div>
+      <div>
+        <h4>サービス</h4>
+        <ul>
+          <li><a href="/#features">機能</a></li>
+          <li><a href="/#pricing">料金</a></li>
+          <li><a href="/cameras.html">対応カメラ</a></li>
+          <li><a href="/#faq">FAQ</a></li>
+          <li><a href="/#partner">パートナー募集</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>法的情報</h4>
+        <ul>
+          <li><a href="#">利用規約</a></li>
+          <li><a href="#">プライバシーポリシー</a></li>
+          <li><a href="#">特定商取引法に基づく表記</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>お問い合わせ</h4>
+        <ul>
+          <li><a href="mailto:info@miseban.ai">一般のお問い合わせ</a></li>
+          <li><a href="mailto:partner@miseban.ai">パートナー窓口</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>&copy; 2026 MisebanAI. All rights reserved.</p>
+    </div>
+  </div>
+</footer>
+
+<script>
+/* ===== Mobile menu ===== */
+(function(){
+  var toggle = document.getElementById('mobileToggle');
+  var menu = document.getElementById('mobileMenu');
+  var close = document.getElementById('mobileClose');
+  var links = menu.querySelectorAll('a');
+  function open(){menu.classList.add('open');document.body.style.overflow='hidden'}
+  function shut(){menu.classList.remove('open');document.body.style.overflow=''}
+  toggle.addEventListener('click', open);
+  close.addEventListener('click', shut);
+  for(var i=0;i<links.length;i++) links[i].addEventListener('click', shut);
+})();
+
+/* ===== Scroll reveal ===== */
+(function(){
+  var els = document.querySelectorAll('.reveal');
+  if(!('IntersectionObserver' in window)){
+    els.forEach(function(el){el.classList.add('visible')});
+    return;
+  }
+  var observer = new IntersectionObserver(function(entries){
+    entries.forEach(function(e){
+      if(e.isIntersecting){
+        e.target.classList.add('visible');
+        observer.unobserve(e.target);
+      }
+    });
+  },{threshold:0.1});
+  els.forEach(function(el){observer.observe(el)});
+})();
+</script>
+
+</body>
+</html>

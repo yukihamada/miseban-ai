@@ -110,8 +110,28 @@ endif
 # ────────────────────────────────────────────
 
 .PHONY: deploy
-deploy: ## Deploy to Fly.io
+deploy: ## Deploy web to Fly.io
 	fly deploy -c fly.web.toml --remote-only
+
+# ────────────────────────────────────────────
+# API Server
+# ────────────────────────────────────────────
+
+.PHONY: run-api-local
+run-api-local: ## Run API server locally with .env
+	@echo "Starting API server..."
+	cargo run --package api
+
+.PHONY: build-api
+build-api: ## Build API Docker image
+	docker build -f Dockerfile.api -t miseban-ai-api .
+
+.PHONY: deploy-api
+deploy-api: ## Deploy API to Fly.io
+	fly deploy -c fly.api.toml --remote-only
+
+.PHONY: deploy-all
+deploy-all: deploy deploy-api ## Deploy both web and API
 
 # ────────────────────────────────────────────
 # Shipping (physical product)
