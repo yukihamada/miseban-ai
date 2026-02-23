@@ -8,6 +8,9 @@ use tokio::signal;
 use tokio::sync::watch;
 use tracing::{debug, error, info, warn};
 
+mod scanner;
+mod setup;
+
 // ---------------------------------------------------------------------------
 // Version
 // ---------------------------------------------------------------------------
@@ -21,7 +24,7 @@ const VERSION: &str = env!("CARGO_PKG_VERSION");
 #[derive(Parser, Debug)]
 #[command(
     name = "miseban-agent",
-    about = "MisebanAI camera agent — capture frames from IP cameras and upload for analysis",
+    about = "MisebanAI camera agent — plug in, power on, done.",
     version
 )]
 struct Cli {
@@ -38,12 +41,16 @@ struct Cli {
     token: Option<String>,
 
     /// API endpoint for quick mode.
-    #[arg(long, default_value = "https://api.miseban.ai/v1/frames")]
+    #[arg(long, default_value = "https://api.misebanai.com/v1/frames")]
     endpoint: String,
 
     /// Capture frames but don't upload. Saves JPEGs to /tmp/miseban/ for testing.
     #[arg(long)]
     dry_run: bool,
+
+    /// Force setup wizard (Web UI on port 3939).
+    #[arg(long)]
+    setup: bool,
 
     /// Enable verbose logging (debug level).
     #[arg(short, long)]
@@ -62,7 +69,7 @@ struct AgentConfig {
 
 #[derive(Debug, Deserialize, Clone)]
 struct ServerConfig {
-    /// Cloud API endpoint URL (e.g. https://api.miseban.ai/v1/frames).
+    /// Cloud API endpoint URL (e.g. https://api.misebanai.com/v1/frames).
     endpoint: String,
     /// API token for authentication.
     token: String,
@@ -529,6 +536,50 @@ async fn main() {
         )
         .init();
 
+    // -----------------------------------------------------------------------
+    // Auto-detect: no config? → launch setup wizard automatically.
+    // -----------------------------------------------------------------------
+    if cli.setup {
+        println!();
+        println!("  ╔══════════════════════════════════════════╗");
+        println!("  ║     MisebanAI セットアップウィザード       ║");
+        println!("  ╚══════════════════════════════════════════╝");
+        println!();
+        println!("  ブラウザで http://localhost:3939 を開いてください");
+        println!("  スマホからも接続できます（同じWi-Fi）");
+        println!();
+        if let Err(e) = setup::run_setup_server().await {
+            error!(error = %e, "Setup server failed");
+            std::process::exit(1);
+        }
+        info!("Setup complete! Restarting in capture mode...");
+        // Fall through to load the freshly-written config.
+    }
+
+    let has_config = resolve_config_path(cli.config.clone()).is_some();
+    let has_quick_mode = cli.camera.is_some();
+
+    if !has_config && !has_quick_mode {
+        // No config found — auto-enter setup mode (おばあちゃんモード).
+        println!();
+        println!("  ╔══════════════════════════════════════════╗");
+        println!("  ║         MisebanAI Camera Agent           ║");
+        println!("  ║              v{}                      ║", VERSION);
+        println!("  ╚══════════════════════════════════════════╝");
+        println!();
+        println!("  設定ファイルが見つかりません。");
+        println!("  セットアップウィザードを起動します...");
+        println!();
+        println!("  ブラウザで http://localhost:3939 を開いてください");
+        println!("  スマホからも接続できます（同じWi-Fi）");
+        println!();
+        if let Err(e) = setup::run_setup_server().await {
+            error!(error = %e, "Setup server failed");
+            std::process::exit(1);
+        }
+        info!("Setup complete! Starting capture mode...");
+    }
+
     // Build config: either from --camera quick mode or from config file.
     let config = if let Some(camera_url) = &cli.camera {
         // Quick mode: single camera from CLI args.
@@ -562,7 +613,7 @@ async fn main() {
     } else {
         // Config file mode.
         let config_path = resolve_config_path(cli.config).unwrap_or_else(|| {
-            error!("No config file found. Create ~/.miseban/config.toml, pass --config, or use --camera for quick mode");
+            error!("Config file still not found after setup. Exiting.");
             std::process::exit(1);
         });
 
