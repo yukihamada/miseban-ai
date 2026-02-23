@@ -46,6 +46,7 @@ struct AppState {
     jwt_secret: JwtSecret,
     line_client: OptionalLineClient,
     stripe_client: OptionalStripeClient,
+    rate_limiter: plan_guard::RateLimiter,
 }
 
 // ---------------------------------------------------------------------------
@@ -99,15 +100,40 @@ async fn receive_frame(
     State(state): State<AppState>,
     Json(frame): Json<FrameData>,
 ) -> Result<(StatusCode, Json<AnalysisResult>), ApiError> {
+    // Input validation.
+    if frame.camera_id.is_empty() || frame.camera_id.len() > 128 {
+        return Err(ApiError::Forbidden("Invalid camera_id".to_string()));
+    }
+    // Max 10MB JPEG payload.
+    const MAX_JPEG_SIZE: usize = 10 * 1024 * 1024;
+    if frame.jpeg_bytes.len() > MAX_JPEG_SIZE {
+        return Err(ApiError::Forbidden("Frame too large (max 10MB)".to_string()));
+    }
+    if frame.jpeg_bytes.is_empty() {
+        return Err(ApiError::Forbidden("Empty frame data".to_string()));
+    }
+
     info!(
         camera_id = %frame.camera_id,
         timestamp = %frame.timestamp,
         user_id = %user_id,
+        bytes = frame.jpeg_bytes.len(),
         "Frame received"
     );
 
-    // Soft plan enforcement: warn if over camera limit (do not reject).
+    // Plan enforcement: check camera limit and rate limit.
     if let Some(store) = db::get_store_by_owner(&state.pool, &user_id).await {
+        // Rate limit check (hard enforcement).
+        if !state.rate_limiter.check(&store.id, &store.plan_tier).await {
+            warn!(
+                store_id = %store.id,
+                plan_tier = %store.plan_tier,
+                "Frame submission rate limited"
+            );
+            return Err(ApiError::Forbidden("Rate limit exceeded. Please wait before submitting another frame.".to_string()));
+        }
+
+        // Camera limit check (soft enforcement).
         match plan_guard::can_add_camera(&state.pool, &store.id).await {
             Ok(false) => {
                 warn!(
@@ -925,6 +951,12 @@ fn build_router(state: AppState) -> Router {
     // CORS: allow the deployed frontend and localhost for development.
     let cors = CorsLayer::new()
         .allow_origin([
+            "https://misebanai.com"
+                .parse::<HeaderValue>()
+                .expect("valid origin"),
+            "https://www.misebanai.com"
+                .parse::<HeaderValue>()
+                .expect("valid origin"),
             "https://miseban-ai.fly.dev"
                 .parse::<HeaderValue>()
                 .expect("valid origin"),
@@ -1036,6 +1068,7 @@ async fn main() {
         jwt_secret: JwtSecret(jwt_secret),
         line_client,
         stripe_client,
+        rate_limiter: plan_guard::RateLimiter::new(),
     };
 
     let app = build_router(state);
@@ -1078,6 +1111,7 @@ mod tests {
             jwt_secret: JwtSecret("test-secret-for-integration-tests".to_string()),
             line_client: OptionalLineClient(None),
             stripe_client: OptionalStripeClient(None),
+            rate_limiter: plan_guard::RateLimiter::new(),
         };
 
         build_router(state)

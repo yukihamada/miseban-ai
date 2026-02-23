@@ -1,7 +1,56 @@
+use std::collections::HashMap;
+use std::sync::Arc;
+use std::time::Instant;
+
 use sqlx::PgPool;
+use tokio::sync::Mutex;
 use uuid::Uuid;
 
 use crate::db;
+
+// ---------------------------------------------------------------------------
+// Rate limiter (in-memory, per-store)
+// ---------------------------------------------------------------------------
+
+/// In-memory rate limiter: tracks last frame submission time per store.
+#[derive(Clone)]
+pub struct RateLimiter {
+    state: Arc<Mutex<HashMap<Uuid, Instant>>>,
+}
+
+impl RateLimiter {
+    pub fn new() -> Self {
+        Self {
+            state: Arc::new(Mutex::new(HashMap::new())),
+        }
+    }
+
+    /// Check if a store can submit a frame based on its tier's rate limit.
+    /// Returns true if allowed, false if rate limited.
+    pub async fn check(&self, store_id: &Uuid, tier: &str) -> bool {
+        let min_interval = min_interval_for_tier(tier);
+        let mut map = self.state.lock().await;
+
+        if let Some(last) = map.get(store_id) {
+            if last.elapsed() < min_interval {
+                return false;
+            }
+        }
+
+        map.insert(*store_id, Instant::now());
+        true
+    }
+}
+
+/// Minimum interval between frame submissions per tier.
+fn min_interval_for_tier(tier: &str) -> std::time::Duration {
+    match tier {
+        "starter" => std::time::Duration::from_secs(2),     // 0.5 fps
+        "pro" => std::time::Duration::from_millis(500),      // 2 fps
+        "enterprise" => std::time::Duration::from_millis(100), // 10 fps
+        _ => std::time::Duration::from_secs(10),             // free: 1 frame / 10s
+    }
+}
 
 // ---------------------------------------------------------------------------
 // Plan tier enforcement
@@ -14,17 +63,6 @@ pub async fn can_add_camera(pool: &PgPool, store_id: &Uuid) -> Result<bool, sqlx
 
     let count = db::count_cameras(pool, store_id).await;
     Ok((count as usize) < max)
-}
-
-/// Check if a camera belongs to a store that can still accept frames.
-/// This is a lightweight check called on every frame submission.
-///
-/// For now, all tiers can submit frames.
-/// Future: rate limit based on tier.
-///   Free: 1 frame/10s, Starter: 1 frame/5s, Pro: 1 frame/1s
-#[allow(dead_code)]
-pub async fn can_submit_frame(_pool: &PgPool, _store_id: &Uuid) -> bool {
-    true
 }
 
 /// Get the plan tier string for a store.
@@ -117,5 +155,32 @@ mod tests {
 
         // Enterprise tier
         assert!(tier_has_feature("enterprise", "custom_models"));
+    }
+
+    #[tokio::test]
+    async fn test_rate_limiter_allows_first_request() {
+        let limiter = RateLimiter::new();
+        let store_id = Uuid::new_v4();
+        assert!(limiter.check(&store_id, "free").await);
+    }
+
+    #[tokio::test]
+    async fn test_rate_limiter_blocks_rapid_requests() {
+        let limiter = RateLimiter::new();
+        let store_id = Uuid::new_v4();
+        // First request: allowed
+        assert!(limiter.check(&store_id, "free").await);
+        // Immediate second request: blocked (free tier = 10s interval)
+        assert!(!limiter.check(&store_id, "free").await);
+    }
+
+    #[tokio::test]
+    async fn test_rate_limiter_different_stores_independent() {
+        let limiter = RateLimiter::new();
+        let store_a = Uuid::new_v4();
+        let store_b = Uuid::new_v4();
+        assert!(limiter.check(&store_a, "free").await);
+        // Different store should be allowed even after store_a submitted
+        assert!(limiter.check(&store_b, "free").await);
     }
 }
