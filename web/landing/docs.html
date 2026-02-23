@@ -6,7 +6,7 @@
 <title>API ドキュメント｜ミセバンAI</title>
 <meta name="description" content="ミセバンAI REST API リファレンス。エンドポイント一覧、認証方法、リクエスト・レスポンス例を掲載。">
 <meta name="robots" content="index, follow">
-<link rel="canonical" href="https://miseban.ai/docs.html">
+<link rel="canonical" href="https://misebanai.com/docs.html">
 
 <!-- Favicon -->
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%234f46e5'/><text x='50%25' y='54%25' dominant-baseline='middle' text-anchor='middle' fill='white' font-size='18' font-weight='bold' font-family='sans-serif'>M</text></svg>">
@@ -197,7 +197,7 @@ pre.code-block .number{color:#fca5a5}
   <!-- Base URL -->
   <h2 id="base-url">ベース URL</h2>
   <p>すべてのAPIリクエストは以下のベースURLに送信してください。</p>
-  <div class="base-url"><span>https://api.miseban.ai/api/v1</span></div>
+  <div class="base-url"><span>https://api.misebanai.com/api/v1</span></div>
   <p>すべてのリクエスト・レスポンスは <code>application/json</code> 形式です（CSV出力を除く）。</p>
 
   <!-- Authentication -->
@@ -226,7 +226,7 @@ pre.code-block .number{color:#fca5a5}
         <p>APIサーバーの稼働状態を確認します。監視ツールやロードバランサーのヘルスチェックに使用できます。</p>
         <h4>リクエスト例</h4>
 <pre class="code-block"><span class="comment"># ヘルスチェック</span>
-curl https://api.miseban.ai/api/v1/health</pre>
+curl https://api.misebanai.com/api/v1/health</pre>
         <h4>レスポンス例 (200 OK)</h4>
 <pre class="code-block">{
   <span class="key">"status"</span>: <span class="string">"ok"</span>,
@@ -247,7 +247,7 @@ curl https://api.miseban.ai/api/v1/health</pre>
         <h4>説明</h4>
         <p>利用可能な料金プランとその詳細情報を取得します。</p>
         <h4>リクエスト例</h4>
-<pre class="code-block">curl https://api.miseban.ai/api/v1/pricing</pre>
+<pre class="code-block">curl https://api.misebanai.com/api/v1/pricing</pre>
         <h4>レスポンス例 (200 OK)</h4>
 <pre class="code-block">{
   <span class="key">"plans"</span>: [
@@ -321,7 +321,7 @@ curl https://api.miseban.ai/api/v1/health</pre>
         <p>カメラからキャプチャしたフレーム画像を送信し、AI分析（来客カウント、動線分析等）を実行します。</p>
         <h4>リクエスト例</h4>
 <pre class="code-block"><span class="comment"># フレーム画像を送信</span>
-curl -X POST https://api.miseban.ai/api/v1/frames \
+curl -X POST https://api.misebanai.com/api/v1/frames \
   -H <span class="string">"Authorization: Bearer &lt;token&gt;"</span> \
   -H <span class="string">"Content-Type: application/json"</span> \
   -d '{
@@ -356,7 +356,7 @@ curl -X POST https://api.miseban.ai/api/v1/frames \
         <h4>説明</h4>
         <p>ログイン中の店舗に紐づく統計サマリー（本日の来客数、ピーク時間帯、前日比等）を返します。</p>
         <h4>リクエスト例</h4>
-<pre class="code-block">curl https://api.miseban.ai/api/v1/stores/me/stats \
+<pre class="code-block">curl https://api.misebanai.com/api/v1/stores/me/stats \
   -H <span class="string">"Authorization: Bearer &lt;token&gt;"</span></pre>
         <h4>レスポンス例 (200 OK)</h4>
 <pre class="code-block">{
@@ -474,7 +474,7 @@ curl -X POST https://api.miseban.ai/api/v1/frames \
         <p>統計データをCSV形式でエクスポートします。Pro プラン以上で利用可能です。クエリパラメータ <code>from</code>、<code>to</code> で期間を指定できます。</p>
         <h4>リクエスト例</h4>
 <pre class="code-block"><span class="comment"># CSV出力（Pro以上）</span>
-curl https://api.miseban.ai/api/v1/stores/me/export/csv?from=2026-02-01&amp;to=2026-02-23 \
+curl https://api.misebanai.com/api/v1/stores/me/export/csv?from=2026-02-01&amp;to=2026-02-23 \
   -H <span class="string">"Authorization: Bearer &lt;token&gt;"</span> \
   -o report.csv</pre>
         <h4>レスポンス例 (200 OK)</h4>

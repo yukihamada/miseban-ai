@@ -1,151 +1,156 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://miseban-ai.fly.dev/</loc>
+    <loc>https://misebanai.com/</loc>
     <lastmod>2026-02-22</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://miseban-ai.fly.dev/cameras.html</loc>
+    <loc>https://misebanai.com/cameras.html</loc>
     <lastmod>2026-02-22</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://miseban-ai.fly.dev/blog/</loc>
+    <loc>https://misebanai.com/blog/</loc>
     <lastmod>2026-02-22</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://miseban-ai.fly.dev/blog/001-hello-world.html</loc>
+    <loc>https://misebanai.com/blog/001-hello-world.html</loc>
     <lastmod>2026-02-22</lastmod>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://miseban-ai.fly.dev/blog/002-architecture.html</loc>
+    <loc>https://misebanai.com/blog/002-architecture.html</loc>
     <lastmod>2026-02-22</lastmod>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://miseban-ai.fly.dev/blog/003-claude-code-diary.html</loc>
+    <loc>https://misebanai.com/blog/003-claude-code-diary.html</loc>
     <lastmod>2026-02-22</lastmod>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://miseban-ai.fly.dev/blog/004-hardware-design.html</loc>
+    <loc>https://misebanai.com/blog/004-hardware-design.html</loc>
     <lastmod>2026-02-22</lastmod>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://miseban-ai.fly.dev/blog/005-product-meeting.html</loc>
+    <loc>https://misebanai.com/blog/005-product-meeting.html</loc>
     <lastmod>2026-02-22</lastmod>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://miseban-ai.fly.dev/blog/006-meeting-decisions.html</loc>
+    <loc>https://misebanai.com/blog/006-meeting-decisions.html</loc>
     <lastmod>2026-02-22</lastmod>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://miseban-ai.fly.dev/blog/007-strategy-execution.html</loc>
+    <loc>https://misebanai.com/blog/007-strategy-execution.html</loc>
     <lastmod>2026-02-23</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://miseban-ai.fly.dev/blog/008-release-meeting.html</loc>
+    <loc>https://misebanai.com/blog/008-release-meeting.html</loc>
     <lastmod>2026-02-23</lastmod>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://miseban-ai.fly.dev/blog/009-release-decisions.html</loc>
+    <loc>https://misebanai.com/blog/009-release-decisions.html</loc>
     <lastmod>2026-02-23</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://miseban-ai.fly.dev/blog/010-multiproduct-meeting.html</loc>
+    <loc>https://misebanai.com/blog/010-multiproduct-meeting.html</loc>
     <lastmod>2026-02-23</lastmod>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://miseban-ai.fly.dev/blog/011-multiproduct-decisions.html</loc>
+    <loc>https://misebanai.com/blog/011-multiproduct-decisions.html</loc>
     <lastmod>2026-02-23</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://miseban-ai.fly.dev/blog/012-prompt-driven-development.html</loc>
+    <loc>https://misebanai.com/blog/012-prompt-driven-development.html</loc>
     <lastmod>2026-02-23</lastmod>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://miseban-ai.fly.dev/blog/013-sprint-cycle-1.html</loc>
+    <loc>https://misebanai.com/blog/013-sprint-cycle-1.html</loc>
     <lastmod>2026-02-23</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://miseban-ai.fly.dev/blog/014-sprint-cycle-2.html</loc>
+    <loc>https://misebanai.com/blog/014-sprint-cycle-2.html</loc>
     <lastmod>2026-02-23</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://miseban-ai.fly.dev/blog/015-sprint-cycle-3.html</loc>
+    <loc>https://misebanai.com/blog/015-sprint-cycle-3.html</loc>
     <lastmod>2026-02-23</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://miseban-ai.fly.dev/blog/016-sprint-cycle-4.html</loc>
+    <loc>https://misebanai.com/blog/016-sprint-cycle-4.html</loc>
     <lastmod>2026-02-23</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://miseban-ai.fly.dev/blog/017-sprint-cycle-5.html</loc>
+    <loc>https://misebanai.com/blog/017-sprint-cycle-5.html</loc>
     <lastmod>2026-02-23</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://miseban-ai.fly.dev/blog/018-sprint-cycle-6.html</loc>
+    <loc>https://misebanai.com/blog/018-sprint-cycle-6.html</loc>
     <lastmod>2026-02-23</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://miseban-ai.fly.dev/blog/019-sprint-cycle-7.html</loc>
+    <loc>https://misebanai.com/blog/019-sprint-cycle-7.html</loc>
     <lastmod>2026-02-23</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://miseban-ai.fly.dev/docs.html</loc>
+    <loc>https://misebanai.com/blog/021-sprint-cycle-9.html</loc>
+    <lastmod>2026-02-23</lastmod>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://misebanai.com/docs.html</loc>
     <lastmod>2026-02-23</lastmod>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://miseban-ai.fly.dev/blog/020-team-meeting-beta.html</loc>
+    <loc>https://misebanai.com/blog/020-team-meeting-beta.html</loc>
     <lastmod>2026-02-23</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://miseban-ai.fly.dev/team.html</loc>
+    <loc>https://misebanai.com/team.html</loc>
     <lastmod>2026-02-23</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://miseban-ai.fly.dev/privacy.html</loc>
+    <loc>https://misebanai.com/privacy.html</loc>
     <lastmod>2026-02-23</lastmod>
     <priority>0.4</priority>
   </url>
   <url>
-    <loc>https://miseban-ai.fly.dev/terms.html</loc>
+    <loc>https://misebanai.com/terms.html</loc>
     <lastmod>2026-02-23</lastmod>
     <priority>0.4</priority>
   </url>
   <url>
-    <loc>https://miseban-ai.fly.dev/legal.html</loc>
+    <loc>https://misebanai.com/legal.html</loc>
     <lastmod>2026-02-23</lastmod>
     <priority>0.4</priority>
   </url>
   <url>
-    <loc>https://miseban-ai.fly.dev/dashboard/</loc>
+    <loc>https://misebanai.com/dashboard/</loc>
     <lastmod>2026-02-23</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
