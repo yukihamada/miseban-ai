@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0f172a"/>
+      <stop offset="100%" style="stop-color:#1e1b4b"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <text x="600" y="270" text-anchor="middle" fill="white" font-size="80" font-weight="700" font-family="'Helvetica Neue',sans-serif">ミセバン<tspan fill="#6366f1">AI</tspan></text>
+  <text x="600" y="350" text-anchor="middle" fill="#94a3b8" font-size="32" font-weight="400" font-family="'Helvetica Neue',sans-serif">AI店舗分析プラットフォーム</text>
+  <text x="600" y="420" text-anchor="middle" fill="#10b981" font-size="24" font-weight="600" font-family="'Helvetica Neue',sans-serif">今あるカメラをつなぐだけ。月額0円から。</text>
+  <rect x="100" y="520" width="1000" height="4" rx="2" fill="#4f46e5" opacity="0.5"/>
+  <text x="600" y="570" text-anchor="middle" fill="#64748b" font-size="20" font-family="'Helvetica Neue',sans-serif">misebanai.com</text>
+</svg>

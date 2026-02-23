@@ -924,17 +924,21 @@ async fn line_webhook(
 // Health
 // ---------------------------------------------------------------------------
 
+/// Server start time for uptime calculation.
+static START_TIME: std::sync::OnceLock<std::time::Instant> = std::sync::OnceLock::new();
+
 /// Health check response.
 #[derive(Serialize)]
 struct HealthResponse {
     status: &'static str,
     version: &'static str,
     database: &'static str,
+    uptime_seconds: u64,
 }
 
 /// GET /api/v1/health
 ///
-/// Returns service health including database connectivity check.
+/// Returns service health including database connectivity and uptime.
 async fn health_check(State(state): State<AppState>) -> Json<HealthResponse> {
     let db_status = match sqlx::query_scalar::<_, i32>("SELECT 1")
         .fetch_one(&state.pool)
@@ -944,10 +948,16 @@ async fn health_check(State(state): State<AppState>) -> Json<HealthResponse> {
         Err(_) => "unavailable",
     };
 
+    let uptime = START_TIME
+        .get()
+        .map(|t| t.elapsed().as_secs())
+        .unwrap_or(0);
+
     Json(HealthResponse {
         status: if db_status == "connected" { "ok" } else { "degraded" },
         version: env!("CARGO_PKG_VERSION"),
         database: db_status,
+        uptime_seconds: uptime,
     })
 }
 
@@ -1020,6 +1030,9 @@ fn build_router(state: AppState) -> Router {
 
 #[tokio::main]
 async fn main() {
+    // Record server start time for uptime tracking.
+    START_TIME.get_or_init(std::time::Instant::now);
+
     // Load .env file if present (non-fatal if missing).
     let _ = dotenvy::dotenv();
 
