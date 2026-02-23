@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sprint Cycle 12 — P0セキュリティ修正: Webhook署名検証 + Tier判定ロジック｜ミセバンAI Blog</title>
+<meta name="description" content="Stripe/LINE Webhook署名検証を実装し、Stripe tier判定のハードコードを修正。HMAC-SHA256による改ざん防止で本番セキュリティ要件をクリア。全10テスト合格。">
+<meta name="keywords" content="Sprint Cycle 12,Webhook,署名検証,Stripe,LINE,HMAC,セキュリティ,ミセバンAI">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://misebanai.com/blog/025-sprint-cycle-12.html">
+<meta property="og:title" content="Sprint Cycle 12 — P0セキュリティ修正: Webhook署名検証 + Tier判定ロジック｜ミセバンAI Blog">
+<meta property="og:description" content="Stripe/LINE Webhook署名検証を実装し、本番セキュリティ要件をクリア。全10テスト合格。">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://misebanai.com/blog/025-sprint-cycle-12.html">
+<meta property="og:image" content="https://misebanai.com/ogp.png">
+<meta property="og:site_name" content="ミセバンAI">
+<meta property="og:locale" content="ja_JP">
+<meta property="article:published_time" content="2026-02-23">
+<meta property="article:author" content="ミセバンAI チーム">
+<meta property="article:tag" content="Sprint">
+<meta property="article:tag" content="Security">
+<meta property="article:tag" content="Webhook">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Sprint Cycle 12 — P0セキュリティ修正: Webhook署名検証 + Tier判定ロジック">
+<meta name="twitter:description" content="Stripe/LINE Webhook署名検証を実装し、本番セキュリティ要件をクリア。全10テスト合格。">
+<meta name="twitter:image" content="https://misebanai.com/ogp.png">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%234f46e5'/><text x='50%25' y='54%25' dominant-baseline='middle' text-anchor='middle' fill='white' font-size='18' font-weight='bold' font-family='sans-serif'>M</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--white:#fff;--gray-50:#f8fafc;--gray-100:#f1f5f9;--gray-200:#e2e8f0;--gray-300:#cbd5e1;--gray-400:#94a3b8;--gray-500:#64748b;--slate-600:#475569;--slate-700:#334155;--slate-800:#1e293b;--slate-900:#0f172a;--indigo-50:#eef2ff;--indigo-100:#e0e7ff;--indigo-500:#6366f1;--indigo-600:#4f46e5;--indigo-700:#4338ca;--indigo-900:#312e81;--indigo-950:#1e1b4b;--emerald-50:#ecfdf5;--emerald-500:#10b981;--emerald-600:#059669;--amber-50:#fffbeb;--amber-500:#f59e0b;--amber-600:#d97706;--rose-50:#fff1f2;--rose-500:#f43f5e;--rose-600:#e11d48;--sky-50:#f0f9ff;--sky-500:#0ea5e9;--radius-sm:8px;--radius:12px;--radius-lg:16px;--radius-xl:24px;--shadow-md:0 4px 6px -1px rgba(0,0,0,.1),0 2px 4px -2px rgba(0,0,0,.1)}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+body{font-family:'Noto Sans JP','Inter',system-ui,-apple-system,sans-serif;color:var(--slate-900);background:var(--white);line-height:1.8;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+img{max-width:100%;height:auto;display:block}a{text-decoration:none;color:inherit;transition:color .2s}ul,ol{list-style:none}
+.container{max-width:1200px;margin:0 auto;padding:0 24px}.nums{font-family:'Inter','Noto Sans JP',sans-serif}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;font-family:inherit;font-size:.9375rem;font-weight:600;padding:14px 28px;border-radius:100px;border:none;cursor:pointer;transition:all .2s ease;white-space:nowrap;line-height:1.4}
+.btn-primary{background:var(--indigo-600);color:var(--white);box-shadow:0 1px 2px rgba(79,70,229,.3),0 4px 12px rgba(79,70,229,.2)}.btn-primary:hover{background:var(--indigo-700);transform:translateY(-1px)}.btn-sm{padding:10px 20px;font-size:.875rem}
+.btn-ghost{background:transparent;color:var(--indigo-600);border:2px solid var(--indigo-200);padding:12px 24px}.btn-ghost:hover{background:var(--indigo-50);border-color:var(--indigo-400)}
+.header{position:fixed;top:0;left:0;width:100%;z-index:1000;background:rgba(255,255,255,.92);backdrop-filter:blur(16px) saturate(180%);-webkit-backdrop-filter:blur(16px) saturate(180%);box-shadow:0 1px 3px rgba(0,0,0,.06);border-bottom:1px solid rgba(0,0,0,.04)}
+.header-inner{display:flex;align-items:center;justify-content:space-between;height:72px}.logo{display:flex;align-items:center;gap:2px;font-size:1.25rem;font-weight:700;color:var(--slate-900)}.logo-ai{color:var(--indigo-600);font-weight:700}
+.nav{display:flex;align-items:center;gap:32px}.nav a{font-size:.875rem;font-weight:500;color:var(--slate-600);transition:color .2s}.nav a:hover{color:var(--slate-900)}.nav-cta{margin-left:8px}
+.mobile-toggle{display:none;background:none;border:none;cursor:pointer;padding:8px}.mobile-toggle span{display:block;width:22px;height:2px;background:var(--slate-900);margin:5px 0;border-radius:1px;transition:.3s}
+.mobile-menu{display:none;position:fixed;inset:0;background:var(--white);z-index:999;flex-direction:column;align-items:center;justify-content:center;gap:28px}.mobile-menu.open{display:flex}.mobile-menu a{font-size:1.125rem;color:var(--slate-900);font-weight:500}
+.mobile-close{position:absolute;top:24px;right:24px;background:none;border:none;cursor:pointer;padding:8px;color:var(--slate-600)}
+.blog-hero{padding:140px 0 60px;background:linear-gradient(135deg,var(--slate-900) 0%,var(--indigo-950) 100%);color:var(--white)}
+.blog-hero-label{display:inline-flex;align-items:center;gap:6px;font-size:.8125rem;font-weight:600;letter-spacing:.02em;color:var(--emerald-500);background:rgba(16,185,129,.12);padding:6px 16px;border-radius:100px;margin-bottom:16px}
+.blog-hero h1{font-size:clamp(1.5rem,3.5vw,2.25rem);font-weight:700;line-height:1.5;margin-bottom:16px}
+.blog-hero-meta{display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-top:16px;font-size:.875rem;color:var(--gray-400)}
+.blog-hero-meta span{display:inline-flex;align-items:center;gap:6px}
+.blog-content{padding:60px 0 80px;max-width:800px;margin:0 auto}
+.blog-content h2{font-size:1.5rem;font-weight:700;margin:48px 0 20px;padding-bottom:12px;border-bottom:2px solid var(--indigo-100);color:var(--slate-900)}
+.blog-content h3{font-size:1.2rem;font-weight:600;margin:32px 0 12px;color:var(--slate-800)}
+.blog-content p{margin-bottom:20px;color:var(--slate-700);line-height:1.9}
+.blog-content ul,.blog-content ol{margin-bottom:20px;padding-left:0}
+.blog-content li{padding:6px 0 6px 24px;position:relative;color:var(--slate-700)}
+.blog-content li::before{content:'';position:absolute;left:8px;top:16px;width:6px;height:6px;border-radius:50%;background:var(--indigo-500)}
+.blog-content code{font-family:'JetBrains Mono',monospace;font-size:.875em;background:var(--gray-100);padding:2px 8px;border-radius:6px;color:var(--indigo-600)}
+.blog-content pre{background:var(--slate-900);color:var(--gray-200);padding:24px;border-radius:var(--radius);overflow-x:auto;margin:20px 0;font-family:'JetBrains Mono',monospace;font-size:.875rem;line-height:1.7}
+.blog-content pre code{background:transparent;padding:0;color:inherit}
+.blog-content blockquote{border-left:4px solid var(--indigo-500);padding:16px 24px;margin:24px 0;background:var(--indigo-50);border-radius:0 var(--radius-sm) var(--radius-sm) 0}
+.blog-content blockquote p{color:var(--indigo-900);margin:0;font-weight:500}
+.blog-content a{color:var(--indigo-600);text-decoration:underline;text-underline-offset:2px}
+.blog-content a:hover{color:var(--indigo-700)}
+.blog-content strong{font-weight:700;color:var(--slate-900)}
+.blog-content table{width:100%;border-collapse:collapse;margin:20px 0;font-size:.9rem}
+.blog-content th,.blog-content td{padding:12px 16px;text-align:left;border-bottom:1px solid var(--gray-200)}
+.blog-content th{background:var(--gray-50);font-weight:600;color:var(--slate-800);font-size:.85rem}
+.blog-content tr:hover{background:var(--gray-50)}
+.status{display:inline-flex;align-items:center;gap:4px;padding:2px 10px;border-radius:100px;font-size:.75rem;font-weight:600}
+.status-ok{background:var(--emerald-50);color:var(--emerald-600)}
+.status-warn{background:var(--amber-50);color:var(--amber-600)}
+.blog-footer{padding:40px 0;background:var(--gray-50);border-top:1px solid var(--gray-200);text-align:center}
+.blog-footer-nav{display:flex;justify-content:center;gap:24px;flex-wrap:wrap;margin-bottom:16px}
+.blog-footer-nav a{color:var(--slate-600);font-size:.875rem;font-weight:500}.blog-footer-nav a:hover{color:var(--indigo-600)}
+.blog-footer p{color:var(--gray-500);font-size:.8125rem}
+@media(max-width:768px){.nav{display:none}.mobile-toggle{display:block}.blog-hero h1{font-size:1.4rem}.blog-content{padding:40px 24px 60px}.blog-content h2{font-size:1.25rem}.blog-content table{font-size:.8rem}.blog-content th,.blog-content td{padding:8px 10px}}
+</style>
+</head>
+<body>
+<header class="header">
+  <div class="container header-inner">
+    <a href="/" class="logo">ミセバン<span class="logo-ai">AI</span></a>
+    <nav class="nav">
+      <a href="/">ホーム</a>
+      <a href="/blog/">ブログ</a>
+      <a href="/docs.html">ドキュメント</a>
+      <a href="/team.html">チーム</a>
+      <a href="/dashboard/" class="btn btn-primary btn-sm nav-cta">無料で始める</a>
+    </nav>
+    <button class="mobile-toggle" id="mobileToggle" aria-label="メニューを開く"><span></span><span></span><span></span></button>
+  </div>
+</header>
+<div class="mobile-menu" id="mobileMenu">
+  <button class="mobile-close" id="mobileClose" aria-label="メニューを閉じる">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+  </button>
+  <a href="/">ホーム</a><a href="/blog/">ブログ</a><a href="/docs.html">ドキュメント</a><a href="/team.html">チーム</a>
+  <a href="/dashboard/" class="btn btn-primary">無料で始める</a>
+</div>
+
+<section class="blog-hero">
+  <div class="container">
+    <span class="blog-hero-label">Sprint Cycle 12</span>
+    <h1>P0セキュリティ修正 — Webhook署名検証 +<br>Stripe Tier判定ロジック</h1>
+    <div class="blog-hero-meta">
+      <span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> 2026-02-23</span>
+      <span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> 4 min read</span>
+      <span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> Security Sprint</span>
+    </div>
+  </div>
+</section>
+
+<article class="blog-content container">
+
+<h2>概要</h2>
+<p>リリース前会議（Blog #024）で特定されたP0課題2件を修正するセキュリティスプリントです。</p>
+
+<table>
+<thead><tr><th>課題</th><th>修正前</th><th>修正後</th></tr></thead>
+<tbody>
+<tr>
+  <td>Stripe Webhook tier判定</td>
+  <td><span class="status status-warn">ハードコード "starter"</span></td>
+  <td><span class="status status-ok">metadata / price_id / amount で判定</span></td>
+</tr>
+<tr>
+  <td>Webhook署名検証</td>
+  <td><span class="status status-warn">検証なし（全POSTを受理）</span></td>
+  <td><span class="status status-ok">HMAC-SHA256 署名検証</span></td>
+</tr>
+</tbody>
+</table>
+
+<h2>1. Stripe Tier判定ロジック修正</h2>
+<p>以前のコードでは、<code>checkout.session.completed</code> イベント受信時にtierが <code>"starter"</code> にハードコードされていました。Proプランを購入してもStarterに割り当てられるバグです。</p>
+
+<h3>修正アプローチ: 3段階フォールバック</h3>
+<pre><code>// Priority順:
+// 1. metadata["tier"] — checkout作成時に埋め込み
+// 2. price_id マッチ — 環境変数の既知price_idと照合
+// 3. amount_total — 金額ベースのフォールバック
+pub fn determine_tier(session: &Value) -> &'static str</code></pre>
+
+<p>さらに、checkout session作成時に <code>metadata[tier]</code> を自動的に埋め込むよう <code>create_checkout_session()</code> も修正しました。</p>
+
+<h2>2. Stripe Webhook署名検証</h2>
+<p>Stripeは各webhook呼び出しに <code>Stripe-Signature</code> ヘッダーを付与します。このヘッダーには:</p>
+<ul>
+  <li><code>t=</code>: UNIXタイムスタンプ（リプレイ攻撃防止）</li>
+  <li><code>v1=</code>: HMAC-SHA256署名（改ざん検知）</li>
+</ul>
+
+<pre><code>// 検証ロジック:
+// 1. ヘッダーからtとv1を解析
+// 2. タイムスタンプが5分以内か確認
+// 3. HMAC-SHA256("${t}.${body}", webhook_secret) を計算
+// 4. hex(result) == v1 なら合格</code></pre>
+
+<p><code>STRIPE_WEBHOOK_SECRET</code> が未設定の場合は検証をスキップ（開発環境用）。本番では必ず設定します。</p>
+
+<h2>3. LINE Webhook署名検証</h2>
+<p>LINE PlatformはWebhook呼び出し時に <code>X-Line-Signature</code> ヘッダーを付与します。</p>
+
+<pre><code>// 検証ロジック:
+// 1. HMAC-SHA256(channel_secret, body_bytes) を計算
+// 2. Base64エンコード
+// 3. X-Line-Signature ヘッダー値と比較</code></pre>
+
+<p><code>LINE_CHANNEL_SECRET</code> 環境変数で制御。LINE webhookハンドラはJSONパース前に署名を検証するよう変更しました。</p>
+
+<h2>4. テスト結果</h2>
+<p>全10テストが合格。新規4テストを追加しました。</p>
+
+<table>
+<thead><tr><th>テスト名</th><th>検証内容</th><th>結果</th></tr></thead>
+<tbody>
+<tr><td><code>stripe_signature_verification_works</code></td><td>正当/不正署名の判定</td><td><span class="status status-ok">PASS</span></td></tr>
+<tr><td><code>determine_tier_from_metadata</code></td><td>metadata.tierからPro判定</td><td><span class="status status-ok">PASS</span></td></tr>
+<tr><td><code>determine_tier_from_amount</code></td><td>amount_totalからPro判定</td><td><span class="status status-ok">PASS</span></td></tr>
+<tr><td><code>line_signature_verification_works</code></td><td>正当/不正LINE署名の判定</td><td><span class="status status-ok">PASS</span></td></tr>
+<tr><td colspan="2">その他既存テスト (6件)</td><td><span class="status status-ok">ALL PASS</span></td></tr>
+</tbody>
+</table>
+
+<h2>5. 追加クレート</h2>
+<table>
+<thead><tr><th>クレート</th><th>バージョン</th><th>用途</th></tr></thead>
+<tbody>
+<tr><td><code>hmac</code></td><td>0.12</td><td>HMAC計算（Stripe/LINE共通）</td></tr>
+<tr><td><code>sha2</code></td><td>0.10</td><td>SHA-256ハッシュ</td></tr>
+<tr><td><code>hex</code></td><td>0.4</td><td>Stripe署名のhexエンコード</td></tr>
+<tr><td><code>base64</code></td><td>0.22</td><td>LINE署名のBase64エンコード</td></tr>
+</tbody>
+</table>
+
+<h2>変更ファイル</h2>
+<ul>
+  <li><code>crates/api/Cargo.toml</code> — hmac, sha2, hex, base64 追加</li>
+  <li><code>crates/api/src/billing.rs</code> — <code>determine_tier()</code>, <code>verify_stripe_signature()</code>, <code>price_id_to_tier()</code> 追加</li>
+  <li><code>crates/api/src/line.rs</code> — <code>verify_line_signature()</code> 追加</li>
+  <li><code>crates/api/src/main.rs</code> — Webhook handlers にヘッダー検証追加、テスト4件追加</li>
+</ul>
+
+<blockquote><p>P0課題2件を完了。ベータ公開に向けた最大のセキュリティリスクが解消されました。次のSprint 13ではP1課題（レート制限、入力バリデーション、GA設定、LINE紐付け）に取り組みます。</p></blockquote>
+
+<div style="text-align:center;margin:48px 0">
+  <a href="/blog/" class="btn btn-ghost btn-sm">← ブログ一覧に戻る</a>
+  <a href="/dashboard/" class="btn btn-primary btn-sm" style="margin-left:12px">無料で始める →</a>
+</div>
+
+</article>
+
+<footer class="blog-footer">
+  <div class="container">
+    <div class="blog-footer-nav">
+      <a href="/">ホーム</a><a href="/blog/">ブログ</a><a href="/docs.html">ドキュメント</a><a href="/privacy.html">プライバシー</a><a href="/terms.html">利用規約</a>
+    </div>
+    <p>&copy; 2026 ミセバンAI. All rights reserved.</p>
+  </div>
+</footer>
+
+<script>
+document.getElementById('mobileToggle')?.addEventListener('click',()=>document.getElementById('mobileMenu').classList.add('open'));
+document.getElementById('mobileClose')?.addEventListener('click',()=>document.getElementById('mobileMenu').classList.remove('open'));
+document.querySelectorAll('.mobile-menu a').forEach(a=>a.addEventListener('click',()=>document.getElementById('mobileMenu').classList.remove('open')));
+</script>
+</body>
+</html>

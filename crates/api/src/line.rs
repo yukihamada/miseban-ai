@@ -1,7 +1,12 @@
+use base64::Engine;
+use hmac::{Hmac, Mac};
 use serde::Serialize;
+use sha2::Sha256;
 use tracing::{error, info, warn};
 
 use crate::alerts::AlertPayload;
+
+type HmacSha256 = Hmac<Sha256>;
 
 // ---------------------------------------------------------------------------
 // Error type
@@ -206,4 +211,19 @@ impl LineClient {
             )))
         }
     }
+}
+
+// ---------------------------------------------------------------------------
+// LINE webhook signature verification
+// ---------------------------------------------------------------------------
+
+/// Verify a LINE webhook signature (X-Line-Signature header).
+/// The signature is HMAC-SHA256(channel_secret, body) base64-encoded.
+pub fn verify_line_signature(body: &[u8], signature: &str, channel_secret: &str) -> bool {
+    let Ok(mut mac) = HmacSha256::new_from_slice(channel_secret.as_bytes()) else {
+        return false;
+    };
+    mac.update(body);
+    let expected = base64::engine::general_purpose::STANDARD.encode(mac.finalize().into_bytes());
+    expected == signature
 }

@@ -1,7 +1,11 @@
+use hmac::{Hmac, Mac};
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
+use sha2::Sha256;
 use sqlx::PgPool;
 use uuid::Uuid;
+
+type HmacSha256 = Hmac<Sha256>;
 
 // Stripe API base URL
 const STRIPE_API: &str = "https://api.stripe.com/v1";
@@ -33,6 +37,10 @@ impl StripeClient {
         success_url: &str,
         cancel_url: &str,
     ) -> Result<CheckoutSession, StripeError> {
+        // Determine tier from price_id for metadata.
+        let tier = Self::price_id_to_tier(price_id);
+        let store_id_str = store_id.to_string();
+
         let params = [
             ("mode", "subscription"),
             ("payment_method_types[]", "card"),
@@ -41,7 +49,8 @@ impl StripeClient {
             ("customer_email", customer_email),
             ("success_url", success_url),
             ("cancel_url", cancel_url),
-            ("metadata[store_id]", &store_id.to_string()),
+            ("metadata[store_id]", store_id_str.as_str()),
+            ("metadata[tier]", tier),
             ("allow_promotion_codes", "true"),
         ];
 
@@ -62,6 +71,26 @@ impl StripeClient {
         resp.json()
             .await
             .map_err(|e| StripeError::HttpError(e.to_string()))
+    }
+
+    /// Map a price_id to a tier name using env vars.
+    fn price_id_to_tier(price_id: &str) -> &'static str {
+        if let Ok(id) = std::env::var("STRIPE_PRICE_STARTER") {
+            if price_id == id {
+                return "starter";
+            }
+        }
+        if let Ok(id) = std::env::var("STRIPE_PRICE_PRO") {
+            if price_id == id {
+                return "pro";
+            }
+        }
+        if let Ok(id) = std::env::var("STRIPE_PRICE_ENTERPRISE") {
+            if price_id == id {
+                return "enterprise";
+            }
+        }
+        "starter" // fallback
     }
 
     /// Create a Customer Portal session for managing subscription.
@@ -306,4 +335,132 @@ pub struct SubscriptionInfo {
     pub plan_tier: String,
     pub stripe_customer_id: Option<String>,
     pub is_active: bool,
+}
+
+// ---------------------------------------------------------------------------
+// Tier determination from webhook data
+// ---------------------------------------------------------------------------
+
+/// Determine plan tier from checkout session metadata or price information.
+/// Priority: metadata["tier"] > price_id match > fallback to "starter".
+pub fn determine_tier(session: &serde_json::Value) -> &'static str {
+    // 1. Check metadata.tier (set during checkout creation)
+    if let Some(tier) = session
+        .get("metadata")
+        .and_then(|m| m.get("tier"))
+        .and_then(|t| t.as_str())
+    {
+        return match tier {
+            "starter" => "starter",
+            "pro" => "pro",
+            "enterprise" => "enterprise",
+            _ => "starter",
+        };
+    }
+
+    // 2. Match against known price IDs from env
+    if let Some(price_id) = extract_price_id(session) {
+        if let Ok(starter_id) = std::env::var("STRIPE_PRICE_STARTER") {
+            if price_id == starter_id {
+                return "starter";
+            }
+        }
+        if let Ok(pro_id) = std::env::var("STRIPE_PRICE_PRO") {
+            if price_id == pro_id {
+                return "pro";
+            }
+        }
+        if let Ok(ent_id) = std::env::var("STRIPE_PRICE_ENTERPRISE") {
+            if price_id == ent_id {
+                return "enterprise";
+            }
+        }
+    }
+
+    // 3. Match by amount_total (JPY, fallback)
+    if let Some(amount) = session.get("amount_total").and_then(|a| a.as_u64()) {
+        return match amount {
+            9800 => "starter",
+            29800 => "pro",
+            49800 => "enterprise",
+            _ => "starter",
+        };
+    }
+
+    "starter"
+}
+
+/// Extract price_id from session line_items or display_items.
+fn extract_price_id(session: &serde_json::Value) -> Option<&str> {
+    // Try line_items.data[0].price.id
+    session
+        .get("line_items")
+        .and_then(|li| li.get("data"))
+        .and_then(|d| d.as_array())
+        .and_then(|arr| arr.first())
+        .and_then(|item| item.get("price"))
+        .and_then(|p| p.get("id"))
+        .and_then(|id| id.as_str())
+        // Or try display_items[0].plan.id
+        .or_else(|| {
+            session
+                .get("display_items")
+                .and_then(|di| di.as_array())
+                .and_then(|arr| arr.first())
+                .and_then(|item| item.get("plan"))
+                .and_then(|p| p.get("id"))
+                .and_then(|id| id.as_str())
+        })
+}
+
+// ---------------------------------------------------------------------------
+// Stripe webhook signature verification
+// ---------------------------------------------------------------------------
+
+/// Verify a Stripe webhook signature.
+/// Returns Ok(()) if valid, Err(message) if invalid or missing.
+pub fn verify_stripe_signature(
+    payload: &str,
+    sig_header: &str,
+    secret: &str,
+) -> Result<(), String> {
+    // Parse header: t=timestamp,v1=signature[,v1=sig2,...]
+    let mut timestamp: Option<&str> = None;
+    let mut signatures: Vec<&str> = Vec::new();
+
+    for part in sig_header.split(',') {
+        let part = part.trim();
+        if let Some(t) = part.strip_prefix("t=") {
+            timestamp = Some(t);
+        } else if let Some(sig) = part.strip_prefix("v1=") {
+            signatures.push(sig);
+        }
+    }
+
+    let ts = timestamp.ok_or_else(|| "Missing timestamp in signature header".to_string())?;
+    if signatures.is_empty() {
+        return Err("No v1 signatures found".to_string());
+    }
+
+    // Check timestamp freshness (within 5 minutes)
+    if let Ok(ts_num) = ts.parse::<i64>() {
+        let now = chrono::Utc::now().timestamp();
+        if (now - ts_num).abs() > 300 {
+            return Err("Webhook timestamp too old".to_string());
+        }
+    }
+
+    // Compute expected signature: HMAC-SHA256(secret, "timestamp.payload")
+    let signed_payload = format!("{ts}.{payload}");
+    let mut mac = HmacSha256::new_from_slice(secret.as_bytes())
+        .map_err(|e| format!("HMAC key error: {e}"))?;
+    mac.update(signed_payload.as_bytes());
+    let expected = hex::encode(mac.finalize().into_bytes());
+
+    // Compare against any v1 signature (Stripe may rotate keys)
+    if signatures.iter().any(|sig| *sig == expected) {
+        Ok(())
+    } else {
+        Err("Signature mismatch".to_string())
+    }
 }

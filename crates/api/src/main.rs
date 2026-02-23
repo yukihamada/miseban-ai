@@ -771,10 +771,24 @@ async fn get_subscription(
 /// POST /api/v1/webhooks/stripe
 ///
 /// Stripe webhook endpoint (public, no JWT auth). Parses raw body and handles events.
+/// Verifies webhook signature if STRIPE_WEBHOOK_SECRET is configured.
 async fn stripe_webhook(
     State(state): State<AppState>,
+    headers: axum::http::HeaderMap,
     body: String,
 ) -> Result<StatusCode, ApiError> {
+    // Verify Stripe webhook signature if secret is configured.
+    if let Ok(secret) = std::env::var("STRIPE_WEBHOOK_SECRET") {
+        let sig = headers
+            .get("stripe-signature")
+            .and_then(|v| v.to_str().ok())
+            .unwrap_or("");
+        if let Err(e) = billing::verify_stripe_signature(&body, sig, &secret) {
+            warn!(error = %e, "Stripe webhook signature verification failed");
+            return Err(ApiError::Forbidden(format!("Invalid signature: {e}")));
+        }
+    }
+
     let event: billing::StripeEvent = serde_json::from_str(&body)
         .map_err(|e| ApiError::Internal(format!("Invalid webhook payload: {e}")))?;
 
@@ -791,10 +805,10 @@ async fn stripe_webhook(
                 let _ =
                     billing::set_stripe_customer_id(&state.pool, &store_id, customer_id).await;
 
-                // Default to "starter" on any checkout completion.
-                // TODO: determine tier from price_id in the session line items.
-                let _ = billing::update_plan_tier(&state.pool, &store_id, "starter").await;
-                info!(store_id = %store_id, "Checkout completed, plan upgraded");
+                // Determine tier from metadata or price_id.
+                let tier = billing::determine_tier(obj);
+                let _ = billing::update_plan_tier(&state.pool, &store_id, tier).await;
+                info!(store_id = %store_id, tier = tier, "Checkout completed, plan set");
             }
         }
         "customer.subscription.deleted" => {
@@ -824,14 +838,32 @@ async fn stripe_webhook(
 
 /// POST /api/v1/webhooks/line
 ///
-/// LINE webhook endpoint (public, no auth). Receives events from LINE platform.
-/// For now, logs follow/unfollow events for future user linking.
+/// LINE webhook endpoint (public, no JWT auth). Receives events from LINE platform.
+/// Verifies webhook signature if LINE_CHANNEL_SECRET is configured.
 async fn line_webhook(
-    // No auth -- LINE webhooks are public. Signature verification is recommended
-    // in production via X-Line-Signature header.
-    Json(body): Json<serde_json::Value>,
+    headers: axum::http::HeaderMap,
+    body: String,
 ) -> StatusCode {
-    // LINE webhook verification: respond 200 to any POST.
+    // Verify LINE signature if channel secret is configured.
+    if let Ok(secret) = std::env::var("LINE_CHANNEL_SECRET") {
+        let sig = headers
+            .get("x-line-signature")
+            .and_then(|v| v.to_str().ok())
+            .unwrap_or("");
+        if !line::verify_line_signature(body.as_bytes(), sig, &secret) {
+            warn!("LINE webhook signature verification failed");
+            return StatusCode::FORBIDDEN;
+        }
+    }
+
+    let body: serde_json::Value = match serde_json::from_str(&body) {
+        Ok(v) => v,
+        Err(e) => {
+            warn!(error = %e, "Invalid LINE webhook payload");
+            return StatusCode::BAD_REQUEST;
+        }
+    };
+
     if let Some(events) = body.get("events").and_then(|v| v.as_array()) {
         for event in events {
             let event_type = event.get("type").and_then(|v| v.as_str()).unwrap_or("");
@@ -1149,5 +1181,69 @@ mod tests {
             body["error"].is_string(),
             "Unauthorized response should contain an error message"
         );
+    }
+
+    #[test]
+    fn stripe_signature_verification_works() {
+        let secret = "whsec_test_secret_key";
+        let payload = r#"{"type":"checkout.session.completed","data":{}}"#;
+        let timestamp = chrono::Utc::now().timestamp().to_string();
+
+        // Compute valid signature
+        use hmac::{Hmac, Mac};
+        use sha2::Sha256;
+        type HmacSha256 = Hmac<Sha256>;
+        let signed = format!("{}.{}", timestamp, payload);
+        let mut mac = HmacSha256::new_from_slice(secret.as_bytes()).unwrap();
+        mac.update(signed.as_bytes());
+        let sig = hex::encode(mac.finalize().into_bytes());
+        let header = format!("t={},v1={}", timestamp, sig);
+
+        // Valid signature should pass
+        assert!(billing::verify_stripe_signature(payload, &header, secret).is_ok());
+
+        // Wrong signature should fail
+        let bad_header = format!("t={},v1=deadbeef", timestamp);
+        assert!(billing::verify_stripe_signature(payload, &bad_header, secret).is_err());
+
+        // Missing timestamp should fail
+        assert!(billing::verify_stripe_signature(payload, "v1=abc", secret).is_err());
+    }
+
+    #[test]
+    fn determine_tier_from_metadata() {
+        let session = serde_json::json!({
+            "metadata": { "store_id": "abc", "tier": "pro" },
+            "customer": "cus_123"
+        });
+        assert_eq!(billing::determine_tier(&session), "pro");
+    }
+
+    #[test]
+    fn determine_tier_from_amount() {
+        let session = serde_json::json!({
+            "metadata": { "store_id": "abc" },
+            "customer": "cus_123",
+            "amount_total": 29800
+        });
+        assert_eq!(billing::determine_tier(&session), "pro");
+    }
+
+    #[test]
+    fn line_signature_verification_works() {
+        let secret = "test_channel_secret";
+        let body = b"{\"events\":[]}";
+
+        // Compute valid signature
+        use base64::Engine;
+        use hmac::{Hmac, Mac};
+        use sha2::Sha256;
+        type HmacSha256 = Hmac<Sha256>;
+        let mut mac = HmacSha256::new_from_slice(secret.as_bytes()).unwrap();
+        mac.update(body);
+        let sig = base64::engine::general_purpose::STANDARD.encode(mac.finalize().into_bytes());
+
+        assert!(line::verify_line_signature(body, &sig, secret));
+        assert!(!line::verify_line_signature(body, "invalid_sig", secret));
     }
 }
