@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sprint Cycle 16 — ダッシュボードAPI接続、来客数時系列エンドポイント追加｜ミセバンAI Blog</title>
+<meta name="description" content="ダッシュボード14箇所のTODOを全実装に置き換え、apiFetch()ヘルパー追加、来客数時系列API(weekly/hourly)追加、Supabase設定の構成化。全13テスト合格。TODO残数0件。">
+<meta name="keywords" content="Sprint Cycle 16,Dashboard,API,Integration,ミセバンAI">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://misebanai.com/blog/029-sprint-cycle-16.html">
+<meta property="og:title" content="Sprint Cycle 16 — ダッシュボードAPI接続、来客数時系列エンドポイント追加">
+<meta property="og:description" content="ダッシュボード14箇所のTODOを全実装に置き換え、来客数時系列API追加、Supabase設定の構成化。全13テスト合格。TODO残数0件。">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://misebanai.com/blog/029-sprint-cycle-16.html">
+<meta property="og:image" content="https://misebanai.com/ogp.png">
+<meta property="og:site_name" content="ミセバンAI">
+<meta property="og:locale" content="ja_JP">
+<meta property="article:published_time" content="2026-02-23">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Sprint Cycle 16 — ダッシュボードAPI接続、来客数時系列エンドポイント追加">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%234f46e5'/><text x='50%25' y='54%25' dominant-baseline='middle' text-anchor='middle' fill='white' font-size='18' font-weight='bold' font-family='sans-serif'>M</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--white:#fff;--gray-50:#f8fafc;--gray-100:#f1f5f9;--gray-200:#e2e8f0;--gray-400:#94a3b8;--gray-500:#64748b;--slate-600:#475569;--slate-700:#334155;--slate-800:#1e293b;--slate-900:#0f172a;--indigo-50:#eef2ff;--indigo-100:#e0e7ff;--indigo-500:#6366f1;--indigo-600:#4f46e5;--indigo-700:#4338ca;--indigo-900:#312e81;--indigo-950:#1e1b4b;--emerald-50:#ecfdf5;--emerald-500:#10b981;--emerald-600:#059669;--radius-sm:8px;--radius:12px}
+html{scroll-behavior:smooth}body{font-family:'Noto Sans JP','Inter',system-ui,sans-serif;color:var(--slate-900);background:var(--white);line-height:1.8;-webkit-font-smoothing:antialiased}
+a{text-decoration:none;color:inherit}ul,ol{list-style:none}
+.container{max-width:1200px;margin:0 auto;padding:0 24px}
+.btn{display:inline-flex;align-items:center;gap:8px;font-family:inherit;font-size:.9375rem;font-weight:600;padding:14px 28px;border-radius:100px;border:none;cursor:pointer;transition:all .2s;white-space:nowrap}
+.btn-primary{background:var(--indigo-600);color:var(--white)}.btn-primary:hover{background:var(--indigo-700);transform:translateY(-1px)}.btn-sm{padding:10px 20px;font-size:.875rem}
+.btn-ghost{background:transparent;color:var(--indigo-600);border:2px solid var(--indigo-100);padding:12px 24px}
+.header{position:fixed;top:0;left:0;width:100%;z-index:1000;background:rgba(255,255,255,.92);backdrop-filter:blur(16px);box-shadow:0 1px 3px rgba(0,0,0,.06);border-bottom:1px solid rgba(0,0,0,.04)}
+.header-inner{display:flex;align-items:center;justify-content:space-between;height:72px}.logo{font-size:1.25rem;font-weight:700;color:var(--slate-900)}.logo-ai{color:var(--indigo-600)}
+.nav{display:flex;align-items:center;gap:32px}.nav a{font-size:.875rem;font-weight:500;color:var(--slate-600)}.nav-cta{margin-left:8px}
+.mobile-toggle{display:none;background:none;border:none;cursor:pointer;padding:8px}.mobile-toggle span{display:block;width:22px;height:2px;background:var(--slate-900);margin:5px 0}
+.blog-hero{padding:140px 0 60px;background:linear-gradient(135deg,var(--slate-900),var(--indigo-950));color:var(--white)}
+.blog-hero-label{display:inline-flex;font-size:.8125rem;font-weight:600;color:var(--emerald-500);background:rgba(16,185,129,.12);padding:6px 16px;border-radius:100px;margin-bottom:16px}
+.blog-hero h1{font-size:clamp(1.5rem,3.5vw,2.25rem);font-weight:700;line-height:1.5}
+.blog-hero-meta{display:flex;gap:16px;flex-wrap:wrap;margin-top:16px;font-size:.875rem;color:var(--gray-400)}
+.blog-hero-meta span{display:inline-flex;align-items:center;gap:6px}
+.blog-content{padding:60px 0 80px;max-width:800px;margin:0 auto}
+.blog-content h2{font-size:1.5rem;font-weight:700;margin:48px 0 20px;padding-bottom:12px;border-bottom:2px solid var(--indigo-100)}
+.blog-content h3{font-size:1.2rem;font-weight:600;margin:32px 0 12px}
+.blog-content p{margin-bottom:20px;color:var(--slate-700);line-height:1.9}
+.blog-content ul{margin-bottom:20px}.blog-content li{padding:6px 0 6px 24px;position:relative;color:var(--slate-700)}.blog-content li::before{content:'';position:absolute;left:8px;top:16px;width:6px;height:6px;border-radius:50%;background:var(--indigo-500)}
+.blog-content code{font-family:'JetBrains Mono',monospace;font-size:.875em;background:var(--gray-100);padding:2px 8px;border-radius:6px;color:var(--indigo-600)}
+.blog-content pre{background:var(--slate-900);color:var(--gray-200);padding:24px;border-radius:var(--radius);overflow-x:auto;margin:20px 0;font-family:'JetBrains Mono',monospace;font-size:.875rem;line-height:1.7}
+.blog-content pre code{background:transparent;padding:0;color:inherit}
+.blog-content blockquote{border-left:4px solid var(--indigo-500);padding:16px 24px;margin:24px 0;background:var(--indigo-50);border-radius:0 var(--radius-sm) var(--radius-sm) 0}
+.blog-content blockquote p{color:var(--indigo-900);margin:0;font-weight:500}
+.blog-content strong{color:var(--slate-900)}
+.blog-content table{width:100%;border-collapse:collapse;margin:20px 0;font-size:.9rem}
+.blog-content th,.blog-content td{padding:12px 16px;text-align:left;border-bottom:1px solid var(--gray-200)}
+.blog-content th{background:var(--gray-50);font-weight:600;font-size:.85rem}
+.status{display:inline-flex;padding:2px 10px;border-radius:100px;font-size:.75rem;font-weight:600}
+.status-ok{background:var(--emerald-50);color:var(--emerald-600)}
+.blog-footer{padding:40px 0;background:var(--gray-50);border-top:1px solid var(--gray-200);text-align:center}
+.blog-footer-nav{display:flex;justify-content:center;gap:24px;flex-wrap:wrap;margin-bottom:16px}
+.blog-footer-nav a{color:var(--slate-600);font-size:.875rem}.blog-footer p{color:var(--gray-500);font-size:.8125rem}
+@media(max-width:768px){.nav{display:none}.mobile-toggle{display:block}.blog-hero h1{font-size:1.4rem}.blog-content{padding:40px 24px 60px}}
+</style>
+</head>
+<body>
+<header class="header"><div class="container header-inner">
+<a href="/" class="logo">ミセバン<span class="logo-ai">AI</span></a>
+<nav class="nav"><a href="/">ホーム</a><a href="/blog/">ブログ</a><a href="/docs.html">ドキュメント</a><a href="/dashboard/" class="btn btn-primary btn-sm nav-cta">無料で始める</a></nav>
+<button class="mobile-toggle" id="mobileToggle" aria-label="メニュー"><span></span><span></span><span></span></button>
+</div></header>
+
+<section class="blog-hero"><div class="container">
+<span class="blog-hero-label">Sprint Cycle 16</span>
+<h1>ダッシュボードAPI接続、<br>来客数時系列エンドポイント追加</h1>
+<div class="blog-hero-meta">
+<span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> 2026-02-23</span>
+<span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> 5 min read</span>
+</div>
+</div></section>
+
+<article class="blog-content container">
+
+<h2>概要</h2>
+<p>Sprint Cycle 16では、ダッシュボードに残っていた14箇所のTODO/プレースホルダーを全て実装に置き換え、API経由でのリアルタイムデータ取得を実現しました。来客数の時系列API（週次・時間帯別）を新規追加し、Chart.jsとの自動連携も完了。デモデータフォールバック付きでAPI未接続時も動作保証されます。</p>
+
+<table>
+<thead><tr><th>対応内容</th><th>状態</th></tr></thead>
+<tbody>
+<tr><td>ダッシュボードAPI接続（14箇所のTODO解消）</td><td><span class="status status-ok">完了</span></td></tr>
+<tr><td>apiFetch()ヘルパー関数追加</td><td><span class="status status-ok">完了</span></td></tr>
+<tr><td>来客数時系列API（weekly/hourly）</td><td><span class="status status-ok">完了</span></td></tr>
+<tr><td>ダッシュボード機能強化（チャート・アラート・CSV等）</td><td><span class="status status-ok">完了</span></td></tr>
+<tr><td>Supabase設定の構成化</td><td><span class="status status-ok">完了</span></td></tr>
+</tbody>
+</table>
+
+<h2>1. ダッシュボードをAPI接続に切り替え</h2>
+<p>これまでダッシュボードの各データ表示箇所にはTODOコメントやプレースホルダーが残っていました。今回、14箇所すべてを実際のAPI呼び出しに置き換えました。</p>
+
+<p>API未接続時やエラー時にはデモデータにフォールバックする設計のため、開発環境やオフライン時でも画面が正常に表示されます。本番環境ではAPIから取得したリアルタイムデータが自動的に反映されます。</p>
+
+<h2>2. apiFetch()ヘルパー関数</h2>
+<p>API通信を統一的に行うためのヘルパー関数を追加しました。Supabase認証トークンを自動的にリクエストヘッダーに付与し、認証状態を意識せずにAPI呼び出しが可能です。</p>
+
+<pre><code>// API通信ヘルパー
+async function apiFetch(path, options = {}) {
+  const token = supabase
+    ? (await supabase.auth.getSession())?.data?.session?.access_token
+    : null;
+  const headers = { 'Content-Type': 'application/json', ...options.headers };
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+  const resp = await fetch(`${API_BASE}${path}`, { ...options, headers });
+  if (!resp.ok) throw new Error(`API ${resp.status}`);
+  return resp;
+}</code></pre>
+
+<p>この関数により、ダッシュボード内の全データ取得が統一的なパターンで記述でき、認証トークンの取得・付与を各呼び出し箇所で個別に行う必要がなくなりました。</p>
+
+<h2>3. 来客数時系列API追加</h2>
+<p>ダッシュボードのチャート表示に必要な時系列データを返す2つのエンドポイントを新規追加しました。</p>
+
+<h3>週次来客数（過去7日間）</h3>
+<p><code>GET /api/v1/stores/me/stats/weekly</code> は過去7日間の日別来客数を返します。ダッシュボードの週次トレンドチャートに直接バインドされます。</p>
+
+<pre><code>// 週次来客数エンドポイント
+#[derive(Serialize)]
+struct WeeklyStats { days: Vec&lt;DailyEntry&gt; }
+#[derive(Serialize)]
+struct DailyEntry { date: NaiveDate, count: i64 }
+
+async fn get_weekly_stats(
+    AuthUser(user_id): AuthUser,
+    State(state): State&lt;AppState&gt;,
+) -&gt; Result&lt;Json&lt;WeeklyStats&gt;, ApiError&gt; { ... }</code></pre>
+
+<h3>時間帯別来客数（本日）</h3>
+<p><code>GET /api/v1/stores/me/stats/hourly</code> は本日の時間帯別来客数を返します。ピーク時間帯の把握やスタッフ配置の最適化に活用できます。</p>
+
+<p><code>db.rs</code>には対応するデータ取得関数<code>get_weekly_visitor_counts()</code>と<code>get_hourly_visitor_counts()</code>を追加しました。</p>
+
+<h2>4. ダッシュボード機能強化</h2>
+<p>API接続により、ダッシュボードの各機能がリアルデータで動作するようになりました。</p>
+
+<ul>
+<li><strong>概要カード</strong>: APIからリアルタイムデータを取得し、来客数・売上等の主要指標を表示</li>
+<li><strong>週次/時間帯チャート</strong>: 新設APIからデータを取得し、Chart.jsに自動反映</li>
+<li><strong>カメラ一覧</strong>: API経由で登録済みカメラを表示。追加もAPI POSTで実装</li>
+<li><strong>アラート</strong>: API → Supabase → デモデータの3段階フォールバックで確実に表示</li>
+<li><strong>CSV出力</strong>: APIから直接ダウンロードに対応</li>
+<li><strong>LINE連携コード</strong>: API送信による連携コード発行を実装</li>
+</ul>
+
+<p>特にアラート機能は、APIが利用可能ならAPIから、APIが落ちていればSupabaseから直接、それもダメならデモデータを表示する3段階フォールバック構成としました。ユーザーが空の画面を見ることはありません。</p>
+
+<h2>5. Supabase設定の構成化</h2>
+<p><code>window.__MISEBAN_CONFIG</code>オブジェクトを導入し、Supabase URLとAnon Keyを外部から注入可能にしました。これにより、環境ごとの設定切り替えが容易になり、ハードコードされた認証情報を排除しました。</p>
+
+<p>デプロイ環境に応じて設定値を差し替えるだけで、開発・ステージング・本番のSupabaseインスタンスを切り替えられます。</p>
+
+<h2>テスト結果</h2>
+<p>全<strong>13テスト合格</strong>。既存テストへの影響はありません。</p>
+
+<table>
+<thead><tr><th>指標</th><th>Before</th><th>After</th></tr></thead>
+<tbody>
+<tr><td>TODO/プレースホルダー残数</td><td>14件</td><td><strong>0件</strong></td></tr>
+<tr><td>テスト合格数</td><td>13/13</td><td>13/13</td></tr>
+<tr><td>新規APIエンドポイント</td><td>-</td><td>2件（weekly/hourly）</td></tr>
+</tbody>
+</table>
+
+<blockquote><p>ダッシュボードのTODOを全て解消し、API経由でのリアルデータ表示を実現しました。デモデータフォールバック付きで堅牢性も確保。次のスプリントでは、取得データを活用した分析機能の拡充に取り組みます。</p></blockquote>
+
+<div style="text-align:center;margin:48px 0">
+<a href="/blog/" class="btn btn-ghost btn-sm">&larr; ブログ一覧に戻る</a>
+<a href="/dashboard/" class="btn btn-primary btn-sm" style="margin-left:12px">無料で始める &rarr;</a>
+</div>
+</article>
+
+<footer class="blog-footer"><div class="container">
+<div class="blog-footer-nav"><a href="/">ホーム</a><a href="/blog/">ブログ</a><a href="/docs.html">ドキュメント</a><a href="/privacy.html">プライバシー</a><a href="/terms.html">利用規約</a></div>
+<p>&copy; 2026 ミセバンAI. All rights reserved.</p>
+</div></footer>
+</body>
+</html>

@@ -15,7 +15,7 @@ use axum::{
     routing::{get, patch, post},
     Json, Router,
 };
-use chrono::Utc;
+use chrono::{NaiveDate, Utc};
 use serde::{Deserialize, Serialize};
 use shared::{
     AgeDistribution, AgeGroup, AnalysisResult, DailyReport, DemographicsSummary, FrameData,
@@ -249,6 +249,30 @@ struct StoreStats {
     cameras_online: i64,
 }
 
+/// Response for GET /api/v1/stores/me/stats/weekly.
+#[derive(Serialize)]
+struct WeeklyStats {
+    days: Vec<DailyEntry>,
+}
+
+#[derive(Serialize)]
+struct DailyEntry {
+    date: NaiveDate,
+    count: i64,
+}
+
+/// Response for GET /api/v1/stores/me/stats/hourly.
+#[derive(Serialize)]
+struct HourlyStats {
+    hours: Vec<HourlyEntry>,
+}
+
+#[derive(Serialize)]
+struct HourlyEntry {
+    hour: i32,
+    count: i64,
+}
+
 /// GET /api/v1/stores/me/stats
 ///
 /// Returns stats for the authenticated user's store.
@@ -269,6 +293,48 @@ async fn get_my_store_stats(
         today_total,
         cameras_online,
     }))
+}
+
+/// GET /api/v1/stores/me/stats/weekly
+///
+/// Returns daily visitor totals for the past 7 days for the authenticated user's store.
+async fn get_weekly_stats(
+    AuthUser(user_id): AuthUser,
+    State(state): State<AppState>,
+) -> Result<Json<WeeklyStats>, ApiError> {
+    let store = db::get_store_by_owner(&state.pool, &user_id)
+        .await
+        .ok_or_else(|| ApiError::NotFound("No store found for this user".to_string()))?;
+
+    let rows = db::get_weekly_visitor_counts(&state.pool, &store.id).await;
+
+    let days = rows
+        .into_iter()
+        .map(|(date, count)| DailyEntry { date, count })
+        .collect();
+
+    Ok(Json(WeeklyStats { days }))
+}
+
+/// GET /api/v1/stores/me/stats/hourly
+///
+/// Returns hourly visitor counts for today for the authenticated user's store.
+async fn get_hourly_stats(
+    AuthUser(user_id): AuthUser,
+    State(state): State<AppState>,
+) -> Result<Json<HourlyStats>, ApiError> {
+    let store = db::get_store_by_owner(&state.pool, &user_id)
+        .await
+        .ok_or_else(|| ApiError::NotFound("No store found for this user".to_string()))?;
+
+    let rows = db::get_hourly_visitor_counts(&state.pool, &store.id).await;
+
+    let hours = rows
+        .into_iter()
+        .map(|(hour, count)| HourlyEntry { hour, count })
+        .collect();
+
+    Ok(Json(HourlyStats { hours }))
 }
 
 /// GET /api/v1/stores/:store_id/stats
@@ -1000,6 +1066,8 @@ fn build_router(state: AppState) -> Router {
         // Authenticated routes
         .route("/api/v1/frames", post(receive_frame))
         .route("/api/v1/stores/me/stats", get(get_my_store_stats))
+        .route("/api/v1/stores/me/stats/weekly", get(get_weekly_stats))
+        .route("/api/v1/stores/me/stats/hourly", get(get_hourly_stats))
         .route("/api/v1/stores/me/daily", get(get_my_daily_report))
         .route("/api/v1/stores/me/cameras", get(get_my_cameras))
         .route("/api/v1/stores/me/usage", get(get_my_usage))

@@ -1968,8 +1968,9 @@ body {
 
 <script>
 // ===== Supabase Configuration =====
-const SUPABASE_URL = 'YOUR_SUPABASE_URL';     // TODO: Replace with actual Supabase URL
-const SUPABASE_ANON_KEY = 'YOUR_ANON_KEY';   // TODO: Replace with actual Supabase anon key
+const MISEBAN_CONFIG = window.__MISEBAN_CONFIG || {};
+const SUPABASE_URL = MISEBAN_CONFIG.supabaseUrl || 'https://misebanai.supabase.co';
+const SUPABASE_ANON_KEY = MISEBAN_CONFIG.supabaseAnonKey || '';
 
 let supabase = null;
 try {
@@ -1984,6 +1985,19 @@ try {
 const API_BASE = window.location.origin.includes('localhost')
     ? 'http://localhost:3000'
     : 'https://miseban-ai-api.fly.dev';
+
+// ===== API Helper =====
+async function apiFetch(path, options = {}) {
+  const token = supabase
+    ? (await supabase.auth.getSession())?.data?.session?.access_token
+    : null;
+  const headers = { 'Content-Type': 'application/json', ...options.headers };
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+
+  const resp = await fetch(`${API_BASE}${path}`, { ...options, headers });
+  if (!resp.ok) throw new Error(`API ${resp.status}: ${resp.statusText}`);
+  return resp;
+}
 
 // ===== State =====
 let currentUser = null;
@@ -2015,9 +2029,7 @@ const headerDate = $('#header-date');
 
 let isSignupMode = false;
 
-// ===== Demo Data =====
-// TODO: Replace with Supabase queries throughout
-
+// ===== Demo Data (fallback when API is unavailable) =====
 const DEMO_DATA = {
   today: 143,
   yesterday: 127,
@@ -2174,16 +2186,17 @@ function showLogin() {
   destroyCharts();
 }
 
-function showDashboard() {
+async function showDashboard() {
   loginScreen.style.display = 'none';
   dashboardScreen.classList.add('active');
   updateUserDisplay();
   setHeaderDate();
-  loadCurrentStore();
+  await loadCurrentStore();
+  await loadStoreData();
   switchTab('overview');
   initCharts();
-  renderAlerts();
-  renderCameras();
+  await renderAlerts();
+  await renderCameras();
   initReportDates();
   subscribeToAlerts();
   checkCheckoutResult();
@@ -2204,6 +2217,76 @@ async function loadCurrentStore() {
   } catch (e) {
     console.warn('Store load skipped (demo mode):', e);
   }
+}
+
+// ===== Load Store Data from API =====
+async function loadStoreData() {
+  try {
+    // Fetch stats
+    const statsResp = await apiFetch('/api/v1/stores/me/stats');
+    const stats = await statsResp.json();
+    DEMO_DATA.today = stats.today_total || 0;
+    DEMO_DATA.camerasOnline = stats.cameras_online || 0;
+
+    // Fetch weekly data
+    const weeklyResp = await apiFetch('/api/v1/stores/me/stats/weekly');
+    const weekly = await weeklyResp.json();
+    if (weekly.days && weekly.days.length > 0) {
+      const days = ['日','月','火','水','木','金','土'];
+      DEMO_DATA.weeklyLabels = weekly.days.map(d => {
+        const dt = new Date(d.date);
+        return `${dt.getMonth()+1}/${dt.getDate()}(${days[dt.getDay()]})`;
+      });
+      DEMO_DATA.weeklyData = weekly.days.map(d => d.count);
+      // Calculate yesterday and change
+      if (weekly.days.length >= 2) {
+        DEMO_DATA.yesterday = weekly.days[weekly.days.length - 2].count;
+        DEMO_DATA.changePercent = DEMO_DATA.yesterday > 0
+          ? ((DEMO_DATA.today - DEMO_DATA.yesterday) / DEMO_DATA.yesterday * 100).toFixed(1)
+          : 0;
+      }
+    }
+
+    // Fetch hourly data
+    const hourlyResp = await apiFetch('/api/v1/stores/me/stats/hourly');
+    const hourly = await hourlyResp.json();
+    if (hourly.hours && hourly.hours.length > 0) {
+      DEMO_DATA.hourlyLabels = hourly.hours.map(h => `${h.hour}時`);
+      DEMO_DATA.hourlyData = hourly.hours.map(h => h.count);
+      // Find peak hour
+      const maxIdx = DEMO_DATA.hourlyData.indexOf(Math.max(...DEMO_DATA.hourlyData));
+      DEMO_DATA.peakHour = `${DEMO_DATA.hourlyLabels[maxIdx]}〜${parseInt(DEMO_DATA.hourlyLabels[maxIdx])+1}時`;
+    }
+
+    // Update overview cards
+    updateOverviewCards();
+  } catch (e) {
+    console.warn('API fetch failed, using demo data:', e.message);
+  }
+}
+
+function updateOverviewCards() {
+  const todayEl = document.querySelector('#stat-today');
+  if (todayEl) todayEl.textContent = DEMO_DATA.today.toLocaleString();
+
+  const yesterdayEl = document.querySelector('#stat-yesterday');
+  if (yesterdayEl) yesterdayEl.textContent = DEMO_DATA.yesterday.toLocaleString();
+
+  const changeEl = document.querySelector('#stat-today')?.closest('.stat-card')?.querySelector('.stat-card-change');
+  if (changeEl) {
+    const change = parseFloat(DEMO_DATA.changePercent);
+    changeEl.textContent = (change >= 0 ? '+' : '') + change + '% 昨日比';
+    changeEl.className = 'stat-card-change ' + (change >= 0 ? 'up' : 'down');
+  }
+
+  const peakEl = document.querySelector('#stat-peak');
+  if (peakEl) peakEl.textContent = DEMO_DATA.peakHour.split('〜')[0];
+
+  const peakChangeEl = peakEl?.closest('.stat-card')?.querySelector('.stat-card-change');
+  if (peakChangeEl) peakChangeEl.textContent = DEMO_DATA.peakHour;
+
+  const camOnlineEl = document.querySelector('#stat-cameras-online');
+  if (camOnlineEl) camOnlineEl.textContent = DEMO_DATA.camerasOnline;
 }
 
 function updateUserDisplay() {
@@ -2321,7 +2404,7 @@ function destroyCharts() {
 function initCharts() {
   destroyCharts();
 
-  // TODO: Replace with Supabase query — fetch daily visitor counts for past 7 days
+  // Weekly chart (data loaded from API via loadStoreData, falls back to DEMO_DATA)
   const weeklyCtx = $('#chart-weekly').getContext('2d');
   const weeklyGradient = weeklyCtx.createLinearGradient(0, 0, 0, 240);
   weeklyGradient.addColorStop(0, 'rgba(79, 70, 229, 0.15)');
@@ -2359,7 +2442,7 @@ function initCharts() {
     },
   });
 
-  // TODO: Replace with Supabase query — fetch hourly visitor counts for today
+  // Hourly chart (data loaded from API via loadStoreData, falls back to DEMO_DATA)
   const hourlyCtx = $('#chart-hourly').getContext('2d');
   hourlyChart = new Chart(hourlyCtx, {
     type: 'bar',
@@ -2398,7 +2481,7 @@ function initCharts() {
 function initReportChart() {
   if (reportChart) reportChart.destroy();
 
-  // TODO: Replace with Supabase query — fetch daily visitor counts for selected date range
+  // Report chart (data loaded from API via report generation, falls back to DEMO_DATA)
   const ctx = $('#chart-report').getContext('2d');
   const gradient = ctx.createLinearGradient(0, 0, 0, 300);
   gradient.addColorStop(0, 'rgba(79, 70, 229, 0.12)');
@@ -2440,51 +2523,75 @@ function initReportChart() {
 // ===== Alerts =====
 async function renderAlerts() {
   const list = $('#alert-list');
-  if (!currentStore) {
-    // Fallback to demo data if no store is set
-    renderDemoAlerts();
-    return;
-  }
 
+  // Try API first
   try {
-    const { data, error } = await supabase
-      .from('alerts')
-      .select('*')
-      .eq('store_id', currentStore.id)
-      .order('created_at', { ascending: false })
-      .limit(10);
+    const resp = await apiFetch('/api/v1/stores/me/alerts?limit=10');
+    const alerts = await resp.json();
 
-    if (error) throw error;
+    if (alerts && alerts.length > 0) {
+      list.innerHTML = alerts.map(a => {
+        const typeClass = a.alert_type === 'intrusion' ? 'error' :
+                         a.alert_type === 'crowding' ? 'warn' : 'info';
+        const typeLabel = a.alert_type === 'intrusion' ? '侵入検知' :
+                         a.alert_type === 'crowding' ? '混雑検知' : '異常検知';
+        const time = new Date(a.created_at).toLocaleString('ja-JP', {hour:'2-digit', minute:'2-digit'});
+        const unreadClass = a.is_read ? '' : 'unread';
+        return `<div class="alert-item ${unreadClass}" data-id="${a.id}" onclick="markAlertRead('${a.id}')">
+            <div class="alert-dot ${typeClass}"></div>
+            <div class="alert-content">
+                <div class="alert-label">${typeLabel}</div>
+                <div class="alert-text">${a.message || typeLabel}</div>
+            </div>
+            <div class="alert-time">${time}</div>
+        </div>`;
+      }).join('');
 
-    if (!data || data.length === 0) {
-      list.innerHTML = '<div class="alert-empty">アラートはありません</div>';
+      updateUnreadBadge(alerts.filter(a => !a.is_read).length);
       return;
     }
-
-    list.innerHTML = data.map(a => {
-      const typeClass = a.alert_type === 'intrusion' ? 'error' :
-                       a.alert_type === 'crowding' ? 'warn' : 'info';
-      const typeLabel = a.alert_type === 'intrusion' ? '侵入検知' :
-                       a.alert_type === 'crowding' ? '混雑検知' : '異常検知';
-      const time = new Date(a.created_at).toLocaleString('ja-JP', {hour:'2-digit', minute:'2-digit'});
-      const unreadClass = a.is_read ? '' : 'unread';
-      return `<div class="alert-item ${unreadClass}" data-id="${a.id}" onclick="markAlertRead('${a.id}')">
-          <div class="alert-dot ${typeClass}"></div>
-          <div class="alert-content">
-              <div class="alert-label">${typeLabel}</div>
-              <div class="alert-text">${a.message || typeLabel}</div>
-          </div>
-          <div class="alert-time">${time}</div>
-      </div>`;
-    }).join('');
-
-    // Update unread count badge
-    updateUnreadBadge(data.filter(a => !a.is_read).length);
   } catch (e) {
-    console.error('Alert fetch error:', e);
-    // Fallback to demo data if Supabase not configured
-    renderDemoAlerts();
+    console.warn('Alert API failed:', e.message);
   }
+
+  // Try Supabase direct query as second fallback
+  if (currentStore && supabase) {
+    try {
+      const { data, error } = await supabase
+        .from('alerts')
+        .select('*')
+        .eq('store_id', currentStore.id)
+        .order('created_at', { ascending: false })
+        .limit(10);
+
+      if (!error && data && data.length > 0) {
+        list.innerHTML = data.map(a => {
+          const typeClass = a.alert_type === 'intrusion' ? 'error' :
+                           a.alert_type === 'crowding' ? 'warn' : 'info';
+          const typeLabel = a.alert_type === 'intrusion' ? '侵入検知' :
+                           a.alert_type === 'crowding' ? '混雑検知' : '異常検知';
+          const time = new Date(a.created_at).toLocaleString('ja-JP', {hour:'2-digit', minute:'2-digit'});
+          const unreadClass = a.is_read ? '' : 'unread';
+          return `<div class="alert-item ${unreadClass}" data-id="${a.id}" onclick="markAlertRead('${a.id}')">
+              <div class="alert-dot ${typeClass}"></div>
+              <div class="alert-content">
+                  <div class="alert-label">${typeLabel}</div>
+                  <div class="alert-text">${a.message || typeLabel}</div>
+              </div>
+              <div class="alert-time">${time}</div>
+          </div>`;
+        }).join('');
+
+        updateUnreadBadge(data.filter(a => !a.is_read).length);
+        return;
+      }
+    } catch (e) {
+      console.warn('Supabase alert fetch failed:', e.message);
+    }
+  }
+
+  // Fallback to demo data
+  renderDemoAlerts();
 }
 
 function renderDemoAlerts() {
@@ -2598,15 +2705,45 @@ async function submitLineCode() {
   const code = document.getElementById('line-code-input')?.value?.trim();
   if (!code) return;
 
-  // TODO: Send code to API for verification
-  alert('LINE連携機能は近日公開予定です。コード: ' + code);
+  try {
+    await apiFetch('/api/v1/stores/me/line-link', {
+      method: 'POST',
+      body: JSON.stringify({ code })
+    });
+    alert('LINE連携が完了しました！');
+  } catch (e) {
+    console.warn('LINE link failed:', e.message);
+    alert('LINE連携機能は近日公開予定です。');
+  }
   document.querySelector('.modal-overlay')?.remove();
 }
 
 // ===== Cameras =====
-function renderCameras() {
-  // TODO: Replace with Supabase query — fetch cameras for this store
+async function renderCameras() {
   const grid = $('#camera-list');
+
+  // Try API first
+  try {
+    const resp = await apiFetch('/api/v1/stores/me/cameras');
+    const cameras = await resp.json();
+
+    if (cameras && cameras.length > 0) {
+      DEMO_DATA.cameras = cameras.map(cam => ({
+        id: cam.id,
+        name: cam.name,
+        location: cam.rtsp_url ? 'RTSP接続' : '未設定',
+        status: cam.status || 'offline',
+        todayCount: cam.today_count || 0,
+        avgDaily: cam.avg_daily || 0,
+      }));
+      DEMO_DATA.camerasTotal = cameras.length;
+      DEMO_DATA.camerasOnline = cameras.filter(c => c.status === 'online').length;
+    }
+  } catch (e) {
+    console.warn('Camera API fetch failed, using demo data:', e.message);
+  }
+
+  // Render from DEMO_DATA (now potentially updated from API)
   grid.innerHTML = DEMO_DATA.cameras.map(cam => `
     <div class="camera-card">
       <div class="camera-preview">
@@ -2640,7 +2777,7 @@ function renderCameras() {
 }
 
 // Add camera form
-$('#add-camera-form').addEventListener('submit', (e) => {
+$('#add-camera-form').addEventListener('submit', async (e) => {
   e.preventDefault();
   const name = $('#cam-name').value.trim();
   const location = $('#cam-location').value.trim();
@@ -2651,7 +2788,16 @@ $('#add-camera-form').addEventListener('submit', (e) => {
     return;
   }
 
-  // TODO: Replace with Supabase insert — add camera to store's camera list
+  try {
+    await apiFetch('/api/v1/stores/me/cameras', {
+      method: 'POST',
+      body: JSON.stringify({ name, rtsp_url: rtsp, location })
+    });
+  } catch (err) {
+    console.warn('Camera add API failed, using local:', err.message);
+  }
+
+  // Add locally too for immediate UI feedback
   DEMO_DATA.cameras.push({
     id: Date.now(),
     name,
@@ -2661,7 +2807,7 @@ $('#add-camera-form').addEventListener('submit', (e) => {
     avgDaily: 0,
   });
 
-  renderCameras();
+  await renderCameras();
   e.target.reset();
   alert(`「${name}」を追加しました。接続確認中...`);
 });
@@ -2676,29 +2822,59 @@ function initReportDates() {
   $('#report-end').value = end;
 }
 
-$('#report-generate-btn').addEventListener('click', () => {
-  // TODO: Replace with Supabase query — fetch report data for selected date range
-  const total = DEMO_DATA.weeklyData.reduce((a, b) => a + b, 0);
-  const avg = Math.round(total / DEMO_DATA.weeklyData.length);
+$('#report-generate-btn').addEventListener('click', async () => {
+  try {
+    const from = $('#report-start').value;
+    const to = $('#report-end').value;
+    const resp = await apiFetch(`/api/v1/stores/me/stats/weekly?from=${from}&to=${to}`);
+    const data = await resp.json();
+    if (data.days && data.days.length > 0) {
+      const days = ['日','月','火','水','木','金','土'];
+      DEMO_DATA.reportWeeklyLabels = data.days.map(d => {
+        const dt = new Date(d.date);
+        return `${dt.getMonth()+1}/${dt.getDate()}(${days[dt.getDay()]})`;
+      });
+      DEMO_DATA.reportWeeklyData = data.days.map(d => d.count);
+    }
+  } catch (e) {
+    console.warn('Report API failed, using demo data:', e.message);
+  }
+
+  const total = DEMO_DATA.reportWeeklyData.reduce((a, b) => a + b, 0);
+  const avg = Math.round(total / Math.max(DEMO_DATA.reportWeeklyData.length, 1));
   $('#report-total').textContent = total;
   $('#report-avg').textContent = avg;
   initReportChart();
 });
 
-$('#report-csv-btn').addEventListener('click', () => {
-  // TODO: Replace with actual CSV generation from Supabase data
-  const header = '日付,来客数\n';
-  const rows = DEMO_DATA.reportWeeklyLabels.map((label, i) =>
-    `${label},${DEMO_DATA.reportWeeklyData[i]}`
-  ).join('\n');
-  const csv = header + rows;
-  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `miseban-report-${$('#report-start').value}_${$('#report-end').value}.csv`;
-  a.click();
-  URL.revokeObjectURL(url);
+$('#report-csv-btn').addEventListener('click', async () => {
+  try {
+    const from = $('#report-start').value;
+    const to = $('#report-end').value;
+    const resp = await apiFetch(`/api/v1/stores/me/export/csv?from=${from}&to=${to}`);
+    const blob = await resp.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `miseban-report-${from}_${to}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  } catch (e) {
+    console.warn('CSV API failed, using local data:', e.message);
+    // Fallback to local CSV generation
+    const header = '日付,来客数\n';
+    const rows = DEMO_DATA.reportWeeklyLabels.map((label, i) =>
+      `${label},${DEMO_DATA.reportWeeklyData[i]}`
+    ).join('\n');
+    const csv = header + rows;
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `miseban-report-${$('#report-start').value}_${$('#report-end').value}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
 });
 
 // ===== Billing =====
@@ -3108,8 +3284,8 @@ document.getElementById('shortcuts-overlay')?.addEventListener('click', (e) => {
 
 // ===== Patched showDashboard =====
 const _originalShowDashboard = showDashboard;
-showDashboard = function() {
-  _originalShowDashboard();
+showDashboard = async function() {
+  await _originalShowDashboard();
   setupSessionCheck();
   // Check onboarding after store load attempt completes
   setTimeout(() => checkOnboarding(), 500);

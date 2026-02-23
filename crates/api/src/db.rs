@@ -186,6 +186,56 @@ pub async fn count_cameras(pool: &PgPool, store_id: &Uuid) -> i64 {
     row.map(|r| r.0).unwrap_or(0)
 }
 
+/// Fetch daily visitor totals for the past 7 days for a store.
+///
+/// Returns a vector of `(date, total_count)` tuples sorted by date ascending.
+/// Days with no data are simply omitted from the result.
+pub async fn get_weekly_visitor_counts(
+    pool: &PgPool,
+    store_id: &Uuid,
+) -> Vec<(NaiveDate, i64)> {
+    let rows: Vec<(NaiveDate, i64)> = sqlx::query_as(
+        "SELECT counted_at::date AS day, SUM(people_count)::bigint AS total \
+         FROM visitor_counts \
+         WHERE store_id = $1 \
+           AND counted_at >= (CURRENT_DATE - INTERVAL '6 days') \
+         GROUP BY day \
+         ORDER BY day",
+    )
+    .bind(store_id)
+    .fetch_all(pool)
+    .await
+    .unwrap_or_default();
+
+    rows
+}
+
+/// Fetch hourly visitor totals for today for a store.
+///
+/// Returns a vector of `(hour, total_count)` tuples sorted by hour ascending.
+/// Hours with no data are simply omitted from the result.
+pub async fn get_hourly_visitor_counts(
+    pool: &PgPool,
+    store_id: &Uuid,
+) -> Vec<(i32, i64)> {
+    let rows: Vec<(i32, i64)> = sqlx::query_as(
+        "SELECT EXTRACT(HOUR FROM counted_at)::int AS hour, \
+                SUM(people_count)::bigint AS total \
+         FROM visitor_counts \
+         WHERE store_id = $1 \
+           AND counted_at >= CURRENT_DATE \
+           AND counted_at < CURRENT_DATE + INTERVAL '1 day' \
+         GROUP BY hour \
+         ORDER BY hour",
+    )
+    .bind(store_id)
+    .fetch_all(pool)
+    .await
+    .unwrap_or_default();
+
+    rows
+}
+
 /// List cameras for a given store.
 pub async fn get_cameras(pool: &PgPool, store_id: &Uuid) -> Vec<CameraRow> {
     sqlx::query_as::<_, CameraRow>(
