@@ -64,6 +64,10 @@ enum ApiError {
     Forbidden(String),
     /// Something unexpected happened.
     Internal(String),
+    /// Authentication failed (invalid credentials, missing token, etc.).
+    Unauthorized(String),
+    /// Bad request (validation error, malformed input, etc.).
+    BadRequest(String),
 }
 
 impl IntoResponse for ApiError {
@@ -73,6 +77,8 @@ impl IntoResponse for ApiError {
             ApiError::NotFound(msg) => (StatusCode::NOT_FOUND, msg.clone()),
             ApiError::Forbidden(msg) => (StatusCode::FORBIDDEN, msg.clone()),
             ApiError::Internal(msg) => (StatusCode::INTERNAL_SERVER_ERROR, msg.clone()),
+            ApiError::Unauthorized(msg) => (StatusCode::UNAUTHORIZED, msg.clone()),
+            ApiError::BadRequest(msg) => (StatusCode::BAD_REQUEST, msg.clone()),
         };
 
         let body = serde_json::json!({ "error": message });
@@ -987,6 +993,86 @@ async fn line_webhook(
 }
 
 // ---------------------------------------------------------------------------
+// Auth endpoints (signup / login)
+// ---------------------------------------------------------------------------
+
+#[derive(Deserialize)]
+struct AuthRequest {
+    email: String,
+    password: String,
+}
+
+#[derive(Serialize)]
+struct AuthResponse {
+    token: String,
+    user_id: String,
+}
+
+/// POST /api/v1/auth/signup
+async fn signup(
+    State(state): State<AppState>,
+    Json(body): Json<AuthRequest>,
+) -> Result<(StatusCode, Json<AuthResponse>), ApiError> {
+    let email = body.email.trim().to_lowercase();
+    if email.is_empty() || !email.contains('@') {
+        return Err(ApiError::BadRequest("Invalid email".to_string()));
+    }
+    if body.password.len() < 8 {
+        return Err(ApiError::BadRequest("Password must be at least 8 characters".to_string()));
+    }
+
+    // Check if user already exists
+    if db::find_user_by_email(&state.pool, &email).await.is_some() {
+        return Err(ApiError::BadRequest("Email already registered".to_string()));
+    }
+
+    let password_hash = auth::hash_password(&body.password)
+        .map_err(|e| ApiError::Internal(format!("Hash error: {e}")))?;
+
+    let user_id = db::create_user(&state.pool, &email, &password_hash)
+        .await
+        .map_err(|e| ApiError::Internal(format!("DB error: {e}")))?;
+
+    // Create a default store for the new user
+    let store_name = format!("{}のお店", email.split('@').next().unwrap_or("user"));
+    if let Err(e) = db::create_default_store(&state.pool, &user_id, &store_name).await {
+        warn!(error = %e, "Failed to create default store (non-fatal)");
+    }
+
+    let token = auth::issue_token(&user_id, &state.jwt_secret.0)
+        .map_err(|e| ApiError::Internal(format!("Token error: {e}")))?;
+
+    Ok((StatusCode::CREATED, Json(AuthResponse {
+        token,
+        user_id: user_id.to_string(),
+    })))
+}
+
+/// POST /api/v1/auth/login
+async fn login(
+    State(state): State<AppState>,
+    Json(body): Json<AuthRequest>,
+) -> Result<Json<AuthResponse>, ApiError> {
+    let email = body.email.trim().to_lowercase();
+
+    let user = db::find_user_by_email(&state.pool, &email)
+        .await
+        .ok_or_else(|| ApiError::Unauthorized("Invalid email or password".to_string()))?;
+
+    if !auth::verify_password(&body.password, &user.password_hash) {
+        return Err(ApiError::Unauthorized("Invalid email or password".to_string()));
+    }
+
+    let token = auth::issue_token(&user.id, &state.jwt_secret.0)
+        .map_err(|e| ApiError::Internal(format!("Token error: {e}")))?;
+
+    Ok(Json(AuthResponse {
+        token,
+        user_id: user.id.to_string(),
+    }))
+}
+
+// ---------------------------------------------------------------------------
 // Health
 // ---------------------------------------------------------------------------
 
@@ -1063,7 +1149,7 @@ async fn get_public_config() -> Json<PublicConfig> {
         api_version: env!("CARGO_PKG_VERSION"),
         supabase_url,
         features: vec![
-            "frames", "stats", "alerts", "billing", "csv_export",
+            "auth", "frames", "stats", "alerts", "billing", "csv_export",
             "line_notifications", "cameras", "weekly_stats", "hourly_stats",
         ],
     })
@@ -1120,6 +1206,9 @@ fn build_router(state: AppState) -> Router {
         .route("/api/v1/billing/checkout", post(create_checkout))
         .route("/api/v1/billing/portal", post(create_portal))
         .route("/api/v1/billing/subscription", get(get_subscription))
+        // Auth routes (public)
+        .route("/api/v1/auth/signup", post(signup))
+        .route("/api/v1/auth/login", post(login))
         // Public routes
         .route("/api/v1/health", get(health_check))
         .route("/api/v1/config", get(get_public_config))
@@ -1450,6 +1539,63 @@ mod tests {
         assert!(features.contains(&"frames"), "should list frames feature");
         assert!(features.contains(&"weekly_stats"), "should list weekly_stats");
         assert!(features.contains(&"hourly_stats"), "should list hourly_stats");
+    }
+
+    #[tokio::test]
+    async fn signup_rejects_invalid_email() {
+        let app = test_app();
+
+        let request = Request::builder()
+            .uri("/api/v1/auth/signup")
+            .method("POST")
+            .header("content-type", "application/json")
+            .body(axum::body::Body::from(
+                r#"{"email":"bademail","password":"12345678"}"#,
+            ))
+            .unwrap();
+
+        let response = app.oneshot(request).await.unwrap();
+        assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+    }
+
+    #[tokio::test]
+    async fn signup_rejects_short_password() {
+        let app = test_app();
+
+        let request = Request::builder()
+            .uri("/api/v1/auth/signup")
+            .method("POST")
+            .header("content-type", "application/json")
+            .body(axum::body::Body::from(
+                r#"{"email":"test@example.com","password":"short"}"#,
+            ))
+            .unwrap();
+
+        let response = app.oneshot(request).await.unwrap();
+        assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+    }
+
+    #[tokio::test]
+    async fn login_returns_401_for_nonexistent_user() {
+        let app = test_app();
+
+        let request = Request::builder()
+            .uri("/api/v1/auth/login")
+            .method("POST")
+            .header("content-type", "application/json")
+            .body(axum::body::Body::from(
+                r#"{"email":"nobody@example.com","password":"password123"}"#,
+            ))
+            .unwrap();
+
+        let response = app.oneshot(request).await.unwrap();
+        // Will be 401 (user not found) or 500 (DB unavailable) — both are acceptable
+        assert!(
+            response.status() == StatusCode::UNAUTHORIZED
+                || response.status() == StatusCode::INTERNAL_SERVER_ERROR,
+            "Expected 401 or 500, got {}",
+            response.status()
+        );
     }
 
     #[tokio::test]

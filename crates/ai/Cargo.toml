@@ -4,8 +4,9 @@ version.workspace = true
 edition.workspace = true
 
 [features]
-default = []
+default = ["real"]
 mock = []
+real = ["ort", "ndarray", "image"]
 
 [dependencies]
 shared = { path = "../shared" }
@@ -14,10 +15,10 @@ serde_json = "1"
 chrono = "0.4"
 uuid = { version = "1", features = ["v4"] }
 
-# Real inference dependencies (excluded when `mock` feature is active)
-ort = { version = "=2.0.0-rc.9" }
-ndarray = "0.16"
-image = { version = "0.24", default-features = false, features = ["jpeg"] }
+# Real inference dependencies (only compiled when `real` feature is active)
+ort = { version = "=2.0.0-rc.9", optional = true }
+ndarray = { version = "0.16", optional = true }
+image = { version = "0.24", default-features = false, features = ["jpeg"], optional = true }
 
 [dev-dependencies]
 tokio = { version = "1", features = ["macros", "rt"] }

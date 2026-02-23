@@ -5,7 +5,7 @@ edition.workspace = true
 
 [dependencies]
 shared = { path = "../shared" }
-ai = { path = "../ai" }
+ai = { path = "../ai", default-features = false, features = ["mock"] }
 axum = { version = "0.7", features = ["macros"] }
 tokio = { version = "1", features = ["full"] }
 serde = { version = "1", features = ["derive"] }
@@ -24,6 +24,7 @@ hmac = "0.12"
 sha2 = "0.10"
 hex = "0.4"
 base64 = "0.22"
+bcrypt = "0.16"
 
 [dev-dependencies]
 tower = { version = "0.5", features = ["util"] }

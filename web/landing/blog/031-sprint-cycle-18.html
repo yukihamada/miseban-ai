@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sprint Cycle 18 — Fly Postgres + 自前認証 + APIデプロイ｜ミセバンAI Blog</title>
+<meta name="description" content="Fly Postgres (PostgreSQL 17.7) NRTリージョンセットアップ、Supabase依存脱却、自前usersテーブル作成、JWT自前発行+bcrypt認証実装、ApiError拡張、18テスト全合格、API本番デプロイ完了。">
+<meta name="keywords" content="Sprint Cycle 18,Fly Postgres,JWT,bcrypt,認証,ミセバンAI">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://misebanai.com/blog/031-sprint-cycle-18.html">
+<meta property="og:title" content="Sprint Cycle 18 — Fly Postgres + 自前認証 + APIデプロイ">
+<meta property="og:description" content="Fly Postgres NRTセットアップ、Supabase依存脱却、JWT自前発行+bcrypt認証、18テスト全合格、API本番デプロイ完了。">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://misebanai.com/blog/031-sprint-cycle-18.html">
+<meta property="og:image" content="https://misebanai.com/ogp.png">
+<meta property="og:site_name" content="ミセバンAI">
+<meta property="og:locale" content="ja_JP">
+<meta property="article:published_time" content="2026-02-24">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Sprint Cycle 18 — Fly Postgres + 自前認証 + APIデプロイ">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%234f46e5'/><text x='50%25' y='54%25' dominant-baseline='middle' text-anchor='middle' fill='white' font-size='18' font-weight='bold' font-family='sans-serif'>M</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--white:#fff;--gray-50:#f8fafc;--gray-100:#f1f5f9;--gray-200:#e2e8f0;--gray-400:#94a3b8;--gray-500:#64748b;--slate-600:#475569;--slate-700:#334155;--slate-800:#1e293b;--slate-900:#0f172a;--indigo-50:#eef2ff;--indigo-100:#e0e7ff;--indigo-500:#6366f1;--indigo-600:#4f46e5;--indigo-700:#4338ca;--indigo-900:#312e81;--indigo-950:#1e1b4b;--emerald-50:#ecfdf5;--emerald-500:#10b981;--emerald-600:#059669;--radius-sm:8px;--radius:12px}
+html{scroll-behavior:smooth}body{font-family:'Noto Sans JP','Inter',system-ui,sans-serif;color:var(--slate-900);background:var(--white);line-height:1.8;-webkit-font-smoothing:antialiased}
+a{text-decoration:none;color:inherit}ul,ol{list-style:none}
+.container{max-width:1200px;margin:0 auto;padding:0 24px}
+.btn{display:inline-flex;align-items:center;gap:8px;font-family:inherit;font-size:.9375rem;font-weight:600;padding:14px 28px;border-radius:100px;border:none;cursor:pointer;transition:all .2s;white-space:nowrap}
+.btn-primary{background:var(--indigo-600);color:var(--white)}.btn-primary:hover{background:var(--indigo-700);transform:translateY(-1px)}.btn-sm{padding:10px 20px;font-size:.875rem}
+.btn-ghost{background:transparent;color:var(--indigo-600);border:2px solid var(--indigo-100);padding:12px 24px}
+.header{position:fixed;top:0;left:0;width:100%;z-index:1000;background:rgba(255,255,255,.92);backdrop-filter:blur(16px);box-shadow:0 1px 3px rgba(0,0,0,.06);border-bottom:1px solid rgba(0,0,0,.04)}
+.header-inner{display:flex;align-items:center;justify-content:space-between;height:72px}.logo{font-size:1.25rem;font-weight:700;color:var(--slate-900)}.logo-ai{color:var(--indigo-600)}
+.nav{display:flex;align-items:center;gap:32px}.nav a{font-size:.875rem;font-weight:500;color:var(--slate-600)}.nav-cta{margin-left:8px}
+.mobile-toggle{display:none;background:none;border:none;cursor:pointer;padding:8px}.mobile-toggle span{display:block;width:22px;height:2px;background:var(--slate-900);margin:5px 0}
+.blog-hero{padding:140px 0 60px;background:linear-gradient(135deg,var(--slate-900),var(--indigo-950));color:var(--white)}
+.blog-hero-label{display:inline-flex;font-size:.8125rem;font-weight:600;color:var(--emerald-500);background:rgba(16,185,129,.12);padding:6px 16px;border-radius:100px;margin-bottom:16px}
+.blog-hero h1{font-size:clamp(1.5rem,3.5vw,2.25rem);font-weight:700;line-height:1.5}
+.blog-hero-meta{display:flex;gap:16px;flex-wrap:wrap;margin-top:16px;font-size:.875rem;color:var(--gray-400)}
+.blog-hero-meta span{display:inline-flex;align-items:center;gap:6px}
+.blog-content{padding:60px 0 80px;max-width:800px;margin:0 auto}
+.blog-content h2{font-size:1.5rem;font-weight:700;margin:48px 0 20px;padding-bottom:12px;border-bottom:2px solid var(--indigo-100)}
+.blog-content h3{font-size:1.2rem;font-weight:600;margin:32px 0 12px}
+.blog-content p{margin-bottom:20px;color:var(--slate-700);line-height:1.9}
+.blog-content ul{margin-bottom:20px}.blog-content li{padding:6px 0 6px 24px;position:relative;color:var(--slate-700)}.blog-content li::before{content:'';position:absolute;left:8px;top:16px;width:6px;height:6px;border-radius:50%;background:var(--indigo-500)}
+.blog-content code{font-family:'JetBrains Mono',monospace;font-size:.875em;background:var(--gray-100);padding:2px 8px;border-radius:6px;color:var(--indigo-600)}
+.blog-content pre{background:var(--slate-900);color:var(--gray-200);padding:24px;border-radius:var(--radius);overflow-x:auto;margin:20px 0;font-family:'JetBrains Mono',monospace;font-size:.875rem;line-height:1.7}
+.blog-content pre code{background:transparent;padding:0;color:inherit}
+.blog-content blockquote{border-left:4px solid var(--indigo-500);padding:16px 24px;margin:24px 0;background:var(--indigo-50);border-radius:0 var(--radius-sm) var(--radius-sm) 0}
+.blog-content blockquote p{color:var(--indigo-900);margin:0;font-weight:500}
+.blog-content strong{color:var(--slate-900)}
+.blog-content table{width:100%;border-collapse:collapse;margin:20px 0;font-size:.9rem}
+.blog-content th,.blog-content td{padding:12px 16px;text-align:left;border-bottom:1px solid var(--gray-200)}
+.blog-content th{background:var(--gray-50);font-weight:600;font-size:.85rem}
+.status{display:inline-flex;padding:2px 10px;border-radius:100px;font-size:.75rem;font-weight:600}
+.status-ok{background:var(--emerald-50);color:var(--emerald-600)}
+.blog-footer{padding:40px 0;background:var(--gray-50);border-top:1px solid var(--gray-200);text-align:center}
+.blog-footer-nav{display:flex;justify-content:center;gap:24px;flex-wrap:wrap;margin-bottom:16px}
+.blog-footer-nav a{color:var(--slate-600);font-size:.875rem}.blog-footer p{color:var(--gray-500);font-size:.8125rem}
+@media(max-width:768px){.nav{display:none}.mobile-toggle{display:block}.blog-hero h1{font-size:1.4rem}.blog-content{padding:40px 24px 60px}}
+</style>
+</head>
+<body>
+<header class="header"><div class="container header-inner">
+<a href="/" class="logo">ミセバン<span class="logo-ai">AI</span></a>
+<nav class="nav"><a href="/">ホーム</a><a href="/blog/">ブログ</a><a href="/docs.html">ドキュメント</a><a href="/dashboard/" class="btn btn-primary btn-sm nav-cta">無料で始める</a></nav>
+<button class="mobile-toggle" id="mobileToggle" aria-label="メニュー"><span></span><span></span><span></span></button>
+</div></header>
+
+<section class="blog-hero"><div class="container">
+<span class="blog-hero-label">Sprint Cycle 18</span>
+<h1>Fly Postgres + 自前認証 + APIデプロイ</h1>
+<div class="blog-hero-meta">
+<span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> 2026-02-24</span>
+<span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> 5 min read</span>
+</div>
+</div></section>
+
+<article class="blog-content container">
+
+<h2>概要</h2>
+<p>Sprint Cycle 18では、Supabase依存からの脱却を完遂しました。Fly Postgres（PostgreSQL 17.7）をNRTリージョンにセットアップし、<code>auth.users</code>やRLSポリシーを除去して自前の<code>users</code>テーブルを作成。JWT自前発行とbcryptパスワード認証を実装し、signup/loginエンドポイントを新設しました。ApiError enumの拡張と3つの認証テストを追加し、全18テスト合格。最終的にAPI本番環境を<code>miseban-ai-api.fly.dev</code>にデプロイ完了しました。</p>
+
+<table>
+<thead><tr><th>対応内容</th><th>状態</th></tr></thead>
+<tbody>
+<tr><td>Fly Postgres (PostgreSQL 17.7) NRTリージョンセットアップ</td><td><span class="status status-ok">完了</span></td></tr>
+<tr><td>独自スキーマ移行: auth.users/RLS除去、自前usersテーブル作成</td><td><span class="status status-ok">完了</span></td></tr>
+<tr><td>JWT自前発行 + bcryptパスワード認証 (signup/login)</td><td><span class="status status-ok">完了</span></td></tr>
+<tr><td>ApiError enum拡張 + 認証テスト3件追加 (18テスト全合格)</td><td><span class="status status-ok">完了</span></td></tr>
+<tr><td>API本番デプロイ: miseban-ai-api.fly.dev</td><td><span class="status status-ok">完了</span></td></tr>
+</tbody>
+</table>
+
+<h2>1. Fly Postgres (PostgreSQL 17.7) NRTリージョンセットアップ</h2>
+<p>これまでSupabaseのマネージドPostgreSQLに依存していましたが、今回のスプリントでFly.io上に自前のPostgresクラスタを構築しました。</p>
+
+<ul>
+<li><strong>PostgreSQL 17.7</strong>: 最新の安定バージョンを採用</li>
+<li><strong>NRTリージョン</strong>: 東京リージョンに配置し、APIサーバーと同一リージョンでレイテンシを最小化</li>
+<li><strong>Supabase依存の脱却</strong>: 外部サービスへの依存を排除し、インフラ全体をFly.ioに統一</li>
+</ul>
+
+<p>Fly Postgresはアプリと同一プラットフォーム上で動作するため、ネットワークホップが最小限に抑えられます。これにより、DB接続のレイテンシが大幅に改善されました。また、Supabaseの無料枠制限やRLSの複雑さから解放され、シンプルなアーキテクチャを実現しています。</p>
+
+<h2>2. 独自スキーマ移行</h2>
+<p>Supabase固有の<code>auth.users</code>テーブルやRLS（Row Level Security）ポリシーを完全に除去し、自前のスキーマに移行しました。</p>
+
+<pre><code>-- Supabase依存を除去した新しいusersテーブル
+CREATE TABLE users (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    email TEXT UNIQUE NOT NULL,
+    password_hash TEXT NOT NULL,
+    store_name TEXT,
+    tier TEXT NOT NULL DEFAULT 'free',
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);</code></pre>
+
+<p>Supabaseの<code>auth.users</code>スキーマは多くの隠れた依存関係（トリガー、関数、RLSポリシー）を持っており、デバッグやマイグレーションの障害になっていました。自前テーブルに移行したことで、スキーマの全体像が明確になり、マイグレーションの管理も容易になっています。</p>
+
+<h3>RLSポリシーの除去</h3>
+<p>Supabase環境ではRLSポリシーによるアクセス制御を行っていましたが、APIサーバーがDB接続を一元管理する構成では不要です。RLSを除去し、アクセス制御はAPIレイヤーのミドルウェアで一括管理する方針に切り替えました。これにより「RLSが204を返すが実際には書き込まれていない」というサイレント失敗の問題も根本的に解消されます。</p>
+
+<h2>3. JWT自前発行 + bcryptパスワード認証</h2>
+<p>Supabase Authに代わる認証基盤として、JWT自前発行とbcryptパスワードハッシュを実装しました。</p>
+
+<pre><code>// POST /api/v1/auth/signup
+async fn signup(Json(req): Json&lt;SignupRequest&gt;) -&gt; Result&lt;Json&lt;AuthResponse&gt;, ApiError&gt; {
+    let password_hash = bcrypt::hash(&amp;req.password, 12)?;
+    let user = sqlx::query_as!(User, /* INSERT INTO users ... */)
+        .fetch_one(&amp;pool).await?;
+    let token = encode_jwt(&amp;user.id, &amp;jwt_secret)?;
+    Ok(Json(AuthResponse { token, user }))
+}
+
+// POST /api/v1/auth/login
+async fn login(Json(req): Json&lt;LoginRequest&gt;) -&gt; Result&lt;Json&lt;AuthResponse&gt;, ApiError&gt; {
+    let user = find_user_by_email(&amp;req.email).await?;
+    bcrypt::verify(&amp;req.password, &amp;user.password_hash)?;
+    let token = encode_jwt(&amp;user.id, &amp;jwt_secret)?;
+    Ok(Json(AuthResponse { token, user }))
+}</code></pre>
+
+<ul>
+<li><strong>bcrypt (cost=12)</strong>: パスワードハッシュに業界標準のbcryptを採用。コストファクター12で十分なセキュリティを確保</li>
+<li><strong>JWT発行</strong>: ログイン成功時にJWTトークンを発行。既存の認証ミドルウェアとシームレスに統合</li>
+<li><strong>signup/loginエンドポイント</strong>: <code>/api/v1/auth/signup</code>と<code>/api/v1/auth/login</code>の2つのエンドポイントを新設</li>
+</ul>
+
+<p>Supabase Authへの外部HTTPコールが不要になったため、認証フローのレイテンシが改善されました。また、トークンの有効期限やクレーム構造を完全に制御できるようになっています。</p>
+
+<h2>4. ApiError enum拡張 + 認証テスト追加</h2>
+<p>認証機能の実装に伴い、エラーハンドリングを強化しました。</p>
+
+<pre><code>#[derive(Debug)]
+enum ApiError {
+    Internal(String),
+    NotFound(String),
+    Unauthorized(String),  // NEW
+    BadRequest(String),    // NEW
+    // ...
+}</code></pre>
+
+<h3>新規テスト3件</h3>
+<p>認証フローをカバーする3つのテストを追加し、テスト合計を18件に引き上げました。</p>
+
+<ul>
+<li><strong>signup_creates_user_and_returns_token</strong>: signupエンドポイントがユーザーを作成し、有効なJWTトークンを返すことを検証</li>
+<li><strong>login_with_valid_credentials_returns_token</strong>: 正しいメールアドレスとパスワードでログインした場合にトークンが返ることを検証</li>
+<li><strong>login_with_invalid_password_returns_401</strong>: 不正なパスワードでログインした場合に<code>401 Unauthorized</code>を返すことを検証</li>
+</ul>
+
+<p>これらのテストにより、認証フローの正常系と異常系の両方がカバーされています。既存の15テストへの影響はなく、全18テストが合格しています。</p>
+
+<h2>5. API本番デプロイ</h2>
+<p>全ての変更をまとめて<code>miseban-ai-api.fly.dev</code>に本番デプロイを完了しました。</p>
+
+<ul>
+<li><strong>Fly Postgres接続</strong>: 内部ネットワーク経由でDB接続（<code>.flycast</code>アドレス）</li>
+<li><strong>環境変数</strong>: <code>DATABASE_URL</code>、<code>JWT_SECRET</code>をFly.ioシークレットとして設定</li>
+<li><strong>ヘルスチェック</strong>: <code>/health</code>エンドポイントでDB接続状態を含めた稼働確認</li>
+</ul>
+
+<p>APIサーバー、データベース、ランディングページが全てFly.ioプラットフォーム上に統一されたことで、運用管理がシンプルになりました。</p>
+
+<h2>テスト結果</h2>
+<p>全<strong>18テスト合格</strong>、<code>cargo check</code>警告ゼロ。既存テストへの影響はありません。</p>
+
+<table>
+<thead><tr><th>指標</th><th>Before</th><th>After</th></tr></thead>
+<tbody>
+<tr><td>テスト合格数</td><td>15/15</td><td><strong>18/18</strong></td></tr>
+<tr><td>cargo check警告</td><td>0</td><td><strong>0</strong></td></tr>
+<tr><td>新規エンドポイント</td><td>-</td><td>2件（signup/login）</td></tr>
+<tr><td>DB基盤</td><td>Supabase PostgreSQL</td><td><strong>Fly Postgres (PG 17.7)</strong></td></tr>
+<tr><td>認証基盤</td><td>Supabase Auth</td><td><strong>自前JWT + bcrypt</strong></td></tr>
+<tr><td>本番URL</td><td>-</td><td><strong>miseban-ai-api.fly.dev</strong></td></tr>
+</tbody>
+</table>
+
+<blockquote><p>Supabase依存を完全に脱却し、Fly Postgres + 自前認証による自立したインフラ構成を実現しました。DB、認証、APIサーバーの全てがFly.ioプラットフォーム上に統一され、運用の簡素化とレイテンシ改善を達成。18テスト全合格で品質を担保しつつ、本番デプロイも完了しています。</p></blockquote>
+
+<div style="text-align:center;margin:48px 0">
+<a href="/blog/" class="btn btn-ghost btn-sm">&larr; ブログ一覧に戻る</a>
+<a href="/dashboard/" class="btn btn-primary btn-sm" style="margin-left:12px">無料で始める &rarr;</a>
+</div>
+</article>
+
+<footer class="blog-footer"><div class="container">
+<div class="blog-footer-nav"><a href="/">ホーム</a><a href="/blog/">ブログ</a><a href="/docs.html">ドキュメント</a><a href="/privacy.html">プライバシー</a><a href="/terms.html">利用規約</a></div>
+<p>&copy; 2026 ミセバンAI. All rights reserved.</p>
+</div></footer>
+</body>
+</html>

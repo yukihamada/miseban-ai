@@ -51,6 +51,60 @@ pub async fn create_pool(database_url: &str) -> Result<PgPool, sqlx::Error> {
 // Queries
 // ---------------------------------------------------------------------------
 
+// ---------------------------------------------------------------------------
+// User queries
+// ---------------------------------------------------------------------------
+
+#[derive(Debug, FromRow)]
+#[allow(dead_code)]
+pub struct UserRow {
+    pub id: Uuid,
+    pub email: String,
+    pub password_hash: String,
+}
+
+/// Find a user by email.
+pub async fn find_user_by_email(pool: &PgPool, email: &str) -> Option<UserRow> {
+    sqlx::query_as::<_, UserRow>(
+        "SELECT id, email, password_hash FROM users WHERE email = $1 LIMIT 1",
+    )
+    .bind(email)
+    .fetch_optional(pool)
+    .await
+    .ok()
+    .flatten()
+}
+
+/// Create a new user and return their ID.
+pub async fn create_user(pool: &PgPool, email: &str, password_hash: &str) -> Result<Uuid, sqlx::Error> {
+    let row: (Uuid,) = sqlx::query_as(
+        "INSERT INTO users (email, password_hash) VALUES ($1, $2) RETURNING id",
+    )
+    .bind(email)
+    .bind(password_hash)
+    .fetch_one(pool)
+    .await?;
+
+    Ok(row.0)
+}
+
+/// Create a default store for a new user.
+pub async fn create_default_store(pool: &PgPool, owner_id: &Uuid, store_name: &str) -> Result<Uuid, sqlx::Error> {
+    let row: (Uuid,) = sqlx::query_as(
+        "INSERT INTO stores (owner_id, name) VALUES ($1, $2) RETURNING id",
+    )
+    .bind(owner_id)
+    .bind(store_name)
+    .fetch_one(pool)
+    .await?;
+
+    Ok(row.0)
+}
+
+// ---------------------------------------------------------------------------
+// Store queries
+// ---------------------------------------------------------------------------
+
 /// Fetch the first store owned by the given user.
 pub async fn get_store_by_owner(pool: &PgPool, owner_id: &Uuid) -> Option<StoreRow> {
     sqlx::query_as::<_, StoreRow>(

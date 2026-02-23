@@ -5,8 +5,8 @@ use axum::{
     response::{IntoResponse, Response},
     Json,
 };
-use jsonwebtoken::{decode, DecodingKey, Validation};
-use serde::Deserialize;
+use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, Validation};
+use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 // ---------------------------------------------------------------------------
@@ -20,10 +20,44 @@ pub struct JwtSecret(pub String);
 // JWT claims
 // ---------------------------------------------------------------------------
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 struct Claims {
     sub: String,
-    // Supabase JWTs also contain role, aud, exp, etc. We only need `sub`.
+    exp: usize,
+}
+
+// ---------------------------------------------------------------------------
+// JWT token generation
+// ---------------------------------------------------------------------------
+
+/// Issue a JWT token for a given user ID. Expires in 7 days.
+pub fn issue_token(user_id: &Uuid, secret: &str) -> Result<String, String> {
+    let expiration = chrono::Utc::now()
+        .checked_add_signed(chrono::Duration::days(7))
+        .expect("valid timestamp")
+        .timestamp() as usize;
+
+    let claims = Claims {
+        sub: user_id.to_string(),
+        exp: expiration,
+    };
+
+    encode(
+        &Header::default(),
+        &claims,
+        &EncodingKey::from_secret(secret.as_bytes()),
+    )
+    .map_err(|e| e.to_string())
+}
+
+/// Hash a password using bcrypt.
+pub fn hash_password(password: &str) -> Result<String, String> {
+    bcrypt::hash(password, bcrypt::DEFAULT_COST).map_err(|e| e.to_string())
+}
+
+/// Verify a password against a bcrypt hash.
+pub fn verify_password(password: &str, hash: &str) -> bool {
+    bcrypt::verify(password, hash).unwrap_or(false)
 }
 
 // ---------------------------------------------------------------------------
@@ -31,11 +65,6 @@ struct Claims {
 // ---------------------------------------------------------------------------
 
 /// Extractor that validates a Bearer JWT and yields the authenticated user's UUID.
-///
-/// Usage in handlers:
-/// ```ignore
-/// async fn my_handler(AuthUser(user_id): AuthUser) -> impl IntoResponse { ... }
-/// ```
 #[derive(Debug, Clone)]
 pub struct AuthUser(pub Uuid);
 
@@ -93,7 +122,6 @@ where
 
         // Decode and validate JWT.
         let mut validation = Validation::new(jsonwebtoken::Algorithm::HS256);
-        // Supabase JWTs use "authenticated" as audience; accept any for flexibility.
         validation.validate_aud = false;
 
         let token_data = decode::<Claims>(
