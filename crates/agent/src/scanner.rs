@@ -26,6 +26,7 @@ const RTSP_PORTS: &[u16] = &[554, 8554, 8080];
 const HTTP_PORTS: &[u16] = &[80, 8080, 8000, 8888];
 
 /// Common RTSP path patterns for popular camera brands.
+#[allow(dead_code)] // Intended for future use: RTSP stream validation
 const RTSP_PATHS: &[&str] = &[
     "/stream1",
     "/h264Preview_01_main",
@@ -176,6 +177,7 @@ async fn scan_single_host(ip: Ipv4Addr) -> Vec<DiscoveredCamera> {
 }
 
 /// Quick scan: just check if any camera-like ports are open (fast pre-check).
+#[allow(dead_code)] // Intended for future use: setup wizard pre-check
 pub async fn quick_check() -> bool {
     let local_ip = match get_local_subnet() {
         Some(ip) => ip,

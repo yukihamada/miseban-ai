@@ -882,6 +882,62 @@ async fn health_check() -> Json<HealthResponse> {
 }
 
 // ---------------------------------------------------------------------------
+// Router builder (extracted for testability)
+// ---------------------------------------------------------------------------
+
+/// Build the application router with all routes and middleware.
+///
+/// Separated from `main` so integration tests can construct the same router
+/// without starting a TCP listener or reading environment variables.
+fn build_router(state: AppState) -> Router {
+    // CORS: allow the deployed frontend and localhost for development.
+    let cors = CorsLayer::new()
+        .allow_origin([
+            "https://miseban-ai.fly.dev"
+                .parse::<HeaderValue>()
+                .expect("valid origin"),
+            "http://localhost:3001"
+                .parse::<HeaderValue>()
+                .expect("valid origin"),
+        ])
+        .allow_methods([
+            Method::GET,
+            Method::POST,
+            Method::PUT,
+            Method::PATCH,
+            Method::DELETE,
+            Method::OPTIONS,
+        ])
+        .allow_headers([header::AUTHORIZATION, header::CONTENT_TYPE]);
+
+    Router::new()
+        // Authenticated routes
+        .route("/api/v1/frames", post(receive_frame))
+        .route("/api/v1/stores/me/stats", get(get_my_store_stats))
+        .route("/api/v1/stores/me/daily", get(get_my_daily_report))
+        .route("/api/v1/stores/me/cameras", get(get_my_cameras))
+        .route("/api/v1/stores/me/usage", get(get_my_usage))
+        .route("/api/v1/stores/me/export/csv", get(export_csv))
+        .route("/api/v1/stores/me/alerts", get(get_my_alerts))
+        .route("/api/v1/stores/me/alerts/count", get(get_my_alert_count))
+        .route("/api/v1/alerts/:alert_id/read", patch(mark_alert_read))
+        .route("/api/v1/alerts/read-all", post(mark_all_alerts_read))
+        .route("/api/v1/stores/:store_id/stats", get(get_store_stats))
+        .route("/api/v1/stores/:store_id/daily", get(get_daily_report))
+        // Billing routes (auth required)
+        .route("/api/v1/billing/checkout", post(create_checkout))
+        .route("/api/v1/billing/portal", post(create_portal))
+        .route("/api/v1/billing/subscription", get(get_subscription))
+        // Public routes
+        .route("/api/v1/health", get(health_check))
+        .route("/api/v1/pricing", get(get_pricing))
+        .route("/api/v1/webhooks/line", post(line_webhook))
+        .route("/api/v1/webhooks/stripe", post(stripe_webhook))
+        .layer(cors)
+        .with_state(state)
+}
+
+// ---------------------------------------------------------------------------
 // Main
 // ---------------------------------------------------------------------------
 
@@ -950,51 +1006,7 @@ async fn main() {
         stripe_client,
     };
 
-    // CORS: allow the deployed frontend and localhost for development.
-    let cors = CorsLayer::new()
-        .allow_origin([
-            "https://miseban-ai.fly.dev"
-                .parse::<HeaderValue>()
-                .expect("valid origin"),
-            "http://localhost:3001"
-                .parse::<HeaderValue>()
-                .expect("valid origin"),
-        ])
-        .allow_methods([
-            Method::GET,
-            Method::POST,
-            Method::PUT,
-            Method::PATCH,
-            Method::DELETE,
-            Method::OPTIONS,
-        ])
-        .allow_headers([header::AUTHORIZATION, header::CONTENT_TYPE]);
-
-    let app = Router::new()
-        // Authenticated routes
-        .route("/api/v1/frames", post(receive_frame))
-        .route("/api/v1/stores/me/stats", get(get_my_store_stats))
-        .route("/api/v1/stores/me/daily", get(get_my_daily_report))
-        .route("/api/v1/stores/me/cameras", get(get_my_cameras))
-        .route("/api/v1/stores/me/usage", get(get_my_usage))
-        .route("/api/v1/stores/me/export/csv", get(export_csv))
-        .route("/api/v1/stores/me/alerts", get(get_my_alerts))
-        .route("/api/v1/stores/me/alerts/count", get(get_my_alert_count))
-        .route("/api/v1/alerts/:alert_id/read", patch(mark_alert_read))
-        .route("/api/v1/alerts/read-all", post(mark_all_alerts_read))
-        .route("/api/v1/stores/:store_id/stats", get(get_store_stats))
-        .route("/api/v1/stores/:store_id/daily", get(get_daily_report))
-        // Billing routes (auth required)
-        .route("/api/v1/billing/checkout", post(create_checkout))
-        .route("/api/v1/billing/portal", post(create_portal))
-        .route("/api/v1/billing/subscription", get(get_subscription))
-        // Public routes
-        .route("/api/v1/health", get(health_check))
-        .route("/api/v1/pricing", get(get_pricing))
-        .route("/api/v1/webhooks/line", post(line_webhook))
-        .route("/api/v1/webhooks/stripe", post(stripe_webhook))
-        .layer(cors)
-        .with_state(state);
+    let app = build_router(state);
 
     let addr = SocketAddr::from(([0, 0, 0, 0], port));
     info!("MisebanAI API server listening on {}", addr);
@@ -1006,4 +1018,136 @@ async fn main() {
     axum::serve(listener, app)
         .await
         .expect("Server error");
+}
+
+// ---------------------------------------------------------------------------
+// Integration tests
+// ---------------------------------------------------------------------------
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use axum::http::{Request, StatusCode};
+    use http_body_util::BodyExt;
+    use tower::ServiceExt; // for oneshot
+
+    /// Build a test router backed by a lazy (non-connecting) PgPool.
+    ///
+    /// Public endpoints (health, pricing) never touch the database, so a lazy
+    /// pool is sufficient.  Authenticated endpoints that require a DB will
+    /// fail at the auth layer before any query is executed.
+    fn test_app() -> Router {
+        let pool = sqlx::postgres::PgPoolOptions::new()
+            .connect_lazy("postgres://localhost/miseban_test_fake")
+            .expect("Failed to create lazy pool");
+
+        let state = AppState {
+            pool,
+            jwt_secret: JwtSecret("test-secret-for-integration-tests".to_string()),
+            line_client: OptionalLineClient(None),
+            stripe_client: OptionalStripeClient(None),
+        };
+
+        build_router(state)
+    }
+
+    #[tokio::test]
+    async fn health_check_returns_200() {
+        let app = test_app();
+
+        let request = Request::builder()
+            .uri("/api/v1/health")
+            .method("GET")
+            .body(axum::body::Body::empty())
+            .unwrap();
+
+        let response = app.oneshot(request).await.unwrap();
+
+        assert_eq!(response.status(), StatusCode::OK);
+
+        let body_bytes = response.into_body().collect().await.unwrap().to_bytes();
+        let body: serde_json::Value = serde_json::from_slice(&body_bytes).unwrap();
+
+        assert_eq!(body["status"], "ok");
+        assert!(
+            body["version"].is_string(),
+            "version field should be a string"
+        );
+    }
+
+    #[tokio::test]
+    async fn pricing_returns_valid_json_with_tiers() {
+        let app = test_app();
+
+        let request = Request::builder()
+            .uri("/api/v1/pricing")
+            .method("GET")
+            .body(axum::body::Body::empty())
+            .unwrap();
+
+        let response = app.oneshot(request).await.unwrap();
+
+        assert_eq!(response.status(), StatusCode::OK);
+
+        let body_bytes = response.into_body().collect().await.unwrap().to_bytes();
+        let plans: Vec<serde_json::Value> = serde_json::from_slice(&body_bytes).unwrap();
+
+        // The pricing endpoint should return at least 3 pricing tiers.
+        assert!(
+            plans.len() >= 3,
+            "Expected at least 3 pricing tiers, got {}",
+            plans.len()
+        );
+
+        // Verify each plan has the expected fields.
+        for plan in &plans {
+            assert!(plan["tier"].is_string(), "plan should have a tier field");
+            assert!(plan["name"].is_string(), "plan should have a name field");
+            assert!(
+                plan["price_monthly"].is_number(),
+                "plan should have a price_monthly field"
+            );
+            assert!(
+                plan["features"].is_array(),
+                "plan should have a features array"
+            );
+        }
+
+        // Verify known tier names are present.
+        let tier_names: Vec<&str> = plans
+            .iter()
+            .filter_map(|p| p["tier"].as_str())
+            .collect();
+        assert!(tier_names.contains(&"free"), "should contain free tier");
+        assert!(
+            tier_names.contains(&"starter"),
+            "should contain starter tier"
+        );
+        assert!(tier_names.contains(&"pro"), "should contain pro tier");
+    }
+
+    #[tokio::test]
+    async fn frames_without_auth_returns_401() {
+        let app = test_app();
+
+        // POST to /api/v1/frames with a valid JSON body but no Authorization header.
+        let request = Request::builder()
+            .uri("/api/v1/frames")
+            .method("POST")
+            .header("content-type", "application/json")
+            .body(axum::body::Body::from("{}"))
+            .unwrap();
+
+        let response = app.oneshot(request).await.unwrap();
+
+        assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
+
+        let body_bytes = response.into_body().collect().await.unwrap().to_bytes();
+        let body: serde_json::Value = serde_json::from_slice(&body_bytes).unwrap();
+
+        assert!(
+            body["error"].is_string(),
+            "Unauthorized response should contain an error message"
+        );
+    }
 }
