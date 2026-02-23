@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>リリース前会議 — ベータ公開に向けた課題整理と優先順位決定｜ミセバンAI Blog</title>
+<meta name="description" content="ミセバンAI全コンポーネントのリリース準備状況を棚卸し。API19エンドポイント、Stripe課金、YOLOv8推論、Supabaseスキーマの完成度とP0/P1課題を整理。CTAボタンの視認性も改善。">
+<meta name="keywords" content="リリース会議,ベータ公開,ミセバンAI,Stripe,YOLOv8,Supabase,CTA改善">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://misebanai.com/blog/024-release-meeting.html">
+<!-- OGP -->
+<meta property="og:title" content="リリース前会議 — ベータ公開に向けた課題整理と優先順位決定｜ミセバンAI Blog">
+<meta property="og:description" content="ミセバンAI全コンポーネントのリリース準備状況を棚卸し。P0/P1課題を整理してベータ公開ロードマップを策定。">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://misebanai.com/blog/024-release-meeting.html">
+<meta property="og:image" content="https://misebanai.com/ogp.png">
+<meta property="og:site_name" content="ミセバンAI">
+<meta property="og:locale" content="ja_JP">
+<meta property="article:published_time" content="2026-02-23">
+<meta property="article:author" content="ミセバンAI チーム">
+<meta property="article:tag" content="リリース">
+<meta property="article:tag" content="会議">
+<meta property="article:tag" content="ロードマップ">
+<!-- Twitter Card -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="リリース前会議 — ベータ公開に向けた課題整理と優先順位決定">
+<meta name="twitter:description" content="ミセバンAI全コンポーネントのリリース準備状況を棚卸し。P0/P1課題を整理してベータ公開ロードマップを策定。">
+<meta name="twitter:image" content="https://misebanai.com/ogp.png">
+<!-- Favicon -->
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%234f46e5'/><text x='50%25' y='54%25' dominant-baseline='middle' text-anchor='middle' fill='white' font-size='18' font-weight='bold' font-family='sans-serif'>M</text></svg>">
+<!-- Google Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--white:#fff;--gray-50:#f8fafc;--gray-100:#f1f5f9;--gray-200:#e2e8f0;--gray-300:#cbd5e1;--gray-400:#94a3b8;--gray-500:#64748b;--slate-600:#475569;--slate-700:#334155;--slate-800:#1e293b;--slate-900:#0f172a;--indigo-50:#eef2ff;--indigo-100:#e0e7ff;--indigo-500:#6366f1;--indigo-600:#4f46e5;--indigo-700:#4338ca;--indigo-900:#312e81;--indigo-950:#1e1b4b;--emerald-50:#ecfdf5;--emerald-500:#10b981;--emerald-600:#059669;--amber-50:#fffbeb;--amber-500:#f59e0b;--amber-600:#d97706;--rose-50:#fff1f2;--rose-500:#f43f5e;--rose-600:#e11d48;--sky-50:#f0f9ff;--sky-500:#0ea5e9;--purple-50:#faf5ff;--purple-600:#9333ea;--teal-50:#f0fdfa;--teal-500:#14b8a6;--radius-sm:8px;--radius:12px;--radius-lg:16px;--radius-xl:24px;--shadow-md:0 4px 6px -1px rgba(0,0,0,.1),0 2px 4px -2px rgba(0,0,0,.1)}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+body{font-family:'Noto Sans JP','Inter',system-ui,-apple-system,sans-serif;color:var(--slate-900);background:var(--white);line-height:1.8;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+img{max-width:100%;height:auto;display:block}a{text-decoration:none;color:inherit;transition:color .2s}ul,ol{list-style:none}
+.container{max-width:1200px;margin:0 auto;padding:0 24px}.nums{font-family:'Inter','Noto Sans JP',sans-serif}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;font-family:inherit;font-size:.9375rem;font-weight:600;padding:14px 28px;border-radius:100px;border:none;cursor:pointer;transition:all .2s ease;white-space:nowrap;line-height:1.4}
+.btn-primary{background:var(--indigo-600);color:var(--white);box-shadow:0 1px 2px rgba(79,70,229,.3),0 4px 12px rgba(79,70,229,.2)}.btn-primary:hover{background:var(--indigo-700);transform:translateY(-1px)}.btn-sm{padding:10px 20px;font-size:.875rem}
+.btn-ghost{background:transparent;color:var(--indigo-600);border:2px solid var(--indigo-200);padding:12px 24px}.btn-ghost:hover{background:var(--indigo-50);border-color:var(--indigo-400)}
+.header{position:fixed;top:0;left:0;width:100%;z-index:1000;background:rgba(255,255,255,.92);backdrop-filter:blur(16px) saturate(180%);-webkit-backdrop-filter:blur(16px) saturate(180%);box-shadow:0 1px 3px rgba(0,0,0,.06);border-bottom:1px solid rgba(0,0,0,.04)}
+.header-inner{display:flex;align-items:center;justify-content:space-between;height:72px}.logo{display:flex;align-items:center;gap:2px;font-size:1.25rem;font-weight:700;color:var(--slate-900)}.logo-ai{color:var(--indigo-600);font-weight:700}
+.nav{display:flex;align-items:center;gap:32px}.nav a{font-size:.875rem;font-weight:500;color:var(--slate-600);transition:color .2s}.nav a:hover{color:var(--slate-900)}.nav-cta{margin-left:8px}
+.mobile-toggle{display:none;background:none;border:none;cursor:pointer;padding:8px}.mobile-toggle span{display:block;width:22px;height:2px;background:var(--slate-900);margin:5px 0;border-radius:1px;transition:.3s}
+.mobile-menu{display:none;position:fixed;inset:0;background:var(--white);z-index:999;flex-direction:column;align-items:center;justify-content:center;gap:28px}.mobile-menu.open{display:flex}.mobile-menu a{font-size:1.125rem;color:var(--slate-900);font-weight:500}
+.mobile-close{position:absolute;top:24px;right:24px;background:none;border:none;cursor:pointer;padding:8px;color:var(--slate-600)}
+
+/* Blog styles */
+.blog-hero{padding:140px 0 60px;background:linear-gradient(135deg,var(--slate-900) 0%,var(--indigo-950) 100%);color:var(--white)}
+.blog-hero-label{display:inline-flex;align-items:center;gap:6px;font-size:.8125rem;font-weight:600;letter-spacing:.02em;color:var(--emerald-500);background:rgba(16,185,129,.12);padding:6px 16px;border-radius:100px;margin-bottom:16px}
+.blog-hero h1{font-size:clamp(1.5rem,3.5vw,2.25rem);font-weight:700;line-height:1.5;margin-bottom:16px}
+.blog-hero-meta{display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-top:16px;font-size:.875rem;color:var(--gray-400)}
+.blog-hero-meta span{display:inline-flex;align-items:center;gap:6px}
+.blog-content{padding:60px 0 80px;max-width:800px;margin:0 auto}
+.blog-content h2{font-size:1.5rem;font-weight:700;margin:48px 0 20px;padding-bottom:12px;border-bottom:2px solid var(--indigo-100);color:var(--slate-900)}
+.blog-content h3{font-size:1.2rem;font-weight:600;margin:32px 0 12px;color:var(--slate-800)}
+.blog-content p{margin-bottom:20px;color:var(--slate-700);line-height:1.9}
+.blog-content ul,.blog-content ol{margin-bottom:20px;padding-left:0}
+.blog-content li{padding:6px 0 6px 24px;position:relative;color:var(--slate-700)}
+.blog-content li::before{content:'';position:absolute;left:8px;top:16px;width:6px;height:6px;border-radius:50%;background:var(--indigo-500)}
+.blog-content ol{counter-reset:ol-counter}
+.blog-content ol li{counter-increment:ol-counter}
+.blog-content ol li::before{content:counter(ol-counter);background:var(--indigo-600);color:var(--white);width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:700;top:10px;left:0}
+.blog-content code{font-family:'JetBrains Mono',monospace;font-size:.875em;background:var(--gray-100);padding:2px 8px;border-radius:6px;color:var(--indigo-600)}
+.blog-content pre{background:var(--slate-900);color:var(--gray-200);padding:24px;border-radius:var(--radius);overflow-x:auto;margin:20px 0;font-family:'JetBrains Mono',monospace;font-size:.875rem;line-height:1.7}
+.blog-content pre code{background:transparent;padding:0;color:inherit}
+.blog-content blockquote{border-left:4px solid var(--indigo-500);padding:16px 24px;margin:24px 0;background:var(--indigo-50);border-radius:0 var(--radius-sm) var(--radius-sm) 0}
+.blog-content blockquote p{color:var(--indigo-900);margin:0;font-weight:500}
+.blog-content a{color:var(--indigo-600);text-decoration:underline;text-underline-offset:2px}
+.blog-content a:hover{color:var(--indigo-700)}
+.blog-content strong{font-weight:700;color:var(--slate-900)}
+.blog-content img{border-radius:var(--radius);margin:24px 0;box-shadow:var(--shadow-md)}
+
+/* Tables */
+.blog-content table{width:100%;border-collapse:collapse;margin:20px 0;font-size:.9rem}
+.blog-content th,.blog-content td{padding:12px 16px;text-align:left;border-bottom:1px solid var(--gray-200)}
+.blog-content th{background:var(--gray-50);font-weight:600;color:var(--slate-800);font-size:.85rem}
+.blog-content tr:hover{background:var(--gray-50)}
+
+/* Status badges */
+.status{display:inline-flex;align-items:center;gap:4px;padding:2px 10px;border-radius:100px;font-size:.75rem;font-weight:600}
+.status-ok{background:var(--emerald-50);color:var(--emerald-600)}
+.status-warn{background:var(--amber-50);color:var(--amber-600)}
+.status-ng{background:var(--rose-50);color:var(--rose-600)}
+.status-info{background:var(--sky-50);color:var(--sky-500)}
+
+/* Priority badges */
+.priority{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:100px;font-size:.75rem;font-weight:700}
+.p0{background:var(--rose-50);color:var(--rose-600)}
+.p1{background:var(--amber-50);color:var(--amber-600)}
+.p2{background:var(--sky-50);color:var(--sky-500)}
+
+/* Checklist */
+.checklist{margin:20px 0}
+.checklist li{padding:8px 0 8px 32px;position:relative}
+.checklist li::before{content:'';position:absolute;left:4px;top:12px;width:18px;height:18px;border-radius:4px;border:2px solid var(--gray-300)}
+.checklist li.done::before{background:var(--emerald-500);border-color:var(--emerald-500)}
+.checklist li.done::after{content:'';position:absolute;left:9px;top:15px;width:8px;height:5px;border-left:2px solid var(--white);border-bottom:2px solid var(--white);transform:rotate(-45deg)}
+
+/* Agenda card */
+.agenda-card{background:linear-gradient(135deg,var(--indigo-50),var(--white));border:1px solid var(--indigo-100);border-radius:var(--radius-lg);padding:28px;margin:24px 0}
+.agenda-card h3{margin-top:0;color:var(--indigo-700)}
+
+/* CTA diff */
+.cta-diff{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin:24px 0}
+.cta-diff-card{border-radius:var(--radius);padding:24px;text-align:center}
+.cta-diff-card.before{background:var(--gray-100);border:1px solid var(--gray-200)}
+.cta-diff-card.after{background:linear-gradient(135deg,var(--emerald-50),var(--teal-50));border:1px solid var(--emerald-500)}
+.cta-diff-card .label{font-size:.75rem;font-weight:600;color:var(--gray-500);margin-bottom:12px;text-transform:uppercase;letter-spacing:.05em}
+.cta-diff-card .demo-btn{display:inline-flex;align-items:center;gap:8px;padding:12px 28px;border-radius:100px;font-weight:700;font-size:.9rem;cursor:default}
+.cta-diff-card.before .demo-btn{background:#4f46e5;color:white}
+.cta-diff-card.after .demo-btn{background:linear-gradient(135deg,#10b981,#059669);color:white;box-shadow:0 4px 14px rgba(16,185,129,.4);animation:pulse-demo 2s ease-in-out infinite}
+@keyframes pulse-demo{0%,100%{box-shadow:0 4px 14px rgba(16,185,129,.4),0 0 0 0 rgba(16,185,129,.4)}50%{box-shadow:0 4px 14px rgba(16,185,129,.4),0 0 0 8px rgba(16,185,129,0)}}
+
+/* Roadmap timeline */
+.roadmap{margin:24px 0}
+.roadmap-item{display:flex;gap:20px;padding:16px 0;border-left:3px solid var(--indigo-200);margin-left:12px;padding-left:24px;position:relative}
+.roadmap-item::before{content:'';position:absolute;left:-8px;top:20px;width:13px;height:13px;border-radius:50%;background:var(--indigo-500);border:3px solid var(--white)}
+.roadmap-item.done::before{background:var(--emerald-500)}
+.roadmap-item .rm-label{font-weight:700;min-width:100px;color:var(--indigo-600);font-size:.9rem}
+.roadmap-item .rm-content{flex:1}
+.roadmap-item .rm-content p{margin:0;font-size:.9rem}
+
+/* Footer */
+.blog-footer{padding:40px 0;background:var(--gray-50);border-top:1px solid var(--gray-200);text-align:center}
+.blog-footer-nav{display:flex;justify-content:center;gap:24px;flex-wrap:wrap;margin-bottom:16px}
+.blog-footer-nav a{color:var(--slate-600);font-size:.875rem;font-weight:500}.blog-footer-nav a:hover{color:var(--indigo-600)}
+.blog-footer p{color:var(--gray-500);font-size:.8125rem}
+
+@media(max-width:768px){
+  .nav{display:none}.mobile-toggle{display:block}
+  .blog-hero h1{font-size:1.4rem}
+  .blog-content{padding:40px 24px 60px}
+  .blog-content h2{font-size:1.25rem}
+  .blog-content table{font-size:.8rem}
+  .blog-content th,.blog-content td{padding:8px 10px}
+  .cta-diff{grid-template-columns:1fr}
+  .roadmap-item{flex-direction:column;gap:4px}
+  .roadmap-item .rm-label{min-width:auto}
+}
+</style>
+</head>
+<body>
+<!-- Header -->
+<header class="header">
+  <div class="container header-inner">
+    <a href="/" class="logo">ミセバン<span class="logo-ai">AI</span></a>
+    <nav class="nav">
+      <a href="/">ホーム</a>
+      <a href="/blog/">ブログ</a>
+      <a href="/docs.html">ドキュメント</a>
+      <a href="/team.html">チーム</a>
+      <a href="/dashboard/" class="btn btn-primary btn-sm nav-cta">無料で始める</a>
+    </nav>
+    <button class="mobile-toggle" id="mobileToggle" aria-label="メニューを開く">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</header>
+<div class="mobile-menu" id="mobileMenu">
+  <button class="mobile-close" id="mobileClose" aria-label="メニューを閉じる">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+  </button>
+  <a href="/">ホーム</a>
+  <a href="/blog/">ブログ</a>
+  <a href="/docs.html">ドキュメント</a>
+  <a href="/team.html">チーム</a>
+  <a href="/dashboard/" class="btn btn-primary">無料で始める</a>
+</div>
+
+<!-- Hero -->
+<section class="blog-hero">
+  <div class="container">
+    <span class="blog-hero-label">Release Meeting</span>
+    <h1>リリース前会議 — ベータ公開に向けた<br>課題整理と優先順位決定</h1>
+    <div class="blog-hero-meta">
+      <span>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        2026-02-23
+      </span>
+      <span>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        5 min read
+      </span>
+      <span>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        ミセバンAI チーム
+      </span>
+    </div>
+  </div>
+</section>
+
+<!-- Content -->
+<article class="blog-content container">
+
+<h2>会議の目的</h2>
+<p>Sprint Cycle 10まで完了し、ミセバンAIの全コンポーネントが一通り揃った段階で、ベータ公開に向けた<strong>課題の棚卸し</strong>と<strong>優先順位の決定</strong>を行いました。</p>
+
+<div class="agenda-card">
+<h3>アジェンダ</h3>
+<ol>
+  <li>全コンポーネントのリリース準備状況レビュー</li>
+  <li>P0/P1 クリティカル課題の特定</li>
+  <li>CTAボタンの視認性改善（対応済み）</li>
+  <li>ベータ公開ロードマップの策定</li>
+</ol>
+</div>
+
+<h2>リリース準備状況サマリー</h2>
+<p>全11領域を精査し、各コンポーネントの完成度を評価しました。</p>
+
+<table>
+<thead>
+<tr><th>領域</th><th>状態</th><th>詳細</th></tr>
+</thead>
+<tbody>
+<tr><td><strong>APIサーバー</strong></td><td><span class="status status-ok">完成</span></td><td>19エンドポイント、JWT認証、CORS設定済み</td></tr>
+<tr><td><strong>データベース</strong></td><td><span class="status status-ok">完成</span></td><td>6テーブル、RLS全対応、関数・トリガー完備</td></tr>
+<tr><td><strong>Stripe課金</strong></td><td><span class="status status-warn">一部課題</span></td><td>Checkout/Portal動作。Webhook署名検証なし</td></tr>
+<tr><td><strong>AI推論</strong></td><td><span class="status status-ok">完成</span></td><td>YOLOv8n ONNX、Mock/Real切替、テスト合格</td></tr>
+<tr><td><strong>カメラAgent</strong></td><td><span class="status status-warn">一部課題</span></td><td>RTSP/Snapshot対応、自動検出あり。本番テスト未</td></tr>
+<tr><td><strong>ダッシュボード</strong></td><td><span class="status status-warn">一部課題</span></td><td>SPA実装済。リアルタイム更新の安定性検証未</td></tr>
+<tr><td><strong>ランディングページ</strong></td><td><span class="status status-ok">完成</span></td><td>SEO、OGP、レスポンシブ完成。GA IDは仮</td></tr>
+<tr><td><strong>ドキュメント</strong></td><td><span class="status status-ok">完成</span></td><td>docs, privacy, terms, legal, cameras, team</td></tr>
+<tr><td><strong>デプロイ</strong></td><td><span class="status status-ok">完成</span></td><td>Fly.io Web+API、Docker、CI/CD、セキュリティスキャン</td></tr>
+<tr><td><strong>セキュリティ</strong></td><td><span class="status status-warn">一部課題</span></td><td>JWT/RLS完備。レート制限・Webhook署名検証が未</td></tr>
+<tr><td><strong>LINE通知</strong></td><td><span class="status status-warn">一部課題</span></td><td>Push/Flex Message実装済。ユーザー紐付けフロー未</td></tr>
+</tbody>
+</table>
+
+<blockquote><p>全体評価: <strong>ベータ公開可能（70%→本番）</strong>。コアインフラは完成。P0/P1を潰せば公開ベータに移行可能。</p></blockquote>
+
+<h2>クリティカル課題一覧</h2>
+
+<h3>P0 — リリース前に必ず対応</h3>
+<table>
+<thead><tr><th>課題</th><th>コンポーネント</th><th>工数</th><th>リスク</th></tr></thead>
+<tbody>
+<tr><td>Stripe Webhook tier判定がハードコード（"starter"固定）</td><td>Billing</td><td>1h</td><td><span class="priority p0">P0</span> 顧客が間違ったプランに割り当てられる</td></tr>
+<tr><td>Webhook署名検証なし（Stripe / LINE）</td><td>Security</td><td>2h</td><td><span class="priority p0">P0</span> 偽イベントでプラン変更される可能性</td></tr>
+</tbody>
+</table>
+
+<h3>P1 — 公開1週間以内に対応</h3>
+<table>
+<thead><tr><th>課題</th><th>コンポーネント</th><th>工数</th><th>リスク</th></tr></thead>
+<tbody>
+<tr><td>レート制限が未実装（スタブ: 常にtrue）</td><td>API</td><td>4h</td><td><span class="priority p1">P1</span> DDoS脆弱性</td></tr>
+<tr><td>入力バリデーションなし</td><td>API</td><td>3h</td><td><span class="priority p1">P1</span> 不正データ受入</td></tr>
+<tr><td>GA/Ads トラッキングIDがプレースホルダー</td><td>LP</td><td>0.5h</td><td><span class="priority p1">P1</span> アナリティクス動作せず</td></tr>
+<tr><td>LINE ユーザー紐付けフロー未実装</td><td>Integration</td><td>2h</td><td><span class="priority p1">P1</span> LINE通知が使えない</td></tr>
+</tbody>
+</table>
+
+<h3>P2 — 本番リリースまでに対応</h3>
+<table>
+<thead><tr><th>課題</th><th>コンポーネント</th><th>工数</th></tr></thead>
+<tbody>
+<tr><td>属性分析がスタブ（全員"Unknown"）</td><td>AI</td><td>1-2日</td></tr>
+<tr><td>ゾーンヒートマップがfull_frame固定</td><td>AI</td><td>4h</td></tr>
+<tr><td>ヘルスチェックがDB接続確認なし</td><td>Monitoring</td><td>1h</td></tr>
+<tr><td>データ保持自動削除ポリシー未実装</td><td>Database</td><td>2h</td></tr>
+</tbody>
+</table>
+
+<h2>CTAボタン視認性改善</h2>
+<p>「無料で始める」ボタンの視認性が悪いという課題に対応しました。</p>
+
+<h3>Before / After</h3>
+<div class="cta-diff">
+  <div class="cta-diff-card before">
+    <div class="label">Before</div>
+    <div class="demo-btn">無料で始める</div>
+    <p style="margin-top:12px;font-size:.8rem;color:var(--gray-500)">Indigo背景、控えめなサイズ<br>背景に溶け込んで目立たない</p>
+  </div>
+  <div class="cta-diff-card after">
+    <div class="label">After</div>
+    <div class="demo-btn">無料で始める →</div>
+    <p style="margin-top:12px;font-size:.8rem;color:var(--slate-600)">エメラルドグラデーション<br>パルスアニメーション付き</p>
+  </div>
+</div>
+
+<h3>変更内容</h3>
+<ul>
+  <li><strong>色変更</strong>: Indigo (#4f46e5) → エメラルドグラデーション (#10b981 → #059669)</li>
+  <li><strong>パルスアニメーション</strong>: 2秒周期のグロー効果で常に注意を引く</li>
+  <li><strong>ホバー効果</strong>: 浮き上がり + 影拡大</li>
+  <li><strong>テキスト統一</strong>: 「14日間無料トライアル」→「無料で始める →」に統一</li>
+  <li><strong>対象箇所</strong>: ヘッダーナビ、ヒーロー、料金セクション（フリー）、フッターCTA の全4箇所</li>
+</ul>
+
+<h2>ベータ公開ロードマップ</h2>
+
+<div class="roadmap">
+  <div class="roadmap-item done">
+    <div class="rm-label">Sprint 1-10</div>
+    <div class="rm-content">
+      <p><strong>基盤構築完了</strong> — API 19エンドポイント、DB 6テーブル、AI推論、エージェント、ダッシュボード、LP、CI/CD</p>
+    </div>
+  </div>
+  <div class="roadmap-item done">
+    <div class="rm-label">Sprint 11</div>
+    <div class="rm-content">
+      <p><strong>CTAボタン改善 + リリース会議</strong> — 視認性改善、課題棚卸し、ロードマップ策定</p>
+    </div>
+  </div>
+  <div class="roadmap-item">
+    <div class="rm-label">Sprint 12</div>
+    <div class="rm-content">
+      <p><strong>P0修正</strong> — Stripe Webhook tier判定修正、Webhook署名検証実装（Stripe + LINE）</p>
+    </div>
+  </div>
+  <div class="roadmap-item">
+    <div class="rm-label">Sprint 13</div>
+    <div class="rm-content">
+      <p><strong>P1修正</strong> — レート制限実装、入力バリデーション、GA/Ads ID設定、LINE紐付けフロー</p>
+    </div>
+  </div>
+  <div class="roadmap-item">
+    <div class="rm-label">ベータ公開</div>
+    <div class="rm-content">
+      <p><strong>公開ベータ開始</strong> — フリープラン提供開始、初期ユーザー獲得、フィードバック収集</p>
+    </div>
+  </div>
+  <div class="roadmap-item">
+    <div class="rm-label">Sprint 14-15</div>
+    <div class="rm-content">
+      <p><strong>P2対応</strong> — 属性分析モデル統合、ゾーンヒートマップ、データ保持ポリシー、監視強化</p>
+    </div>
+  </div>
+</div>
+
+<h2>ベータ公開チェックリスト</h2>
+
+<ul class="checklist">
+  <li class="done">コアAPI（JWT認証 + 19エンドポイント）</li>
+  <li class="done">Stripeチェックアウト / カスタマーポータル</li>
+  <li class="done">データベーススキーマ（RLS完全対応）</li>
+  <li class="done">ランディングページ（SEO / OGP完備）</li>
+  <li class="done">Docker / Fly.ioデプロイ</li>
+  <li class="done">CI/CDパイプライン（セキュリティスキャン含む）</li>
+  <li class="done">YOLOv8n人物検出</li>
+  <li class="done">アラート永続化 + LINE通知</li>
+  <li class="done">CTAボタン視認性改善</li>
+  <li>Webhook署名検証（Stripe + LINE）</li>
+  <li>Stripe tier判定ロジック修正</li>
+  <li>レート制限実装</li>
+  <li>入力バリデーション</li>
+  <li>GA/Ads トラッキングID設定</li>
+  <li>LINE ユーザー紐付けフロー</li>
+</ul>
+
+<h2>会議の結論</h2>
+<blockquote>
+<p>P0課題（2件）を修正すれば公開ベータに移行可能。Sprint 12-13で集中的にセキュリティ/バリデーション対応を行い、Sprint 13完了後にベータ公開。属性分析やヒートマップはベータ期間中に順次追加。</p>
+</blockquote>
+
+<p>次回Sprint 12では、Stripe Webhook署名検証とtier判定ロジックの修正に着手します。</p>
+
+<div style="text-align:center;margin:48px 0">
+  <a href="/blog/" class="btn btn-ghost btn-sm">← ブログ一覧に戻る</a>
+  <a href="/dashboard/" class="btn btn-primary btn-sm" style="margin-left:12px">無料で始める →</a>
+</div>
+
+</article>
+
+<!-- Footer -->
+<footer class="blog-footer">
+  <div class="container">
+    <div class="blog-footer-nav">
+      <a href="/">ホーム</a>
+      <a href="/blog/">ブログ</a>
+      <a href="/docs.html">ドキュメント</a>
+      <a href="/privacy.html">プライバシー</a>
+      <a href="/terms.html">利用規約</a>
+    </div>
+    <p>&copy; 2026 ミセバンAI. All rights reserved.</p>
+  </div>
+</footer>
+
+<script>
+document.getElementById('mobileToggle')?.addEventListener('click',()=>document.getElementById('mobileMenu').classList.add('open'));
+document.getElementById('mobileClose')?.addEventListener('click',()=>document.getElementById('mobileMenu').classList.remove('open'));
+document.querySelectorAll('.mobile-menu a').forEach(a=>a.addEventListener('click',()=>document.getElementById('mobileMenu').classList.remove('open')));
+</script>
+</body>
+</html>

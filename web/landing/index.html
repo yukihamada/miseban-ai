@@ -111,6 +111,12 @@ ul{list-style:none}
 .btn-white:active{transform:translateY(1px)}
 .btn-sm{padding:10px 20px;font-size:.875rem}
 .btn-lg{padding:16px 36px;font-size:1rem}
+.btn-cta{background:linear-gradient(135deg,var(--emerald-500),var(--emerald-600));color:var(--white);font-size:1rem;font-weight:700;padding:16px 36px;box-shadow:0 4px 14px rgba(16,185,129,.4),0 0 0 0 rgba(16,185,129,.4);animation:cta-pulse 2s ease-in-out infinite}
+.btn-cta:hover{background:linear-gradient(135deg,var(--emerald-400),var(--emerald-500));transform:translateY(-2px);box-shadow:0 8px 24px rgba(16,185,129,.5)}
+.btn-cta:active{transform:translateY(1px);box-shadow:0 2px 8px rgba(16,185,129,.3)}
+.btn-cta-sm{background:linear-gradient(135deg,var(--emerald-500),var(--emerald-600));color:var(--white);font-weight:700;padding:12px 24px;box-shadow:0 2px 10px rgba(16,185,129,.3)}
+.btn-cta-sm:hover{background:linear-gradient(135deg,var(--emerald-400),var(--emerald-500));transform:translateY(-1px);box-shadow:0 4px 16px rgba(16,185,129,.4)}
+@keyframes cta-pulse{0%,100%{box-shadow:0 4px 14px rgba(16,185,129,.4),0 0 0 0 rgba(16,185,129,.4)}50%{box-shadow:0 4px 14px rgba(16,185,129,.4),0 0 0 8px rgba(16,185,129,0)}}
 
 /* ===== Header ===== */
 .header{position:fixed;top:0;left:0;width:100%;z-index:1000;transition:all .3s ease}
@@ -418,7 +424,7 @@ ul{list-style:none}
       <a href="/blog/">ブログ</a>
       <a href="#faq">FAQ</a>
       <a href="/team.html">チーム</a>
-      <a href="/dashboard/" class="btn btn-primary btn-sm nav-cta">無料で始める</a>
+      <a href="/dashboard/" class="btn btn-cta-sm nav-cta">無料で始める →</a>
     </nav>
     <button class="mobile-toggle" id="mobileToggle" aria-label="メニューを開く">
       <span></span><span></span><span></span>
@@ -439,7 +445,7 @@ ul{list-style:none}
   <a href="#faq" class="mobile-link">FAQ</a>
   <a href="/team.html" class="mobile-link">チーム</a>
   <a href="#partner" class="mobile-link">パートナー募集</a>
-  <a href="/dashboard/" class="btn btn-primary">無料で始める</a>
+  <a href="/dashboard/" class="btn btn-cta">無料で始める →</a>
 </div>
 
 <main>
@@ -454,8 +460,8 @@ ul{list-style:none}
       <h1>あなたの店に、<br>もう一人の店長を。</h1>
       <p class="hero-sub">今あるカメラをつなぐだけ。来客予測、シフト提案、防犯通知。<br>24時間休まないAI店長が、月額0円から。</p>
       <div class="hero-actions">
-        <a href="/dashboard/" class="btn btn-white btn-lg">14日間無料トライアル
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        <a href="/dashboard/" class="btn btn-cta btn-lg">無料で始める
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
         </a>
         <a href="#how-it-works" class="btn btn-outline-white btn-lg">3分でわかる仕組み
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
@@ -763,7 +769,7 @@ ul{list-style:none}
           <li><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="8" fill="#ecfdf5"/><path d="M5 8l2 2 4-4" stroke="#10b981" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>基本来客カウント</li>
           <li><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="8" fill="#ecfdf5"/><path d="M5 8l2 2 4-4" stroke="#10b981" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>日次レポート</li>
         </ul>
-        <a href="/dashboard/" class="btn btn-outline btn-sm">無料で始める</a>
+        <a href="/dashboard/" class="btn btn-cta-sm">無料で始める →</a>
       </div>
       <!-- Starter -->
       <div class="price-card recommended reveal reveal-d1">
@@ -988,10 +994,10 @@ ul{list-style:none}
       <h2>今日から、店舗のデータが<br>見えるようになる</h2>
       <p class="final-cta-sub">14日間無料トライアル。クレジットカード不要。</p>
       <div style="display:flex;flex-direction:column;align-items:center;gap:16px">
-        <a href="/dashboard/" class="btn btn-white btn-lg">14日間無料トライアル
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        <a href="/dashboard/" class="btn btn-cta btn-lg">無料で始める
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
         </a>
-        <p class="final-cta-note">セットアップ5分。いつでもキャンセル可能。</p>
+        <p class="final-cta-note">セットアップ5分。クレカ不要。いつでもキャンセル可能。</p>
       </div>
     </div>
   </div>
