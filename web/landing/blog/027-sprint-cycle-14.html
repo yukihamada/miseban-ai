@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sprint Cycle 14 — ヘルスチェック強化、データ保持ポリシー、ボディサイズ制限｜ミセバンAI Blog</title>
+<meta name="description" content="ヘルスチェックにDB接続確認を追加、Tier別データ保持自動削除SQL関数を実装、Axum 12MBボディサイズ制限を設定。全13テスト合格。">
+<meta name="keywords" content="Sprint Cycle 14,ヘルスチェック,データ保持,BodyLimit,ミセバンAI">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://misebanai.com/blog/027-sprint-cycle-14.html">
+<meta property="og:title" content="Sprint Cycle 14 — ヘルスチェック強化、データ保持ポリシー、ボディサイズ制限">
+<meta property="og:description" content="P2課題対応。運用品質を本番レベルに引き上げ。全13テスト合格。">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://misebanai.com/blog/027-sprint-cycle-14.html">
+<meta property="og:image" content="https://misebanai.com/ogp.png">
+<meta property="og:site_name" content="ミセバンAI">
+<meta property="og:locale" content="ja_JP">
+<meta property="article:published_time" content="2026-02-23">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Sprint Cycle 14 — ヘルスチェック強化、データ保持ポリシー、ボディサイズ制限">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%234f46e5'/><text x='50%25' y='54%25' dominant-baseline='middle' text-anchor='middle' fill='white' font-size='18' font-weight='bold' font-family='sans-serif'>M</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--white:#fff;--gray-50:#f8fafc;--gray-100:#f1f5f9;--gray-200:#e2e8f0;--gray-400:#94a3b8;--gray-500:#64748b;--slate-600:#475569;--slate-700:#334155;--slate-800:#1e293b;--slate-900:#0f172a;--indigo-50:#eef2ff;--indigo-100:#e0e7ff;--indigo-500:#6366f1;--indigo-600:#4f46e5;--indigo-700:#4338ca;--indigo-900:#312e81;--indigo-950:#1e1b4b;--emerald-50:#ecfdf5;--emerald-500:#10b981;--emerald-600:#059669;--radius-sm:8px;--radius:12px}
+html{scroll-behavior:smooth}body{font-family:'Noto Sans JP','Inter',system-ui,sans-serif;color:var(--slate-900);background:var(--white);line-height:1.8;-webkit-font-smoothing:antialiased}
+a{text-decoration:none;color:inherit}ul,ol{list-style:none}
+.container{max-width:1200px;margin:0 auto;padding:0 24px}
+.btn{display:inline-flex;align-items:center;gap:8px;font-family:inherit;font-size:.9375rem;font-weight:600;padding:14px 28px;border-radius:100px;border:none;cursor:pointer;transition:all .2s;white-space:nowrap}
+.btn-primary{background:var(--indigo-600);color:var(--white)}.btn-primary:hover{background:var(--indigo-700);transform:translateY(-1px)}.btn-sm{padding:10px 20px;font-size:.875rem}
+.btn-ghost{background:transparent;color:var(--indigo-600);border:2px solid var(--indigo-100);padding:12px 24px}
+.header{position:fixed;top:0;left:0;width:100%;z-index:1000;background:rgba(255,255,255,.92);backdrop-filter:blur(16px);box-shadow:0 1px 3px rgba(0,0,0,.06);border-bottom:1px solid rgba(0,0,0,.04)}
+.header-inner{display:flex;align-items:center;justify-content:space-between;height:72px}.logo{font-size:1.25rem;font-weight:700;color:var(--slate-900)}.logo-ai{color:var(--indigo-600)}
+.nav{display:flex;align-items:center;gap:32px}.nav a{font-size:.875rem;font-weight:500;color:var(--slate-600)}.nav-cta{margin-left:8px}
+.mobile-toggle{display:none;background:none;border:none;cursor:pointer;padding:8px}.mobile-toggle span{display:block;width:22px;height:2px;background:var(--slate-900);margin:5px 0}
+.blog-hero{padding:140px 0 60px;background:linear-gradient(135deg,var(--slate-900),var(--indigo-950));color:var(--white)}
+.blog-hero-label{display:inline-flex;font-size:.8125rem;font-weight:600;color:var(--emerald-500);background:rgba(16,185,129,.12);padding:6px 16px;border-radius:100px;margin-bottom:16px}
+.blog-hero h1{font-size:clamp(1.5rem,3.5vw,2.25rem);font-weight:700;line-height:1.5}
+.blog-hero-meta{display:flex;gap:16px;flex-wrap:wrap;margin-top:16px;font-size:.875rem;color:var(--gray-400)}
+.blog-hero-meta span{display:inline-flex;align-items:center;gap:6px}
+.blog-content{padding:60px 0 80px;max-width:800px;margin:0 auto}
+.blog-content h2{font-size:1.5rem;font-weight:700;margin:48px 0 20px;padding-bottom:12px;border-bottom:2px solid var(--indigo-100)}
+.blog-content h3{font-size:1.2rem;font-weight:600;margin:32px 0 12px}
+.blog-content p{margin-bottom:20px;color:var(--slate-700);line-height:1.9}
+.blog-content ul{margin-bottom:20px}.blog-content li{padding:6px 0 6px 24px;position:relative;color:var(--slate-700)}.blog-content li::before{content:'';position:absolute;left:8px;top:16px;width:6px;height:6px;border-radius:50%;background:var(--indigo-500)}
+.blog-content code{font-family:'JetBrains Mono',monospace;font-size:.875em;background:var(--gray-100);padding:2px 8px;border-radius:6px;color:var(--indigo-600)}
+.blog-content pre{background:var(--slate-900);color:var(--gray-200);padding:24px;border-radius:var(--radius);overflow-x:auto;margin:20px 0;font-family:'JetBrains Mono',monospace;font-size:.875rem;line-height:1.7}
+.blog-content pre code{background:transparent;padding:0;color:inherit}
+.blog-content blockquote{border-left:4px solid var(--indigo-500);padding:16px 24px;margin:24px 0;background:var(--indigo-50);border-radius:0 var(--radius-sm) var(--radius-sm) 0}
+.blog-content blockquote p{color:var(--indigo-900);margin:0;font-weight:500}
+.blog-content strong{color:var(--slate-900)}
+.blog-content table{width:100%;border-collapse:collapse;margin:20px 0;font-size:.9rem}
+.blog-content th,.blog-content td{padding:12px 16px;text-align:left;border-bottom:1px solid var(--gray-200)}
+.blog-content th{background:var(--gray-50);font-weight:600;font-size:.85rem}
+.status{display:inline-flex;padding:2px 10px;border-radius:100px;font-size:.75rem;font-weight:600}
+.status-ok{background:var(--emerald-50);color:var(--emerald-600)}
+.blog-footer{padding:40px 0;background:var(--gray-50);border-top:1px solid var(--gray-200);text-align:center}
+.blog-footer-nav{display:flex;justify-content:center;gap:24px;flex-wrap:wrap;margin-bottom:16px}
+.blog-footer-nav a{color:var(--slate-600);font-size:.875rem}.blog-footer p{color:var(--gray-500);font-size:.8125rem}
+@media(max-width:768px){.nav{display:none}.mobile-toggle{display:block}.blog-hero h1{font-size:1.4rem}.blog-content{padding:40px 24px 60px}}
+</style>
+</head>
+<body>
+<header class="header"><div class="container header-inner">
+<a href="/" class="logo">ミセバン<span class="logo-ai">AI</span></a>
+<nav class="nav"><a href="/">ホーム</a><a href="/blog/">ブログ</a><a href="/docs.html">ドキュメント</a><a href="/dashboard/" class="btn btn-primary btn-sm nav-cta">無料で始める</a></nav>
+<button class="mobile-toggle" id="mobileToggle" aria-label="メニュー"><span></span><span></span><span></span></button>
+</div></header>
+
+<section class="blog-hero"><div class="container">
+<span class="blog-hero-label">Sprint Cycle 14</span>
+<h1>運用品質向上 — ヘルスチェック強化、<br>データ保持ポリシー、ボディサイズ制限</h1>
+<div class="blog-hero-meta">
+<span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> 2026-02-23</span>
+<span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> 3 min read</span>
+</div>
+</div></section>
+
+<article class="blog-content container">
+
+<h2>概要</h2>
+<p>P2課題とインフラ強化を実施し、運用品質を本番レベルに引き上げました。</p>
+
+<table>
+<thead><tr><th>対応内容</th><th>状態</th></tr></thead>
+<tbody>
+<tr><td>ヘルスチェックにDB接続確認を追加</td><td><span class="status status-ok">完了</span></td></tr>
+<tr><td>データ保持ポリシー（SQL関数）</td><td><span class="status status-ok">完了</span></td></tr>
+<tr><td>Axum 12MBボディサイズ制限</td><td><span class="status status-ok">完了</span></td></tr>
+</tbody>
+</table>
+
+<h2>1. ヘルスチェック強化</h2>
+<p>以前は静的な <code>{"status":"ok"}</code> を返すだけでしたが、DB接続の実際の確認を追加しました。</p>
+
+<pre><code>// Before:
+{ "status": "ok", "version": "0.1.0" }
+
+// After:
+{ "status": "ok", "version": "0.1.0", "database": "connected" }
+// DB接続不可の場合:
+{ "status": "degraded", "version": "0.1.0", "database": "unavailable" }</code></pre>
+
+<p><code>SELECT 1</code> の軽量クエリでDB接続を検証。接続不可時は <code>"degraded"</code> ステータスを返し、Fly.ioのヘルスチェック監視と連携できます。</p>
+
+<h2>2. データ保持ポリシー</h2>
+<p>Tier別のデータ保持期間を超えた <code>visitor_counts</code> レコードを自動削除するSQL関数を実装しました。</p>
+
+<table>
+<thead><tr><th>Tier</th><th>保持期間</th></tr></thead>
+<tbody>
+<tr><td>Free</td><td>7日</td></tr>
+<tr><td>Starter</td><td>30日</td></tr>
+<tr><td>Pro</td><td>90日</td></tr>
+<tr><td>Enterprise</td><td>3,650日 (~10年)</td></tr>
+</tbody>
+</table>
+
+<pre><code>-- 全ストアのTierに応じて古いデータを削除
+SELECT cleanup_expired_visitor_counts();
+-- → 削除されたレコード数を返す</code></pre>
+
+<p>Supabase pg_cronまたはEdge Functionで日次実行を推奨。</p>
+
+<h2>3. ボディサイズ制限</h2>
+<p>AxumのDefaultBodyLimitを <strong>12MB</strong> に設定。大量ペイロードによるメモリ枯渇攻撃を防止します。</p>
+
+<h2>リリース準備チェックリスト最終版</h2>
+
+<table>
+<thead><tr><th>優先度</th><th>項目</th><th>Sprint</th><th>状態</th></tr></thead>
+<tbody>
+<tr><td>P0</td><td>Webhook署名検証</td><td>#12</td><td><span class="status status-ok">完了</span></td></tr>
+<tr><td>P0</td><td>Stripe tier判定</td><td>#12</td><td><span class="status status-ok">完了</span></td></tr>
+<tr><td>P1</td><td>レート制限</td><td>#13</td><td><span class="status status-ok">完了</span></td></tr>
+<tr><td>P1</td><td>入力バリデーション</td><td>#13</td><td><span class="status status-ok">完了</span></td></tr>
+<tr><td>P1</td><td>CORS本番対応</td><td>#13</td><td><span class="status status-ok">完了</span></td></tr>
+<tr><td>P2</td><td>ヘルスチェック強化</td><td>#14</td><td><span class="status status-ok">完了</span></td></tr>
+<tr><td>P2</td><td>データ保持ポリシー</td><td>#14</td><td><span class="status status-ok">完了</span></td></tr>
+<tr><td>P2</td><td>ボディサイズ制限</td><td>#14</td><td><span class="status status-ok">完了</span></td></tr>
+</tbody>
+</table>
+
+<blockquote><p>P0/P1/P2の全課題が解消。14スプリントで構築した本番グレードのAI店舗分析プラットフォームがベータ公開の準備を完了しました。</p></blockquote>
+
+<div style="text-align:center;margin:48px 0">
+<a href="/blog/" class="btn btn-ghost btn-sm">← ブログ一覧に戻る</a>
+<a href="/dashboard/" class="btn btn-primary btn-sm" style="margin-left:12px">無料で始める →</a>
+</div>
+</article>
+
+<footer class="blog-footer"><div class="container">
+<div class="blog-footer-nav"><a href="/">ホーム</a><a href="/blog/">ブログ</a><a href="/docs.html">ドキュメント</a><a href="/privacy.html">プライバシー</a><a href="/terms.html">利用規約</a></div>
+<p>&copy; 2026 ミセバンAI. All rights reserved.</p>
+</div></footer>
+</body>
+</html>

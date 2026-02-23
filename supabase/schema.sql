@@ -454,5 +454,45 @@ $$;
 */
 
 -- ---------------------------------------------------------------------------
+-- Data retention policy: delete old visitor_counts based on plan tier
+-- ---------------------------------------------------------------------------
+
+CREATE OR REPLACE FUNCTION cleanup_expired_visitor_counts()
+RETURNS integer
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+    deleted_count integer := 0;
+    store RECORD;
+    retention_days integer;
+    cutoff timestamp with time zone;
+BEGIN
+    FOR store IN SELECT id, plan_tier FROM stores LOOP
+        -- Determine retention days based on plan tier
+        CASE store.plan_tier
+            WHEN 'starter' THEN retention_days := 30;
+            WHEN 'pro' THEN retention_days := 90;
+            WHEN 'enterprise' THEN retention_days := 3650; -- ~10 years
+            ELSE retention_days := 7; -- free
+        END CASE;
+
+        cutoff := NOW() - (retention_days || ' days')::interval;
+
+        DELETE FROM visitor_counts
+        WHERE store_id = store.id
+          AND counted_at < cutoff;
+
+        deleted_count := deleted_count + FOUND::integer;
+    END LOOP;
+
+    RETURN deleted_count;
+END;
+$$;
+
+-- Schedule: call cleanup_expired_visitor_counts() daily via pg_cron or
+-- application-level cron (e.g., Supabase Edge Function on schedule).
+
+-- ---------------------------------------------------------------------------
 -- Done. Schema is ready.
 -- ---------------------------------------------------------------------------

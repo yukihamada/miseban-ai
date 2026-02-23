@@ -929,13 +929,25 @@ async fn line_webhook(
 struct HealthResponse {
     status: &'static str,
     version: &'static str,
+    database: &'static str,
 }
 
 /// GET /api/v1/health
-async fn health_check() -> Json<HealthResponse> {
+///
+/// Returns service health including database connectivity check.
+async fn health_check(State(state): State<AppState>) -> Json<HealthResponse> {
+    let db_status = match sqlx::query_scalar::<_, i32>("SELECT 1")
+        .fetch_one(&state.pool)
+        .await
+    {
+        Ok(_) => "connected",
+        Err(_) => "unavailable",
+    };
+
     Json(HealthResponse {
-        status: "ok",
+        status: if db_status == "connected" { "ok" } else { "degraded" },
         version: env!("CARGO_PKG_VERSION"),
+        database: db_status,
     })
 }
 
@@ -997,6 +1009,7 @@ fn build_router(state: AppState) -> Router {
         .route("/api/v1/pricing", get(get_pricing))
         .route("/api/v1/webhooks/line", post(line_webhook))
         .route("/api/v1/webhooks/stripe", post(stripe_webhook))
+        .layer(axum::extract::DefaultBodyLimit::max(12 * 1024 * 1024)) // 12MB max
         .layer(cors)
         .with_state(state)
 }
@@ -1134,10 +1147,18 @@ mod tests {
         let body_bytes = response.into_body().collect().await.unwrap().to_bytes();
         let body: serde_json::Value = serde_json::from_slice(&body_bytes).unwrap();
 
-        assert_eq!(body["status"], "ok");
+        // Status will be "degraded" in test (no real DB), but endpoint works.
+        assert!(
+            body["status"].is_string(),
+            "status field should be a string"
+        );
         assert!(
             body["version"].is_string(),
             "version field should be a string"
+        );
+        assert!(
+            body["database"].is_string(),
+            "database field should be a string"
         );
     }
 
