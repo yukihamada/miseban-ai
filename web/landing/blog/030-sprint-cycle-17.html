@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sprint Cycle 17 — /api/v1/config公開設定、テスト15件到達、APIデプロイ準備｜ミセバンAI Blog</title>
+<meta name="description" content="フロントエンド向け公開設定API(/api/v1/config)追加、テスト13→15件に強化、Fly.io APIアプリ(miseban-ai-api)作成、CORS 4オリジン許可設定。全15テスト合格、cargo check警告ゼロ。">
+<meta name="keywords" content="Sprint Cycle 17,Config,Testing,Deploy,ミセバンAI">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://misebanai.com/blog/030-sprint-cycle-17.html">
+<meta property="og:title" content="Sprint Cycle 17 — /api/v1/config公開設定、テスト15件到達、APIデプロイ準備">
+<meta property="og:description" content="公開設定API追加、テスト15件到達、Fly.io APIアプリ作成、CORS設定完了。全15テスト合格、cargo check警告ゼロ。">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://misebanai.com/blog/030-sprint-cycle-17.html">
+<meta property="og:image" content="https://misebanai.com/ogp.png">
+<meta property="og:site_name" content="ミセバンAI">
+<meta property="og:locale" content="ja_JP">
+<meta property="article:published_time" content="2026-02-23">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Sprint Cycle 17 — /api/v1/config公開設定、テスト15件到達、APIデプロイ準備">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%234f46e5'/><text x='50%25' y='54%25' dominant-baseline='middle' text-anchor='middle' fill='white' font-size='18' font-weight='bold' font-family='sans-serif'>M</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--white:#fff;--gray-50:#f8fafc;--gray-100:#f1f5f9;--gray-200:#e2e8f0;--gray-400:#94a3b8;--gray-500:#64748b;--slate-600:#475569;--slate-700:#334155;--slate-800:#1e293b;--slate-900:#0f172a;--indigo-50:#eef2ff;--indigo-100:#e0e7ff;--indigo-500:#6366f1;--indigo-600:#4f46e5;--indigo-700:#4338ca;--indigo-900:#312e81;--indigo-950:#1e1b4b;--emerald-50:#ecfdf5;--emerald-500:#10b981;--emerald-600:#059669;--radius-sm:8px;--radius:12px}
+html{scroll-behavior:smooth}body{font-family:'Noto Sans JP','Inter',system-ui,sans-serif;color:var(--slate-900);background:var(--white);line-height:1.8;-webkit-font-smoothing:antialiased}
+a{text-decoration:none;color:inherit}ul,ol{list-style:none}
+.container{max-width:1200px;margin:0 auto;padding:0 24px}
+.btn{display:inline-flex;align-items:center;gap:8px;font-family:inherit;font-size:.9375rem;font-weight:600;padding:14px 28px;border-radius:100px;border:none;cursor:pointer;transition:all .2s;white-space:nowrap}
+.btn-primary{background:var(--indigo-600);color:var(--white)}.btn-primary:hover{background:var(--indigo-700);transform:translateY(-1px)}.btn-sm{padding:10px 20px;font-size:.875rem}
+.btn-ghost{background:transparent;color:var(--indigo-600);border:2px solid var(--indigo-100);padding:12px 24px}
+.header{position:fixed;top:0;left:0;width:100%;z-index:1000;background:rgba(255,255,255,.92);backdrop-filter:blur(16px);box-shadow:0 1px 3px rgba(0,0,0,.06);border-bottom:1px solid rgba(0,0,0,.04)}
+.header-inner{display:flex;align-items:center;justify-content:space-between;height:72px}.logo{font-size:1.25rem;font-weight:700;color:var(--slate-900)}.logo-ai{color:var(--indigo-600)}
+.nav{display:flex;align-items:center;gap:32px}.nav a{font-size:.875rem;font-weight:500;color:var(--slate-600)}.nav-cta{margin-left:8px}
+.mobile-toggle{display:none;background:none;border:none;cursor:pointer;padding:8px}.mobile-toggle span{display:block;width:22px;height:2px;background:var(--slate-900);margin:5px 0}
+.blog-hero{padding:140px 0 60px;background:linear-gradient(135deg,var(--slate-900),var(--indigo-950));color:var(--white)}
+.blog-hero-label{display:inline-flex;font-size:.8125rem;font-weight:600;color:var(--emerald-500);background:rgba(16,185,129,.12);padding:6px 16px;border-radius:100px;margin-bottom:16px}
+.blog-hero h1{font-size:clamp(1.5rem,3.5vw,2.25rem);font-weight:700;line-height:1.5}
+.blog-hero-meta{display:flex;gap:16px;flex-wrap:wrap;margin-top:16px;font-size:.875rem;color:var(--gray-400)}
+.blog-hero-meta span{display:inline-flex;align-items:center;gap:6px}
+.blog-content{padding:60px 0 80px;max-width:800px;margin:0 auto}
+.blog-content h2{font-size:1.5rem;font-weight:700;margin:48px 0 20px;padding-bottom:12px;border-bottom:2px solid var(--indigo-100)}
+.blog-content h3{font-size:1.2rem;font-weight:600;margin:32px 0 12px}
+.blog-content p{margin-bottom:20px;color:var(--slate-700);line-height:1.9}
+.blog-content ul{margin-bottom:20px}.blog-content li{padding:6px 0 6px 24px;position:relative;color:var(--slate-700)}.blog-content li::before{content:'';position:absolute;left:8px;top:16px;width:6px;height:6px;border-radius:50%;background:var(--indigo-500)}
+.blog-content code{font-family:'JetBrains Mono',monospace;font-size:.875em;background:var(--gray-100);padding:2px 8px;border-radius:6px;color:var(--indigo-600)}
+.blog-content pre{background:var(--slate-900);color:var(--gray-200);padding:24px;border-radius:var(--radius);overflow-x:auto;margin:20px 0;font-family:'JetBrains Mono',monospace;font-size:.875rem;line-height:1.7}
+.blog-content pre code{background:transparent;padding:0;color:inherit}
+.blog-content blockquote{border-left:4px solid var(--indigo-500);padding:16px 24px;margin:24px 0;background:var(--indigo-50);border-radius:0 var(--radius-sm) var(--radius-sm) 0}
+.blog-content blockquote p{color:var(--indigo-900);margin:0;font-weight:500}
+.blog-content strong{color:var(--slate-900)}
+.blog-content table{width:100%;border-collapse:collapse;margin:20px 0;font-size:.9rem}
+.blog-content th,.blog-content td{padding:12px 16px;text-align:left;border-bottom:1px solid var(--gray-200)}
+.blog-content th{background:var(--gray-50);font-weight:600;font-size:.85rem}
+.status{display:inline-flex;padding:2px 10px;border-radius:100px;font-size:.75rem;font-weight:600}
+.status-ok{background:var(--emerald-50);color:var(--emerald-600)}
+.blog-footer{padding:40px 0;background:var(--gray-50);border-top:1px solid var(--gray-200);text-align:center}
+.blog-footer-nav{display:flex;justify-content:center;gap:24px;flex-wrap:wrap;margin-bottom:16px}
+.blog-footer-nav a{color:var(--slate-600);font-size:.875rem}.blog-footer p{color:var(--gray-500);font-size:.8125rem}
+@media(max-width:768px){.nav{display:none}.mobile-toggle{display:block}.blog-hero h1{font-size:1.4rem}.blog-content{padding:40px 24px 60px}}
+</style>
+</head>
+<body>
+<header class="header"><div class="container header-inner">
+<a href="/" class="logo">ミセバン<span class="logo-ai">AI</span></a>
+<nav class="nav"><a href="/">ホーム</a><a href="/blog/">ブログ</a><a href="/docs.html">ドキュメント</a><a href="/dashboard/" class="btn btn-primary btn-sm nav-cta">無料で始める</a></nav>
+<button class="mobile-toggle" id="mobileToggle" aria-label="メニュー"><span></span><span></span><span></span></button>
+</div></header>
+
+<section class="blog-hero"><div class="container">
+<span class="blog-hero-label">Sprint Cycle 17</span>
+<h1>/api/v1/config公開設定、<br>テスト15件到達、APIデプロイ準備</h1>
+<div class="blog-hero-meta">
+<span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> 2026-02-23</span>
+<span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> 5 min read</span>
+</div>
+</div></section>
+
+<article class="blog-content container">
+
+<h2>概要</h2>
+<p>Sprint Cycle 17では、フロントエンドクライアント向けの公開設定API（<code>/api/v1/config</code>）を新設し、テストを13件から15件に強化しました。さらにFly.ioへのAPIデプロイ準備として<code>miseban-ai-api</code>アプリを作成し、CORSの4オリジン許可設定も完了。全15テスト合格、cargo check警告ゼロの状態でデプロイ準備が整いました。</p>
+
+<table>
+<thead><tr><th>対応内容</th><th>状態</th></tr></thead>
+<tbody>
+<tr><td>GET /api/v1/config エンドポイント追加</td><td><span class="status status-ok">完了</span></td></tr>
+<tr><td>テスト強化（13→15件）</td><td><span class="status status-ok">完了</span></td></tr>
+<tr><td>Fly.io APIアプリ作成（miseban-ai-api）</td><td><span class="status status-ok">完了</span></td></tr>
+<tr><td>CORS設定（4オリジン許可）</td><td><span class="status status-ok">完了</span></td></tr>
+</tbody>
+</table>
+
+<h2>1. GET /api/v1/config エンドポイント追加</h2>
+<p>フロントエンドクライアントがAPIサーバーの設定情報を取得するための公開エンドポイントを追加しました。認証不要で、シークレット情報は一切含まない安全な設計です。</p>
+
+<p>レスポンスには以下の情報が含まれます。</p>
+
+<ul>
+<li><strong>api_version</strong>: 現在のAPIバージョン</li>
+<li><strong>supabase_url</strong>: DATABASE_URLから自動抽出したSupabase URL</li>
+<li><strong>features</strong>: 利用可能な機能リスト（9項目）</li>
+</ul>
+
+<pre><code>#[derive(Serialize)]
+struct PublicConfig {
+    api_version: &amp;'static str,
+    supabase_url: String,
+    features: Vec&lt;&amp;'static str&gt;,
+}
+
+async fn get_public_config() -&gt; Json&lt;PublicConfig&gt; {
+    // DATABASE_URLからSupabase URLを自動抽出
+    // features: frames, stats, alerts, billing, ...
+}</code></pre>
+
+<p>Supabase URLは環境変数<code>DATABASE_URL</code>から自動的に抽出されるため、デプロイ先ごとに個別に設定する必要がありません。フロントエンドはこのエンドポイントを起動時に一度呼び出すだけで、必要な接続情報と利用可能機能の一覧を取得できます。</p>
+
+<h2>2. テスト強化（13→15件）</h2>
+<p>今回のスプリントで2件のテストを追加し、テスト合計を15件に引き上げました。</p>
+
+<h3>config_returns_api_version_and_features</h3>
+<p>新設した<code>/api/v1/config</code>のレスポンス構造を検証するテストです。<code>api_version</code>フィールドの存在、<code>features</code>配列の内容、<code>supabase_url</code>の形式を確認します。</p>
+
+<h3>authenticated_endpoints_require_auth</h3>
+<p>認証が必須な9つのエンドポイントに対して、認証トークンなしでリクエストした場合に全て<code>401 Unauthorized</code>を返すことを一括検証するテストです。</p>
+
+<pre><code>// 9つの認証必須エンドポイントを一括テスト
+let endpoints = vec![
+    ("/api/v1/stores/me/stats", "GET"),
+    ("/api/v1/stores/me/stats/weekly", "GET"),
+    ("/api/v1/stores/me/stats/hourly", "GET"),
+    // ... 6 more
+];
+for (uri, method) in endpoints {
+    let response = app.oneshot(request).await.unwrap();
+    assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
+}</code></pre>
+
+<p>このテストにより、認証ミドルウェアの適用漏れを防止できます。新しい認証必須エンドポイントを追加する際は、このリストに追加するだけで自動的にテスト対象になります。</p>
+
+<h2>3. Fly.io APIアプリ作成</h2>
+<p>本番APIサーバーのデプロイ先として、Fly.ioに<code>miseban-ai-api</code>アプリを作成しました。</p>
+
+<ul>
+<li><strong>リージョン</strong>: NRT（東京） -- 国内ユーザー向けに最低レイテンシを実現</li>
+<li><strong>ビルド</strong>: <code>Dockerfile.api</code>によるマルチステージビルド対応</li>
+<li><strong>ランタイム</strong>: Rustバイナリの直接実行</li>
+</ul>
+
+<p>ランディングページ（<code>miseban-ai.fly.dev</code>）とAPIサーバー（<code>miseban-ai-api.fly.dev</code>）を分離することで、それぞれ独立したスケーリングとデプロイが可能になります。</p>
+
+<h2>4. CORS設定</h2>
+<p>APIサーバーのCORS設定として、以下の4オリジンを許可しました。</p>
+
+<table>
+<thead><tr><th>オリジン</th><th>用途</th></tr></thead>
+<tbody>
+<tr><td><code>https://misebanai.com</code></td><td>本番ドメイン</td></tr>
+<tr><td><code>https://www.misebanai.com</code></td><td>本番ドメイン（www付き）</td></tr>
+<tr><td><code>https://miseban-ai.fly.dev</code></td><td>Fly.ioランディングページ</td></tr>
+<tr><td><code>http://localhost:3001</code></td><td>ローカル開発環境</td></tr>
+</tbody>
+</table>
+
+<p>本番・Fly.io・ローカル開発の全環境からAPIへのリクエストが正常に処理されます。許可リストに含まれないオリジンからのリクエストはブラウザのCORSポリシーによりブロックされるため、セキュリティも確保されています。</p>
+
+<h2>テスト結果</h2>
+<p>全<strong>15テスト合格</strong>、<code>cargo check</code>警告ゼロ。既存テストへの影響はありません。</p>
+
+<table>
+<thead><tr><th>指標</th><th>Before</th><th>After</th></tr></thead>
+<tbody>
+<tr><td>テスト合格数</td><td>13/13</td><td><strong>15/15</strong></td></tr>
+<tr><td>cargo check警告</td><td>0</td><td><strong>0</strong></td></tr>
+<tr><td>新規エンドポイント</td><td>-</td><td>1件（/api/v1/config）</td></tr>
+<tr><td>CORS許可オリジン</td><td>-</td><td>4オリジン</td></tr>
+</tbody>
+</table>
+
+<blockquote><p>公開設定APIの追加により、フロントエンドが必要な情報をセキュアに取得できる仕組みが整いました。テストも15件に到達し、認証必須エンドポイントの網羅的な検証を実現。Fly.ioへのAPIデプロイ準備も完了し、次のスプリントでは本番デプロイとモニタリング設定に進みます。</p></blockquote>
+
+<div style="text-align:center;margin:48px 0">
+<a href="/blog/" class="btn btn-ghost btn-sm">&larr; ブログ一覧に戻る</a>
+<a href="/dashboard/" class="btn btn-primary btn-sm" style="margin-left:12px">無料で始める &rarr;</a>
+</div>
+</article>
+
+<footer class="blog-footer"><div class="container">
+<div class="blog-footer-nav"><a href="/">ホーム</a><a href="/blog/">ブログ</a><a href="/docs.html">ドキュメント</a><a href="/privacy.html">プライバシー</a><a href="/terms.html">利用規約</a></div>
+<p>&copy; 2026 ミセバンAI. All rights reserved.</p>
+</div></footer>
+</body>
+</html>

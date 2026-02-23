@@ -1031,6 +1031,44 @@ async fn health_check(State(state): State<AppState>) -> Json<HealthResponse> {
 // Router builder (extracted for testability)
 // ---------------------------------------------------------------------------
 
+/// Public configuration for frontend clients.
+#[derive(Serialize)]
+struct PublicConfig {
+    api_version: &'static str,
+    supabase_url: String,
+    features: Vec<&'static str>,
+}
+
+/// GET /api/v1/config
+///
+/// Returns public configuration for frontend clients (Supabase URL, API version, etc.).
+/// Does NOT expose secret keys.
+async fn get_public_config() -> Json<PublicConfig> {
+    let supabase_url = std::env::var("SUPABASE_PUBLIC_URL")
+        .or_else(|_| {
+            std::env::var("DATABASE_URL").map(|db_url| {
+                // Extract project ID from postgresql://...@db.XXXX.supabase.co:...
+                if let Some(start) = db_url.find("db.") {
+                    if let Some(end) = db_url[start..].find(".supabase.co") {
+                        let project_id = &db_url[start + 3..start + end];
+                        return format!("https://{}.supabase.co", project_id);
+                    }
+                }
+                String::new()
+            })
+        })
+        .unwrap_or_default();
+
+    Json(PublicConfig {
+        api_version: env!("CARGO_PKG_VERSION"),
+        supabase_url,
+        features: vec![
+            "frames", "stats", "alerts", "billing", "csv_export",
+            "line_notifications", "cameras", "weekly_stats", "hourly_stats",
+        ],
+    })
+}
+
 /// Build the application router with all routes and middleware.
 ///
 /// Separated from `main` so integration tests can construct the same router
@@ -1084,6 +1122,7 @@ fn build_router(state: AppState) -> Router {
         .route("/api/v1/billing/subscription", get(get_subscription))
         // Public routes
         .route("/api/v1/health", get(health_check))
+        .route("/api/v1/config", get(get_public_config))
         .route("/api/v1/pricing", get(get_pricing))
         .route("/api/v1/webhooks/line", post(line_webhook))
         .route("/api/v1/webhooks/stripe", post(stripe_webhook))
@@ -1381,5 +1420,69 @@ mod tests {
 
         assert!(line::verify_line_signature(body, &sig, secret));
         assert!(!line::verify_line_signature(body, "invalid_sig", secret));
+    }
+
+    #[tokio::test]
+    async fn config_returns_api_version_and_features() {
+        let app = test_app();
+
+        let request = Request::builder()
+            .uri("/api/v1/config")
+            .method("GET")
+            .body(axum::body::Body::empty())
+            .unwrap();
+
+        let response = app.oneshot(request).await.unwrap();
+        assert_eq!(response.status(), StatusCode::OK);
+
+        let body_bytes = response.into_body().collect().await.unwrap().to_bytes();
+        let config: serde_json::Value = serde_json::from_slice(&body_bytes).unwrap();
+
+        assert!(config["api_version"].is_string(), "should have api_version");
+        assert!(config["features"].is_array(), "should have features array");
+
+        let features: Vec<&str> = config["features"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .filter_map(|v| v.as_str())
+            .collect();
+        assert!(features.contains(&"frames"), "should list frames feature");
+        assert!(features.contains(&"weekly_stats"), "should list weekly_stats");
+        assert!(features.contains(&"hourly_stats"), "should list hourly_stats");
+    }
+
+    #[tokio::test]
+    async fn authenticated_endpoints_require_auth() {
+        // Test multiple authenticated endpoints return 401 without token
+        let endpoints = vec![
+            ("/api/v1/stores/me/stats", "GET"),
+            ("/api/v1/stores/me/stats/weekly", "GET"),
+            ("/api/v1/stores/me/stats/hourly", "GET"),
+            ("/api/v1/stores/me/daily", "GET"),
+            ("/api/v1/stores/me/cameras", "GET"),
+            ("/api/v1/stores/me/usage", "GET"),
+            ("/api/v1/stores/me/alerts", "GET"),
+            ("/api/v1/stores/me/alerts/count", "GET"),
+            ("/api/v1/stores/me/export/csv", "GET"),
+        ];
+
+        for (uri, method) in endpoints {
+            let app = test_app();
+            let request = Request::builder()
+                .uri(uri)
+                .method(method)
+                .body(axum::body::Body::empty())
+                .unwrap();
+
+            let response = app.oneshot(request).await.unwrap();
+            assert_eq!(
+                response.status(),
+                StatusCode::UNAUTHORIZED,
+                "{} {} should return 401 without auth",
+                method,
+                uri
+            );
+        }
     }
 }
