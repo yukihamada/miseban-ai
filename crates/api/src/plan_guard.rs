@@ -45,10 +45,10 @@ impl RateLimiter {
 /// Minimum interval between frame submissions per tier.
 fn min_interval_for_tier(tier: &str) -> std::time::Duration {
     match tier {
-        "starter" => std::time::Duration::from_secs(2),     // 0.5 fps
-        "pro" => std::time::Duration::from_millis(500),      // 2 fps
+        "starter" => std::time::Duration::from_secs(2), // 0.5 fps
+        "pro" => std::time::Duration::from_millis(500), // 2 fps
         "enterprise" => std::time::Duration::from_millis(100), // 10 fps
-        _ => std::time::Duration::from_secs(10),             // free: 1 frame / 10s
+        _ => std::time::Duration::from_secs(10),        // free: 1 frame / 10s
     }
 }
 
@@ -67,11 +67,10 @@ pub async fn can_add_camera(pool: &PgPool, store_id: &Uuid) -> Result<bool, sqlx
 
 /// Get the plan tier string for a store.
 pub async fn get_plan_tier(pool: &PgPool, store_id: &Uuid) -> Result<String, sqlx::Error> {
-    let tier: Option<String> =
-        sqlx::query_scalar("SELECT plan_tier FROM stores WHERE id = $1")
-            .bind(store_id)
-            .fetch_optional(pool)
-            .await?;
+    let tier: Option<String> = sqlx::query_scalar("SELECT plan_tier FROM stores WHERE id = $1")
+        .bind(store_id)
+        .fetch_optional(pool)
+        .await?;
 
     Ok(tier.unwrap_or_else(|| "free".to_string()))
 }

@@ -113,7 +113,9 @@ async fn receive_frame(
     // Max 10MB JPEG payload.
     const MAX_JPEG_SIZE: usize = 10 * 1024 * 1024;
     if frame.jpeg_bytes.len() > MAX_JPEG_SIZE {
-        return Err(ApiError::Forbidden("Frame too large (max 10MB)".to_string()));
+        return Err(ApiError::Forbidden(
+            "Frame too large (max 10MB)".to_string(),
+        ));
     }
     if frame.jpeg_bytes.is_empty() {
         return Err(ApiError::Forbidden("Empty frame data".to_string()));
@@ -136,7 +138,9 @@ async fn receive_frame(
                 plan_tier = %store.plan_tier,
                 "Frame submission rate limited"
             );
-            return Err(ApiError::Forbidden("Rate limit exceeded. Please wait before submitting another frame.".to_string()));
+            return Err(ApiError::Forbidden(
+                "Rate limit exceeded. Please wait before submitting another frame.".to_string(),
+            ));
         }
 
         // Camera limit check (soft enforcement).
@@ -162,10 +166,9 @@ async fn receive_frame(
     let camera_uuid = Uuid::parse_str(&result.camera_id).ok();
 
     if let Some(ref cam_id) = camera_uuid {
-        let demographics_json = serde_json::to_value(&result.demographics)
-            .unwrap_or(serde_json::Value::Null);
-        let zones_json = serde_json::to_value(&result.zones)
-            .unwrap_or(serde_json::Value::Null);
+        let demographics_json =
+            serde_json::to_value(&result.demographics).unwrap_or(serde_json::Value::Null);
+        let zones_json = serde_json::to_value(&result.zones).unwrap_or(serde_json::Value::Null);
 
         if let Err(e) = db::insert_visitor_count(
             &state.pool,
@@ -290,8 +293,7 @@ async fn get_my_store_stats(
         .await
         .ok_or_else(|| ApiError::NotFound("No store found for this user".to_string()))?;
 
-    let (today_total, cameras_online) =
-        db::get_store_stats_db(&state.pool, &store.id).await;
+    let (today_total, cameras_online) = db::get_store_stats_db(&state.pool, &store.id).await;
 
     Ok(Json(StoreStats {
         store_id: store.id.to_string(),
@@ -355,13 +357,10 @@ async fn get_store_stats(
         .map_err(|_| ApiError::NotFound("Invalid store ID".to_string()))?;
 
     if !db::user_owns_store(&state.pool, &user_id, &store_uuid).await {
-        return Err(ApiError::Forbidden(
-            "You do not own this store".to_string(),
-        ));
+        return Err(ApiError::Forbidden("You do not own this store".to_string()));
     }
 
-    let (today_total, cameras_online) =
-        db::get_store_stats_db(&state.pool, &store_uuid).await;
+    let (today_total, cameras_online) = db::get_store_stats_db(&state.pool, &store_uuid).await;
 
     Ok(Json(StoreStats {
         store_id,
@@ -397,9 +396,7 @@ async fn get_daily_report(
         .map_err(|_| ApiError::NotFound("Invalid store ID".to_string()))?;
 
     if !db::user_owns_store(&state.pool, &user_id, &store_uuid).await {
-        return Err(ApiError::Forbidden(
-            "You do not own this store".to_string(),
-        ));
+        return Err(ApiError::Forbidden("You do not own this store".to_string()));
     }
 
     build_daily_report(&state.pool, &store_uuid, &store_id).await
@@ -690,7 +687,9 @@ async fn mark_alert_read(
     if updated {
         Ok(StatusCode::OK)
     } else {
-        Err(ApiError::NotFound("Alert not found or already read".to_string()))
+        Err(ApiError::NotFound(
+            "Alert not found or already read".to_string(),
+        ))
     }
 }
 
@@ -738,7 +737,9 @@ async fn export_csv(
 
     let today = Utc::now().date_naive();
     let to = params.to.unwrap_or(today);
-    let from = params.from.unwrap_or_else(|| to - chrono::Duration::days(30));
+    let from = params
+        .from
+        .unwrap_or_else(|| to - chrono::Duration::days(30));
 
     let csv = csv_export::export_visitor_csv(&state.pool, &store.id, from, to).await?;
 
@@ -839,9 +840,7 @@ async fn create_portal(
 
     let customer_id = billing::get_stripe_customer_id(&state.pool, &store.id)
         .await
-        .ok_or_else(|| {
-            ApiError::NotFound("No Stripe customer linked to this store".to_string())
-        })?;
+        .ok_or_else(|| ApiError::NotFound("No Stripe customer linked to this store".to_string()))?;
 
     let session = stripe
         .create_portal_session(&customer_id, &body.return_url)
@@ -900,8 +899,7 @@ async fn stripe_webhook(
 
             if let Ok(store_id) = Uuid::parse_str(store_id_str) {
                 // Save customer ID to store.
-                let _ =
-                    billing::set_stripe_customer_id(&state.pool, &store_id, customer_id).await;
+                let _ = billing::set_stripe_customer_id(&state.pool, &store_id, customer_id).await;
 
                 // Determine tier from metadata or price_id.
                 let tier = billing::determine_tier(obj);
@@ -910,9 +908,7 @@ async fn stripe_webhook(
             }
         }
         "customer.subscription.deleted" => {
-            let customer_id = event.data.object["customer"]
-                .as_str()
-                .unwrap_or_default();
+            let customer_id = event.data.object["customer"].as_str().unwrap_or_default();
             if let Some((store_id, _)) =
                 billing::get_store_by_stripe_customer(&state.pool, customer_id).await
             {
@@ -921,9 +917,7 @@ async fn stripe_webhook(
             }
         }
         "invoice.payment_failed" => {
-            let customer_id = event.data.object["customer"]
-                .as_str()
-                .unwrap_or_default();
+            let customer_id = event.data.object["customer"].as_str().unwrap_or_default();
             warn!(customer_id = %customer_id, "Payment failed");
         }
         _ => {
@@ -938,10 +932,7 @@ async fn stripe_webhook(
 ///
 /// LINE webhook endpoint (public, no JWT auth). Receives events from LINE platform.
 /// Verifies webhook signature if LINE_CHANNEL_SECRET is configured.
-async fn line_webhook(
-    headers: axum::http::HeaderMap,
-    body: String,
-) -> StatusCode {
+async fn line_webhook(headers: axum::http::HeaderMap, body: String) -> StatusCode {
     // Verify LINE signature if channel secret is configured.
     if let Ok(secret) = std::env::var("LINE_CHANNEL_SECRET") {
         let sig = headers
@@ -1018,7 +1009,9 @@ async fn signup(
         return Err(ApiError::BadRequest("Invalid email".to_string()));
     }
     if body.password.len() < 8 {
-        return Err(ApiError::BadRequest("Password must be at least 8 characters".to_string()));
+        return Err(ApiError::BadRequest(
+            "Password must be at least 8 characters".to_string(),
+        ));
     }
 
     // Check if user already exists
@@ -1042,10 +1035,13 @@ async fn signup(
     let token = auth::issue_token(&user_id, &state.jwt_secret.0)
         .map_err(|e| ApiError::Internal(format!("Token error: {e}")))?;
 
-    Ok((StatusCode::CREATED, Json(AuthResponse {
-        token,
-        user_id: user_id.to_string(),
-    })))
+    Ok((
+        StatusCode::CREATED,
+        Json(AuthResponse {
+            token,
+            user_id: user_id.to_string(),
+        }),
+    ))
 }
 
 /// POST /api/v1/auth/login
@@ -1060,7 +1056,9 @@ async fn login(
         .ok_or_else(|| ApiError::Unauthorized("Invalid email or password".to_string()))?;
 
     if !auth::verify_password(&body.password, &user.password_hash) {
-        return Err(ApiError::Unauthorized("Invalid email or password".to_string()));
+        return Err(ApiError::Unauthorized(
+            "Invalid email or password".to_string(),
+        ));
     }
 
     let token = auth::issue_token(&user.id, &state.jwt_secret.0)
@@ -1100,13 +1098,14 @@ async fn health_check(State(state): State<AppState>) -> Json<HealthResponse> {
         Err(_) => "unavailable",
     };
 
-    let uptime = START_TIME
-        .get()
-        .map(|t| t.elapsed().as_secs())
-        .unwrap_or(0);
+    let uptime = START_TIME.get().map(|t| t.elapsed().as_secs()).unwrap_or(0);
 
     Json(HealthResponse {
-        status: if db_status == "connected" { "ok" } else { "degraded" },
+        status: if db_status == "connected" {
+            "ok"
+        } else {
+            "degraded"
+        },
         version: env!("CARGO_PKG_VERSION"),
         database: db_status,
         uptime_seconds: uptime,
@@ -1149,8 +1148,16 @@ async fn get_public_config() -> Json<PublicConfig> {
         api_version: env!("CARGO_PKG_VERSION"),
         supabase_url,
         features: vec![
-            "auth", "frames", "stats", "alerts", "billing", "csv_export",
-            "line_notifications", "cameras", "weekly_stats", "hourly_stats",
+            "auth",
+            "frames",
+            "stats",
+            "alerts",
+            "billing",
+            "csv_export",
+            "line_notifications",
+            "cameras",
+            "weekly_stats",
+            "hourly_stats",
         ],
     })
 }
@@ -1234,16 +1241,13 @@ async fn main() {
 
     tracing_subscriber::fmt()
         .with_env_filter(
-            tracing_subscriber::EnvFilter::try_from_default_env()
-                .unwrap_or_else(|_| "info".into()),
+            tracing_subscriber::EnvFilter::try_from_default_env().unwrap_or_else(|_| "info".into()),
         )
         .init();
 
     // Read configuration from environment.
-    let database_url = std::env::var("DATABASE_URL")
-        .expect("DATABASE_URL must be set");
-    let jwt_secret = std::env::var("SUPABASE_JWT_SECRET")
-        .expect("SUPABASE_JWT_SECRET must be set");
+    let database_url = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set");
+    let jwt_secret = std::env::var("SUPABASE_JWT_SECRET").expect("SUPABASE_JWT_SECRET must be set");
     let port: u16 = std::env::var("PORT")
         .ok()
         .and_then(|p| p.parse().ok())
@@ -1302,9 +1306,7 @@ async fn main() {
         .await
         .expect("Failed to bind to address");
 
-    axum::serve(listener, app)
-        .await
-        .expect("Server error");
+    axum::serve(listener, app).await.expect("Server error");
 }
 
 // ---------------------------------------------------------------------------
@@ -1410,10 +1412,7 @@ mod tests {
         }
 
         // Verify known tier names are present.
-        let tier_names: Vec<&str> = plans
-            .iter()
-            .filter_map(|p| p["tier"].as_str())
-            .collect();
+        let tier_names: Vec<&str> = plans.iter().filter_map(|p| p["tier"].as_str()).collect();
         assert!(tier_names.contains(&"free"), "should contain free tier");
         assert!(
             tier_names.contains(&"starter"),
@@ -1537,8 +1536,14 @@ mod tests {
             .filter_map(|v| v.as_str())
             .collect();
         assert!(features.contains(&"frames"), "should list frames feature");
-        assert!(features.contains(&"weekly_stats"), "should list weekly_stats");
-        assert!(features.contains(&"hourly_stats"), "should list hourly_stats");
+        assert!(
+            features.contains(&"weekly_stats"),
+            "should list weekly_stats"
+        );
+        assert!(
+            features.contains(&"hourly_stats"),
+            "should list hourly_stats"
+        );
     }
 
     #[tokio::test]

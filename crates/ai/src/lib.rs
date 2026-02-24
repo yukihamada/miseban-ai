@@ -119,8 +119,7 @@ mod inference {
 
     /// Resolve the model file path from environment or default.
     fn model_path() -> String {
-        std::env::var("MISEBAN_MODEL_PATH")
-            .unwrap_or_else(|_| "models/yolov8n.onnx".to_string())
+        std::env::var("MISEBAN_MODEL_PATH").unwrap_or_else(|_| "models/yolov8n.onnx".to_string())
     }
 
     /// Load the YOLOv8n ONNX model into the global singleton.
@@ -188,9 +187,10 @@ mod inference {
         let input = preprocess(jpeg_bytes)?;
 
         let outputs = session
-            .run(ort::inputs![input].map_err(|e| {
-                AiError::Inference(format!("failed to create inputs: {e}"))
-            })?)
+            .run(
+                ort::inputs![input]
+                    .map_err(|e| AiError::Inference(format!("failed to create inputs: {e}")))?,
+            )
             .map_err(|e| AiError::Inference(format!("inference failed: {e}")))?;
 
         // YOLOv8 output shape: [1, 84, 8400]

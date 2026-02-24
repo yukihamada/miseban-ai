@@ -83,10 +83,9 @@ impl IntoResponse for AuthError {
                 StatusCode::UNAUTHORIZED,
                 "Missing Authorization header".to_string(),
             ),
-            AuthError::InvalidToken(msg) => (
-                StatusCode::UNAUTHORIZED,
-                format!("Invalid token: {msg}"),
-            ),
+            AuthError::InvalidToken(msg) => {
+                (StatusCode::UNAUTHORIZED, format!("Invalid token: {msg}"))
+            }
             AuthError::InvalidSubject(msg) => (
                 StatusCode::UNAUTHORIZED,
                 format!("Invalid subject claim: {msg}"),

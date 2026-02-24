@@ -184,16 +184,12 @@ pub async fn mark_alert_read(
 }
 
 /// Mark all alerts as read for a store. Returns the count of alerts marked.
-pub async fn mark_all_alerts_read(
-    pool: &PgPool,
-    store_id: &Uuid,
-) -> Result<i64, sqlx::Error> {
-    let result = sqlx::query(
-        "UPDATE alerts SET is_read = true WHERE store_id = $1 AND is_read = false",
-    )
-    .bind(store_id)
-    .execute(pool)
-    .await?;
+pub async fn mark_all_alerts_read(pool: &PgPool, store_id: &Uuid) -> Result<i64, sqlx::Error> {
+    let result =
+        sqlx::query("UPDATE alerts SET is_read = true WHERE store_id = $1 AND is_read = false")
+            .bind(store_id)
+            .execute(pool)
+            .await?;
 
     Ok(result.rows_affected() as i64)
 }

@@ -79,11 +79,7 @@ impl LineClient {
 
     /// Send a simple text message to a LINE user.
     #[allow(dead_code)]
-    pub async fn push_message(
-        &self,
-        line_user_id: &str,
-        message: &str,
-    ) -> Result<(), LineError> {
+    pub async fn push_message(&self, line_user_id: &str, message: &str) -> Result<(), LineError> {
         let body = PushMessageRequest {
             to: line_user_id,
             messages: vec![LineMessage::Text {
@@ -101,10 +97,7 @@ impl LineClient {
         line_user_id: &str,
         alert: &AlertPayload,
     ) -> Result<(), LineError> {
-        let alt_text = format!(
-            "[MisebanAI Alert] {} - {}",
-            alert.alert_type, alert.message
-        );
+        let alt_text = format!("[MisebanAI Alert] {} - {}", alert.alert_type, alert.message);
 
         let confidence_pct = format!("{:.0}%", alert.confidence * 100.0);
 

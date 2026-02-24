@@ -26,13 +26,21 @@ struct AppState {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-struct PairRequest { code: String }
+struct PairRequest {
+    code: String,
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-struct PairResult { token: String, store_id: String, store_name: String }
+struct PairResult {
+    token: String,
+    store_id: String,
+    store_name: String,
+}
 
 #[derive(Debug, Serialize, Deserialize)]
-struct SaveRequest { cameras: Vec<SelectedCamera> }
+struct SaveRequest {
+    cameras: Vec<SelectedCamera>,
+}
 
 #[derive(Debug, Serialize, Deserialize)]
 struct SelectedCamera {
@@ -54,10 +62,18 @@ struct ApiResponse<T: Serialize> {
 
 impl<T: Serialize> ApiResponse<T> {
     fn success(data: T) -> Self {
-        Self { ok: true, data: Some(data), error: None }
+        Self {
+            ok: true,
+            data: Some(data),
+            error: None,
+        }
     }
     fn err(msg: impl Into<String>) -> Self {
-        Self { ok: false, data: None, error: Some(msg.into()) }
+        Self {
+            ok: false,
+            data: None,
+            error: Some(msg.into()),
+        }
     }
 }
 
@@ -66,9 +82,13 @@ fn config_dir() -> PathBuf {
     PathBuf::from(home).join(".miseban")
 }
 
-fn config_path() -> PathBuf { config_dir().join("config.toml") }
+fn config_path() -> PathBuf {
+    config_dir().join("config.toml")
+}
 
-async fn index_page() -> Html<&'static str> { Html(SETUP_HTML) }
+async fn index_page() -> Html<&'static str> {
+    Html(SETUP_HTML)
+}
 
 async fn handle_pair(
     State(state): State<AppState>,
@@ -78,34 +98,35 @@ async fn handle_pair(
     if code.len() != 6 || !code.chars().all(|c| c.is_ascii_digit()) {
         return (
             StatusCode::BAD_REQUEST,
-            Json(ApiResponse::<PairResult>::err("ペアリングコードは6桁の数字です")),
+            Json(ApiResponse::<PairResult>::err(
+                "ペアリングコードは6桁の数字です",
+            )),
         );
     }
 
     info!(code = %code, "Attempting pairing with cloud API");
     let payload = serde_json::json!({ "code": code });
-    let result = state.http
+    let result = state
+        .http
         .post("https://api.misebanai.com/v1/pair")
         .json(&payload)
         .send()
         .await;
 
     match result {
-        Ok(resp) if resp.status().is_success() => {
-            match resp.json::<PairResult>().await {
-                Ok(pair) => {
-                    info!(store_id = %pair.store_id, store_name = %pair.store_name, "Pairing successful");
-                    *state.paired.lock().await = Some(pair.clone());
-                    (StatusCode::OK, Json(ApiResponse::success(pair)))
-                }
-                Err(e) => {
-                    error!(error = %e, "Failed to parse pairing response");
-                    (StatusCode::BAD_GATEWAY, Json(ApiResponse::<PairResult>::err(
+        Ok(resp) if resp.status().is_success() => match resp.json::<PairResult>().await {
+            Ok(pair) => {
+                info!(store_id = %pair.store_id, store_name = %pair.store_name, "Pairing successful");
+                *state.paired.lock().await = Some(pair.clone());
+                (StatusCode::OK, Json(ApiResponse::success(pair)))
+            }
+            Err(e) => {
+                error!(error = %e, "Failed to parse pairing response");
+                (StatusCode::BAD_GATEWAY, Json(ApiResponse::<PairResult>::err(
                         "サーバーからの応答を解析できませんでした。しばらくしてからお試しください。",
                     )))
-                }
             }
-        }
+        },
         Ok(resp) => {
             let status = resp.status();
             let body = resp.text().await.unwrap_or_default();
@@ -115,13 +136,19 @@ async fn handle_pair(
             } else {
                 "サーバーに接続できませんでした。ネットワーク接続を確認してください。"
             };
-            (StatusCode::BAD_REQUEST, Json(ApiResponse::<PairResult>::err(msg)))
+            (
+                StatusCode::BAD_REQUEST,
+                Json(ApiResponse::<PairResult>::err(msg)),
+            )
         }
         Err(e) => {
             error!(error = %e, "Failed to reach pairing API");
-            (StatusCode::SERVICE_UNAVAILABLE, Json(ApiResponse::<PairResult>::err(
-                "クラウドAPIに接続できません。ネットワーク接続を確認してください。",
-            )))
+            (
+                StatusCode::SERVICE_UNAVAILABLE,
+                Json(ApiResponse::<PairResult>::err(
+                    "クラウドAPIに接続できません。ネットワーク接続を確認してください。",
+                )),
+            )
         }
     }
 }
@@ -139,23 +166,31 @@ async fn handle_save(
     let paired = state.paired.lock().await;
     let pair = match paired.as_ref() {
         Some(p) => p.clone(),
-        None => return (
-            StatusCode::BAD_REQUEST,
-            Json(ApiResponse::<String>::err("先にペアリングコードを入力してください")),
-        ),
+        None => {
+            return (
+                StatusCode::BAD_REQUEST,
+                Json(ApiResponse::<String>::err(
+                    "先にペアリングコードを入力してください",
+                )),
+            )
+        }
     };
     drop(paired);
 
     if req.cameras.is_empty() {
         return (
             StatusCode::BAD_REQUEST,
-            Json(ApiResponse::<String>::err("カメラを1台以上選択してください")),
+            Json(ApiResponse::<String>::err(
+                "カメラを1台以上選択してください",
+            )),
         );
     }
 
     let mut toml_str = String::new();
     toml_str.push_str("# MisebanAI Agent Config (auto-generated by setup wizard)\n\n[server]\n");
-    toml_str.push_str(&format!("endpoint = \"https://api.miseban.ai/v1/frames\"\n"));
+    toml_str.push_str(&format!(
+        "endpoint = \"https://api.miseban.ai/v1/frames\"\n"
+    ));
     toml_str.push_str(&format!("token = \"{}\"\n", pair.token));
     toml_str.push_str(&format!("# store_id = \"{}\"\n", pair.store_id));
     toml_str.push_str(&format!("# store_name = \"{}\"\n\n", pair.store_name));
@@ -169,23 +204,35 @@ async fn handle_save(
     let dir = config_dir();
     if let Err(e) = std::fs::create_dir_all(&dir) {
         error!(error = %e, path = %dir.display(), "Failed to create config directory");
-        return (StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ApiResponse::<String>::err("設定ディレクトリを作成できませんでした")));
+        return (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ApiResponse::<String>::err(
+                "設定ディレクトリを作成できませんでした",
+            )),
+        );
     }
 
     let path = config_path();
     match std::fs::write(&path, &toml_str) {
         Ok(()) => {
             info!(path = %path.display(), cameras = req.cameras.len(), "Config saved");
-            (StatusCode::OK, Json(ApiResponse::success(format!(
-                "設定を {} に保存しました。エージェントを再起動してください。", path.display()
-            ))))
+            (
+                StatusCode::OK,
+                Json(ApiResponse::success(format!(
+                    "設定を {} に保存しました。エージェントを再起動してください。",
+                    path.display()
+                ))),
+            )
         }
         Err(e) => {
             error!(error = %e, path = %path.display(), "Failed to write config");
-            (StatusCode::INTERNAL_SERVER_ERROR, Json(ApiResponse::<String>::err(
-                format!("設定ファイルの書き込みに失敗しました: {}", e)
-            )))
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ApiResponse::<String>::err(format!(
+                    "設定ファイルの書き込みに失敗しました: {}",
+                    e
+                ))),
+            )
         }
     }
 }

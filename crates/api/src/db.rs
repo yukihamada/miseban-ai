@@ -76,27 +76,33 @@ pub async fn find_user_by_email(pool: &PgPool, email: &str) -> Option<UserRow> {
 }
 
 /// Create a new user and return their ID.
-pub async fn create_user(pool: &PgPool, email: &str, password_hash: &str) -> Result<Uuid, sqlx::Error> {
-    let row: (Uuid,) = sqlx::query_as(
-        "INSERT INTO users (email, password_hash) VALUES ($1, $2) RETURNING id",
-    )
-    .bind(email)
-    .bind(password_hash)
-    .fetch_one(pool)
-    .await?;
+pub async fn create_user(
+    pool: &PgPool,
+    email: &str,
+    password_hash: &str,
+) -> Result<Uuid, sqlx::Error> {
+    let row: (Uuid,) =
+        sqlx::query_as("INSERT INTO users (email, password_hash) VALUES ($1, $2) RETURNING id")
+            .bind(email)
+            .bind(password_hash)
+            .fetch_one(pool)
+            .await?;
 
     Ok(row.0)
 }
 
 /// Create a default store for a new user.
-pub async fn create_default_store(pool: &PgPool, owner_id: &Uuid, store_name: &str) -> Result<Uuid, sqlx::Error> {
-    let row: (Uuid,) = sqlx::query_as(
-        "INSERT INTO stores (owner_id, name) VALUES ($1, $2) RETURNING id",
-    )
-    .bind(owner_id)
-    .bind(store_name)
-    .fetch_one(pool)
-    .await?;
+pub async fn create_default_store(
+    pool: &PgPool,
+    owner_id: &Uuid,
+    store_name: &str,
+) -> Result<Uuid, sqlx::Error> {
+    let row: (Uuid,) =
+        sqlx::query_as("INSERT INTO stores (owner_id, name) VALUES ($1, $2) RETURNING id")
+            .bind(owner_id)
+            .bind(store_name)
+            .fetch_one(pool)
+            .await?;
 
     Ok(row.0)
 }
@@ -119,30 +125,24 @@ pub async fn get_store_by_owner(pool: &PgPool, owner_id: &Uuid) -> Option<StoreR
 
 /// Check if a user owns a specific store.
 pub async fn user_owns_store(pool: &PgPool, owner_id: &Uuid, store_id: &Uuid) -> bool {
-    let row: Option<(i64,)> = sqlx::query_as(
-        "SELECT 1 AS found FROM stores WHERE id = $1 AND owner_id = $2 LIMIT 1",
-    )
-    .bind(store_id)
-    .bind(owner_id)
-    .fetch_optional(pool)
-    .await
-    .ok()
-    .flatten();
+    let row: Option<(i64,)> =
+        sqlx::query_as("SELECT 1 AS found FROM stores WHERE id = $1 AND owner_id = $2 LIMIT 1")
+            .bind(store_id)
+            .bind(owner_id)
+            .fetch_optional(pool)
+            .await
+            .ok()
+            .flatten();
 
     row.is_some()
 }
 
 /// Query today's aggregate stats from visitor_counts.
-pub async fn get_store_stats_db(
-    pool: &PgPool,
-    store_id: &Uuid,
-) -> (i64, i64) {
+pub async fn get_store_stats_db(pool: &PgPool, store_id: &Uuid) -> (i64, i64) {
     // today_total: sum of people_count for today
     // cameras_online: count of cameras with status = 'online'
     let today = Utc::now().date_naive();
-    let start = today
-        .and_hms_opt(0, 0, 0)
-        .expect("valid midnight");
+    let start = today.and_hms_opt(0, 0, 0).expect("valid midnight");
 
     let total_row: Option<(Option<i64>,)> = sqlx::query_as(
         "SELECT SUM(people_count)::bigint AS total \
@@ -156,9 +156,7 @@ pub async fn get_store_stats_db(
     .ok()
     .flatten();
 
-    let today_total = total_row
-        .and_then(|r| r.0)
-        .unwrap_or(0);
+    let today_total = total_row.and_then(|r| r.0).unwrap_or(0);
 
     let cameras_row: Option<(i64,)> = sqlx::query_as(
         "SELECT COUNT(*)::bigint FROM cameras WHERE store_id = $1 AND status = 'online'",
@@ -228,14 +226,13 @@ pub async fn get_store_line_user_id(pool: &PgPool, store_id: &Uuid) -> Option<St
 
 /// Count cameras for a store (lightweight, just count).
 pub async fn count_cameras(pool: &PgPool, store_id: &Uuid) -> i64 {
-    let row: Option<(i64,)> = sqlx::query_as(
-        "SELECT COUNT(*)::bigint FROM cameras WHERE store_id = $1",
-    )
-    .bind(store_id)
-    .fetch_optional(pool)
-    .await
-    .ok()
-    .flatten();
+    let row: Option<(i64,)> =
+        sqlx::query_as("SELECT COUNT(*)::bigint FROM cameras WHERE store_id = $1")
+            .bind(store_id)
+            .fetch_optional(pool)
+            .await
+            .ok()
+            .flatten();
 
     row.map(|r| r.0).unwrap_or(0)
 }
@@ -244,10 +241,7 @@ pub async fn count_cameras(pool: &PgPool, store_id: &Uuid) -> i64 {
 ///
 /// Returns a vector of `(date, total_count)` tuples sorted by date ascending.
 /// Days with no data are simply omitted from the result.
-pub async fn get_weekly_visitor_counts(
-    pool: &PgPool,
-    store_id: &Uuid,
-) -> Vec<(NaiveDate, i64)> {
+pub async fn get_weekly_visitor_counts(pool: &PgPool, store_id: &Uuid) -> Vec<(NaiveDate, i64)> {
     let rows: Vec<(NaiveDate, i64)> = sqlx::query_as(
         "SELECT counted_at::date AS day, SUM(people_count)::bigint AS total \
          FROM visitor_counts \
@@ -268,10 +262,7 @@ pub async fn get_weekly_visitor_counts(
 ///
 /// Returns a vector of `(hour, total_count)` tuples sorted by hour ascending.
 /// Hours with no data are simply omitted from the result.
-pub async fn get_hourly_visitor_counts(
-    pool: &PgPool,
-    store_id: &Uuid,
-) -> Vec<(i32, i64)> {
+pub async fn get_hourly_visitor_counts(pool: &PgPool, store_id: &Uuid) -> Vec<(i32, i64)> {
     let rows: Vec<(i32, i64)> = sqlx::query_as(
         "SELECT EXTRACT(HOUR FROM counted_at)::int AS hour, \
                 SUM(people_count)::bigint AS total \
