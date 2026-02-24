@@ -49,7 +49,7 @@ jobs:
 
       # cargo-deny: check advisories and licenses
       - name: Install cargo-deny
-        run: cargo install cargo-deny --locked
+        run: cargo install cargo-deny@0.18.3 --locked
 
       - name: cargo deny check advisories
         run: cargo deny check advisories
