@@ -1,4 +1,5 @@
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
+use std::sync::Arc;
 use std::time::Duration;
 
 use clap::Parser;
@@ -8,8 +9,11 @@ use tokio::signal;
 use tokio::sync::watch;
 use tracing::{debug, error, info, warn};
 
+mod buffer;
 mod scanner;
 mod setup;
+
+use buffer::FrameBuffer;
 
 // ---------------------------------------------------------------------------
 // Version
@@ -399,6 +403,7 @@ async fn camera_loop(
     token: String,
     camera: CameraEntry,
     dry_run: bool,
+    frame_buffer: Arc<FrameBuffer>,
     mut shutdown_rx: watch::Receiver<bool>,
 ) {
     let interval = Duration::from_secs(camera.interval_secs);
@@ -425,6 +430,17 @@ async fn camera_loop(
                         warn!(camera_id = %camera.id, error = %e, "Failed to save frame to disk");
                     }
                 } else {
+                    // Enqueue to local SQLite buffer first (never lose frames).
+                    let buf_id = match frame_buffer.enqueue(&frame).await {
+                        Ok(id) => id,
+                        Err(e) => {
+                            warn!(camera_id = %camera.id, error = %e, "Failed to enqueue frame to buffer");
+                            // Fall through — attempt direct upload anyway.
+                            -1
+                        }
+                    };
+
+                    // Attempt immediate upload.
                     match upload_frame(&client, &endpoint, &token, &frame).await {
                         Ok(Some(result)) => {
                             info!(
@@ -433,16 +449,25 @@ async fn camera_loop(
                                 alerts = result.alerts.len(),
                                 "Analysis result received"
                             );
+                            if buf_id > 0 {
+                                let _ = frame_buffer.mark_done(buf_id).await;
+                            }
                         }
                         Ok(None) => {
                             debug!(camera_id = %camera.id, "Frame uploaded (no analysis result)");
+                            if buf_id > 0 {
+                                let _ = frame_buffer.mark_done(buf_id).await;
+                            }
                         }
                         Err(e) => {
                             warn!(
                                 camera_id = %camera.id,
                                 error = %e,
-                                "Upload failed, will retry next cycle"
+                                "Upload failed — frame buffered locally for retry"
                             );
+                            if buf_id > 0 {
+                                let _ = frame_buffer.mark_failed(buf_id).await;
+                            }
                         }
                     }
                 }
@@ -486,10 +511,88 @@ async fn camera_loop(
 }
 
 // ---------------------------------------------------------------------------
+// Background flush: retry pending frames from the buffer
+// ---------------------------------------------------------------------------
+
+async fn flush_pending(
+    client: reqwest::Client,
+    endpoint: String,
+    token: String,
+    frame_buffer: Arc<FrameBuffer>,
+    mut shutdown_rx: watch::Receiver<bool>,
+) {
+    const FLUSH_INTERVAL: Duration = Duration::from_secs(30);
+    const BATCH_SIZE: usize = 10;
+    const CLEANUP_HOURS: u64 = 24;
+
+    info!("Background flush task started (every {}s, batch {})", FLUSH_INTERVAL.as_secs(), BATCH_SIZE);
+
+    loop {
+        tokio::select! {
+            _ = tokio::time::sleep(FLUSH_INTERVAL) => {}
+            _ = shutdown_rx.changed() => {
+                info!("Flush task received shutdown signal");
+                return;
+            }
+        }
+
+        // Fetch pending frames.
+        let pending = match frame_buffer.peek_pending(BATCH_SIZE).await {
+            Ok(p) => p,
+            Err(e) => {
+                warn!(error = %e, "Failed to peek pending frames");
+                continue;
+            }
+        };
+
+        if pending.is_empty() {
+            // Periodic cleanup even when queue is empty.
+            let _ = frame_buffer.cleanup_old(CLEANUP_HOURS).await;
+            continue;
+        }
+
+        info!(count = pending.len(), "Flushing buffered frames");
+
+        for bf in &pending {
+            let frame = FrameData {
+                camera_id: bf.camera_id.clone(),
+                timestamp: chrono::DateTime::parse_from_rfc3339(&bf.timestamp)
+                    .map(|dt| dt.with_timezone(&chrono::Utc))
+                    .unwrap_or_else(|_| chrono::Utc::now()),
+                jpeg_bytes: bf.jpeg_bytes.clone(),
+                resolution: Resolution { width: 0, height: 0 },
+            };
+
+            match upload_frame(&client, &endpoint, &token, &frame).await {
+                Ok(_) => {
+                    debug!(id = bf.id, camera_id = %bf.camera_id, "Buffered frame uploaded");
+                    let _ = frame_buffer.mark_done(bf.id).await;
+                }
+                Err(e) => {
+                    warn!(
+                        id = bf.id,
+                        camera_id = %bf.camera_id,
+                        retry_count = bf.retry_count,
+                        error = %e,
+                        "Buffered frame upload failed"
+                    );
+                    let _ = frame_buffer.mark_failed(bf.id).await;
+                    // Stop batch on first failure (network likely still down).
+                    break;
+                }
+            }
+        }
+
+        // Cleanup completed + expired entries.
+        let _ = frame_buffer.cleanup_old(CLEANUP_HOURS).await;
+    }
+}
+
+// ---------------------------------------------------------------------------
 // Startup banner
 // ---------------------------------------------------------------------------
 
-fn print_banner(config: &AgentConfig, dry_run: bool) {
+fn print_banner(config: &AgentConfig, dry_run: bool, buffer_path: &Path, pending: usize) {
     println!();
     println!("  ╔══════════════════════════════════════════╗");
     println!("  ║         MisebanAI Camera Agent           ║");
@@ -500,6 +603,10 @@ fn print_banner(config: &AgentConfig, dry_run: bool) {
     println!("  Token    : {}...", &config.server.token.get(..8).unwrap_or("****"));
     println!("  Dry-run  : {}", dry_run);
     println!("  Cameras  : {}", config.cameras.len());
+    println!("  Buffer   : {}", buffer_path.display());
+    if pending > 0 {
+        println!("  Pending  : {} frames queued from previous session", pending);
+    }
     println!();
     for cam in &config.cameras {
         println!(
@@ -626,8 +733,24 @@ async fn main() {
         std::process::exit(1);
     }
 
+    // Initialise SQLite frame buffer (zero-config: ~/.miseban/buffer.db).
+    let buffer_path = dirs_fallback()
+        .map(|h| h.join(".miseban").join("buffer.db"))
+        .unwrap_or_else(|| PathBuf::from("/tmp/miseban/buffer.db"));
+
+    let frame_buffer = Arc::new(
+        FrameBuffer::open(&buffer_path)
+            .await
+            .unwrap_or_else(|e| {
+                error!(error = %e, "Failed to open frame buffer DB");
+                std::process::exit(1);
+            }),
+    );
+
+    let pending = frame_buffer.pending_count().await.unwrap_or(0);
+
     // Print startup banner.
-    print_banner(&config, cli.dry_run);
+    print_banner(&config, cli.dry_run, &buffer_path, pending);
 
     // Build HTTP client.
     let client = reqwest::Client::builder()
@@ -638,17 +761,34 @@ async fn main() {
     // Shutdown channel.
     let (shutdown_tx, shutdown_rx) = watch::channel(false);
 
+    // Clone server config before consuming cameras.
+    let endpoint = config.server.endpoint.clone();
+    let token = config.server.token.clone();
+
     // Spawn one task per camera.
     let mut handles = Vec::new();
     for cam in config.cameras {
         let client = client.clone();
-        let endpoint = config.server.endpoint.clone();
-        let token = config.server.token.clone();
+        let endpoint = endpoint.clone();
+        let token = token.clone();
         let dry_run = cli.dry_run;
+        let buf = Arc::clone(&frame_buffer);
         let rx = shutdown_rx.clone();
         handles.push(tokio::spawn(camera_loop(
-            client, endpoint, token, cam, dry_run, rx,
+            client, endpoint, token, cam, dry_run, buf, rx,
         )));
+    }
+
+    // Spawn background flush task (retries pending frames every 30s).
+    if !cli.dry_run {
+        let flush_handle = tokio::spawn(flush_pending(
+            client.clone(),
+            endpoint,
+            token,
+            Arc::clone(&frame_buffer),
+            shutdown_rx.clone(),
+        ));
+        handles.push(flush_handle);
     }
 
     // Wait for SIGINT or SIGTERM for graceful shutdown.
