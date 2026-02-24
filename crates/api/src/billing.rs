@@ -56,7 +56,7 @@ impl StripeClient {
 
         let resp = self
             .http
-            .post(&format!("{}/checkout/sessions", STRIPE_API))
+            .post(format!("{}/checkout/sessions", STRIPE_API))
             .basic_auth(&self.secret_key, None::<&str>)
             .form(&params)
             .send()
@@ -103,7 +103,7 @@ impl StripeClient {
 
         let resp = self
             .http
-            .post(&format!("{}/billing_portal/sessions", STRIPE_API))
+            .post(format!("{}/billing_portal/sessions", STRIPE_API))
             .basic_auth(&self.secret_key, None::<&str>)
             .form(&params)
             .send()
