@@ -178,11 +178,7 @@ async fn capture_snapshot(
         .map_err(|e| format!("HTTP request failed: {}", e))?;
 
     if !response.status().is_success() {
-        return Err(format!(
-            "HTTP {} from {}",
-            response.status(),
-            camera.url
-        ));
+        return Err(format!("HTTP {} from {}", response.status(), camera.url));
     }
 
     let bytes = response
@@ -243,12 +239,7 @@ async fn capture_rtsp_ffmpeg(camera: &CameraEntry) -> Result<Vec<u8>, String> {
         ])
         .output()
         .await
-        .map_err(|e| {
-            format!(
-                "Failed to spawn ffmpeg (is it installed?): {}",
-                e
-            )
-        })?;
+        .map_err(|e| format!("Failed to spawn ffmpeg (is it installed?): {}", e))?;
 
     if !output.status.success() {
         let stderr = String::from_utf8_lossy(&output.stderr);
@@ -348,7 +339,10 @@ async fn upload_frame(
     }
 
     // Try to parse analysis result; server might return empty or non-JSON.
-    let body = resp.bytes().await.map_err(|e| format!("Failed to read upload response: {}", e))?;
+    let body = resp
+        .bytes()
+        .await
+        .map_err(|e| format!("Failed to read upload response: {}", e))?;
     if body.is_empty() {
         return Ok(None);
     }
@@ -525,7 +519,11 @@ async fn flush_pending(
     const BATCH_SIZE: usize = 10;
     const CLEANUP_HOURS: u64 = 24;
 
-    info!("Background flush task started (every {}s, batch {})", FLUSH_INTERVAL.as_secs(), BATCH_SIZE);
+    info!(
+        "Background flush task started (every {}s, batch {})",
+        FLUSH_INTERVAL.as_secs(),
+        BATCH_SIZE
+    );
 
     loop {
         tokio::select! {
@@ -560,7 +558,10 @@ async fn flush_pending(
                     .map(|dt| dt.with_timezone(&chrono::Utc))
                     .unwrap_or_else(|_| chrono::Utc::now()),
                 jpeg_bytes: bf.jpeg_bytes.clone(),
-                resolution: Resolution { width: 0, height: 0 },
+                resolution: Resolution {
+                    width: 0,
+                    height: 0,
+                },
             };
 
             match upload_frame(&client, &endpoint, &token, &frame).await {
@@ -600,24 +601,24 @@ fn print_banner(config: &AgentConfig, dry_run: bool, buffer_path: &Path, pending
     println!("  ╚══════════════════════════════════════════╝");
     println!();
     println!("  Endpoint : {}", config.server.endpoint);
-    println!("  Token    : {}...", &config.server.token.get(..8).unwrap_or("****"));
+    println!(
+        "  Token    : {}...",
+        &config.server.token.get(..8).unwrap_or("****")
+    );
     println!("  Dry-run  : {}", dry_run);
     println!("  Cameras  : {}", config.cameras.len());
     println!("  Buffer   : {}", buffer_path.display());
     if pending > 0 {
-        println!("  Pending  : {} frames queued from previous session", pending);
+        println!(
+            "  Pending  : {} frames queued from previous session",
+            pending
+        );
     }
     println!();
     for cam in &config.cameras {
-        println!(
-            "    [{:^12}] {} ({})",
-            cam.id, cam.name, cam.mode
-        );
+        println!("    [{:^12}] {} ({})", cam.id, cam.name, cam.mode);
         println!("    {:>14} URL: {}", "", cam.url);
-        println!(
-            "    {:>14} Interval: {}s",
-            "", cam.interval_secs
-        );
+        println!("    {:>14} Interval: {}s", "", cam.interval_secs);
     }
     println!();
 }
@@ -631,11 +632,7 @@ async fn main() {
     let cli = Cli::parse();
 
     // Initialise tracing.
-    let env_filter = if cli.verbose {
-        "debug"
-    } else {
-        "info"
-    };
+    let env_filter = if cli.verbose { "debug" } else { "info" };
     tracing_subscriber::fmt()
         .with_env_filter(
             tracing_subscriber::EnvFilter::try_from_default_env()
@@ -738,14 +735,10 @@ async fn main() {
         .map(|h| h.join(".miseban").join("buffer.db"))
         .unwrap_or_else(|| PathBuf::from("/tmp/miseban/buffer.db"));
 
-    let frame_buffer = Arc::new(
-        FrameBuffer::open(&buffer_path)
-            .await
-            .unwrap_or_else(|e| {
-                error!(error = %e, "Failed to open frame buffer DB");
-                std::process::exit(1);
-            }),
-    );
+    let frame_buffer = Arc::new(FrameBuffer::open(&buffer_path).await.unwrap_or_else(|e| {
+        error!(error = %e, "Failed to open frame buffer DB");
+        std::process::exit(1);
+    }));
 
     let pending = frame_buffer.pending_count().await.unwrap_or(0);
 
@@ -818,7 +811,10 @@ async fn main() {
 
     // Give camera loops a moment to finish their current cycle.
     let shutdown_timeout = Duration::from_secs(5);
-    info!("Waiting up to {:?} for camera loops to finish...", shutdown_timeout);
+    info!(
+        "Waiting up to {:?} for camera loops to finish...",
+        shutdown_timeout
+    );
 
     let _ = tokio::time::timeout(shutdown_timeout, async {
         for h in handles {

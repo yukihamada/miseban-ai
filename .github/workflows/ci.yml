@@ -33,7 +33,7 @@ jobs:
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
         with:
-          toolchain: "1.84.0"
+          toolchain: stable
 
       - name: Cache cargo registry & build
         uses: actions/cache@v4
@@ -110,7 +110,7 @@ jobs:
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
         with:
-          toolchain: "1.84.0"
+          toolchain: stable
           components: rustfmt, clippy
           targets: ${{ matrix.target }}
 

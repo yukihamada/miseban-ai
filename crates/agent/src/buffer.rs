@@ -236,7 +236,10 @@ mod tests {
         let pending = buf.peek_pending(10).await.unwrap();
         assert_eq!(pending.len(), 1);
         assert_eq!(pending[0].camera_id, "cam-1");
-        assert_eq!(pending[0].jpeg_bytes, vec![0xFF, 0xD8, 0xFF, 0xE0, 0x00, 0x10]);
+        assert_eq!(
+            pending[0].jpeg_bytes,
+            vec![0xFF, 0xD8, 0xFF, 0xE0, 0x00, 0x10]
+        );
     }
 
     #[tokio::test]
