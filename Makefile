@@ -93,6 +93,16 @@ docker-agent: ## Build agent Docker image for home/self-hosted use
 docker-agent-multi: ## Build agent Docker image for amd64 + arm64
 	docker buildx build -f Dockerfile.agent --platform linux/amd64,linux/arm64 -t miseban/agent --push .
 
+.PHONY: build-pi
+build-pi: ## Cross-compile agent for Raspberry Pi (ARM64, static musl binary)
+	RUSTUP_TOOLCHAIN=stable cargo zigbuild --release --target aarch64-unknown-linux-musl --package agent
+	mkdir -p dist/miseban-agent
+	cp target/aarch64-unknown-linux-musl/release/miseban-agent dist/miseban-agent/
+	cp dist/install.sh dist/miseban-agent/
+	cd dist && tar czf miseban-agent-arm64.tar.gz miseban-agent/
+	@echo "=== Built: dist/miseban-agent-arm64.tar.gz ==="
+	@ls -lh dist/miseban-agent-arm64.tar.gz
+
 .PHONY: docker-scan
 docker-scan: docker ## Scan Docker image with Trivy
 	trivy image $(IMAGE) --severity CRITICAL,HIGH

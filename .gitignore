@@ -26,6 +26,10 @@ Thumbs.db
 # Logs
 *.log
 
+# Distribution artifacts (built by `make build-pi`)
+dist/miseban-agent/miseban-agent
+dist/*.tar.gz
+
 # ML models (download via scripts/download-model.sh)
 *.onnx
 *.pt
