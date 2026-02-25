@@ -1529,6 +1529,23 @@ body {
           <!-- Populated by JS -->
         </div>
 
+        <!-- Pairing Code Section -->
+        <div class="add-camera-card" style="margin-bottom:1.25rem;">
+          <h3>カメラエージェントをペアリング</h3>
+          <p style="font-size:0.875rem;color:var(--gray-600);margin-bottom:1rem;">
+            カメラエージェント（Raspberry Pi等）をお店に接続するための6桁のペアリングコードを発行します。<br>
+            コードは10分間有効です。エージェントの初期設定ウィザードで入力してください。
+          </p>
+          <div id="pairing-code-display" style="display:none;text-align:center;margin-bottom:1rem;">
+            <div style="font-size:2.5rem;font-weight:700;letter-spacing:0.3em;color:var(--indigo-600);font-family:'Inter',monospace;padding:1rem;background:var(--indigo-50);border-radius:var(--radius);display:inline-block;min-width:200px;" id="pairing-code-value">------</div>
+            <div style="font-size:0.75rem;color:var(--gray-500);margin-top:0.5rem;" id="pairing-code-expires">有効期限: --:--</div>
+          </div>
+          <button class="btn btn-primary" type="button" style="width:auto;" id="generate-pairing-btn">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" d="M13.19 8.688a4.5 4.5 0 0 1 1.242 7.244l-4.5 4.5a4.5 4.5 0 0 1-6.364-6.364l1.757-1.757m13.35-.622 1.757-1.757a4.5 4.5 0 0 0-6.364-6.364l-4.5 4.5a4.5 4.5 0 0 0 1.242 7.244"/></svg>
+            ペアリングコードを発行
+          </button>
+        </div>
+
         <div class="add-camera-card">
           <h3>カメラを追加</h3>
           <form id="add-camera-form">
@@ -1971,9 +1988,21 @@ body {
 
 <script>
 // ===== API Base URL =====
-const API_BASE = window.location.origin.includes('localhost')
-    ? 'http://localhost:3000'
-    : 'https://miseban-ai-api.fly.dev';
+// Configurable: same-origin for production (Fly.io), fallback for dev/cross-origin.
+const API_BASE = (function() {
+  // Allow override via global variable or query param
+  if (window.MISEBAN_API_BASE) return window.MISEBAN_API_BASE;
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('api')) return params.get('api');
+  // Local development
+  if (window.location.origin.includes('localhost')) return 'http://localhost:3000';
+  // Same-origin deployment (Fly.io serves both static + API)
+  if (window.location.origin.includes('misebanai.com') || window.location.origin.includes('fly.dev')) {
+    return window.location.origin;
+  }
+  // Fallback
+  return 'https://api.misebanai.com';
+})();
 
 // ===== Auth Token Management =====
 const AUTH_TOKEN_KEY = 'miseban_auth_token';
@@ -2226,6 +2255,8 @@ async function showDashboard() {
   initCharts();
   await renderAlerts();
   await renderCameras();
+  // Re-update overview cards now that camera data is loaded
+  updateOverviewCards();
   initReportDates();
   subscribeToAlerts();
   checkCheckoutResult();
@@ -2312,6 +2343,31 @@ function updateOverviewCards() {
 
   const camOnlineEl = document.querySelector('#stat-cameras-online');
   if (camOnlineEl) camOnlineEl.textContent = DEMO_DATA.camerasOnline;
+
+  // Update camera total count
+  const camTotalSpan = camOnlineEl?.parentElement?.querySelector('span:last-child');
+  if (camTotalSpan && DEMO_DATA.camerasTotal !== undefined) {
+    camTotalSpan.textContent = ` / ${DEMO_DATA.camerasTotal}`;
+  }
+
+  // Update camera offline badge
+  const camStatusBadge = camOnlineEl?.closest('.stat-card')?.querySelector('.stat-card-change');
+  const offlineCount = (DEMO_DATA.camerasTotal || 0) - (DEMO_DATA.camerasOnline || 0);
+  if (camStatusBadge) {
+    if (offlineCount > 0) {
+      camStatusBadge.textContent = `${offlineCount}台オフライン`;
+      camStatusBadge.style.background = 'var(--red-50)';
+      camStatusBadge.style.color = 'var(--red-600)';
+    } else if (DEMO_DATA.camerasTotal > 0) {
+      camStatusBadge.textContent = '全台オンライン';
+      camStatusBadge.style.background = 'var(--green-50)';
+      camStatusBadge.style.color = 'var(--green-600)';
+    } else {
+      camStatusBadge.textContent = 'カメラ未登録';
+      camStatusBadge.style.background = 'var(--gray-100)';
+      camStatusBadge.style.color = 'var(--gray-500)';
+    }
+  }
 }
 
 function updateUserDisplay() {
@@ -3212,11 +3268,133 @@ document.getElementById('shortcuts-overlay')?.addEventListener('click', (e) => {
   }
 });
 
+// ===== Pairing Code Generation =====
+let pairingCodeTimer = null;
+
+document.getElementById('generate-pairing-btn')?.addEventListener('click', async () => {
+  const btn = document.getElementById('generate-pairing-btn');
+  const display = document.getElementById('pairing-code-display');
+  const codeEl = document.getElementById('pairing-code-value');
+  const expiresEl = document.getElementById('pairing-code-expires');
+
+  btn.disabled = true;
+  btn.innerHTML = '<div class="spinner"></div> 発行中...';
+
+  try {
+    const resp = await apiFetch('/api/v1/pair/generate', { method: 'POST' });
+    const data = await resp.json();
+
+    if (data.code) {
+      // Format code with spacing for readability (e.g., "123 456")
+      const code = data.code;
+      const formatted = code.length === 6 ? code.slice(0, 3) + ' ' + code.slice(3) : code;
+      codeEl.textContent = formatted;
+      display.style.display = 'block';
+
+      // Countdown timer (expires_in_seconds, default 600 = 10 min)
+      let remaining = data.expires_in_seconds || 600;
+      if (pairingCodeTimer) clearInterval(pairingCodeTimer);
+
+      function updateExpiry() {
+        const min = Math.floor(remaining / 60);
+        const sec = remaining % 60;
+        expiresEl.textContent = `有効期限: あと ${min}:${String(sec).padStart(2, '0')}`;
+        if (remaining <= 0) {
+          clearInterval(pairingCodeTimer);
+          codeEl.textContent = '------';
+          expiresEl.textContent = '期限切れ — 再発行してください';
+          codeEl.style.color = 'var(--gray-400)';
+        } else if (remaining <= 60) {
+          expiresEl.style.color = 'var(--red-500)';
+        } else {
+          expiresEl.style.color = 'var(--gray-500)';
+          codeEl.style.color = 'var(--indigo-600)';
+        }
+      }
+
+      updateExpiry();
+      pairingCodeTimer = setInterval(() => {
+        remaining--;
+        updateExpiry();
+      }, 1000);
+
+      if (typeof gtag === 'function') gtag('event', 'pairing_code_generated');
+    }
+  } catch (e) {
+    console.error('Pairing code generation failed:', e);
+    alert('ペアリングコードの発行に失敗しました。再度お試しください。');
+  }
+
+  btn.disabled = false;
+  btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" d="M13.19 8.688a4.5 4.5 0 0 1 1.242 7.244l-4.5 4.5a4.5 4.5 0 0 1-6.364-6.364l1.757-1.757m13.35-.622 1.757-1.757a4.5 4.5 0 0 0-6.364-6.364l-4.5 4.5a4.5 4.5 0 0 0 1.242 7.244"/></svg> ペアリングコードを再発行`;
+});
+
+// ===== Real-time Visitor Counter (30-second polling) =====
+let statsPollingInterval = null;
+
+function startStatsPolling() {
+  // Don't start if already polling
+  if (statsPollingInterval) return;
+
+  statsPollingInterval = setInterval(async () => {
+    // Only poll when on overview tab and user is logged in
+    if (currentTab !== 'overview' || !currentUser) return;
+
+    try {
+      // Fetch latest stats
+      const statsResp = await apiFetch('/api/v1/stores/me/stats');
+      const stats = await statsResp.json();
+      DEMO_DATA.today = stats.today_total || 0;
+      DEMO_DATA.camerasOnline = stats.cameras_online || 0;
+
+      // Update overview cards immediately
+      updateOverviewCards();
+
+      // Also refresh hourly chart for real-time feel
+      const hourlyResp = await apiFetch('/api/v1/stores/me/stats/hourly');
+      const hourly = await hourlyResp.json();
+      if (hourly.hours && hourly.hours.length > 0) {
+        DEMO_DATA.hourlyLabels = hourly.hours.map(h => `${h.hour}時`);
+        DEMO_DATA.hourlyData = hourly.hours.map(h => h.count);
+        // Find peak hour
+        const maxIdx = DEMO_DATA.hourlyData.indexOf(Math.max(...DEMO_DATA.hourlyData));
+        if (maxIdx >= 0 && DEMO_DATA.hourlyLabels[maxIdx]) {
+          DEMO_DATA.peakHour = `${DEMO_DATA.hourlyLabels[maxIdx]}〜${parseInt(DEMO_DATA.hourlyLabels[maxIdx])+1}時`;
+        }
+
+        // Update hourly chart data in-place
+        if (hourlyChart) {
+          hourlyChart.data.labels = DEMO_DATA.hourlyLabels;
+          hourlyChart.data.datasets[0].data = DEMO_DATA.hourlyData;
+          hourlyChart.data.datasets[0].backgroundColor = DEMO_DATA.hourlyData.map(v => {
+            const maxVal = Math.max(...DEMO_DATA.hourlyData);
+            return v === maxVal ? chartColors.indigo : 'rgba(79, 70, 229, 0.25)';
+          });
+          hourlyChart.update('none'); // 'none' = no animation for smooth polling
+        }
+      }
+    } catch (e) {
+      // Silently fail for polling — don't flood console
+      if (e.message !== 'Session expired') {
+        console.debug('Stats polling error:', e.message);
+      }
+    }
+  }, 30 * 1000); // 30 seconds
+}
+
+function stopStatsPolling() {
+  if (statsPollingInterval) {
+    clearInterval(statsPollingInterval);
+    statsPollingInterval = null;
+  }
+}
+
 // ===== Patched showDashboard =====
 const _originalShowDashboard = showDashboard;
 showDashboard = async function() {
   await _originalShowDashboard();
   setupSessionCheck();
+  startStatsPolling();
   // Check onboarding after store load attempt completes
   setTimeout(() => checkOnboarding(), 500);
 };
@@ -3225,6 +3403,7 @@ showDashboard = async function() {
 const _originalShowLogin = showLogin;
 showLogin = function() {
   clearSessionCheck();
+  stopStatsPolling();
   _originalShowLogin();
 };
 
