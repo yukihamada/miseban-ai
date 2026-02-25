@@ -311,7 +311,7 @@ pub fn init_model() -> Result<(), AiError> {
     if !std::path::Path::new(&path).exists() {
         eprintln!(
             "[ai] ONNX model not found at '{}'. \
-             Set MISEBAN_MODEL_PATH or download yolov8n.onnx into models/. \
+             Run `./scripts/download-model.sh` or set MISEBAN_MODEL_PATH. \
              Falling back to no-op mode (people_count will always be 0).",
             path
         );

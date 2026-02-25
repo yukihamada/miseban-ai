@@ -162,6 +162,14 @@ endif
 		| jq .
 
 # ────────────────────────────────────────────
+# ML Models
+# ────────────────────────────────────────────
+
+.PHONY: download-model
+download-model: ## Download YOLOv8n ONNX model into models/
+	./scripts/download-model.sh
+
+# ────────────────────────────────────────────
 # Utilities
 # ────────────────────────────────────────────
 

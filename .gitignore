@@ -25,3 +25,9 @@ Thumbs.db
 
 # Logs
 *.log
+
+# ML models (download via scripts/download-model.sh)
+*.onnx
+*.pt
+models/*.onnx
+models/*.pt
