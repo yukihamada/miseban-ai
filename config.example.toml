@@ -9,7 +9,7 @@
 
 [server]
 # Cloud API endpoint URL
-endpoint = "https://api.miseban.ai/v1/frames"
+endpoint = "https://miseban-ai-api.fly.dev/v1/frames"
 # API token (get this from your dashboard at https://miseban-ai.fly.dev/dashboard/)
 token = "your-api-token-here"
 

@@ -6,6 +6,10 @@
 <title>ダッシュボード｜ミセバンAI</title>
 <meta name="robots" content="noindex, nofollow">
 
+<!-- GA4 -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-BEB4MS3Q5H"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-BEB4MS3Q5H');</script>
+
 <!-- Favicon (same as LP) -->
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%234f46e5'/><text x='50%25' y='54%25' dominant-baseline='middle' text-anchor='middle' fill='white' font-size='18' font-weight='bold' font-family='sans-serif'>M</text></svg>">
 
@@ -17,8 +21,7 @@
 <!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-<!-- Supabase JS -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<!-- Auth is handled by the Rust API (JWT-based) -->
 
 <style>
 /* ===== Reset & Variables ===== */
@@ -1967,34 +1970,49 @@ body {
 </div>
 
 <script>
-// ===== Supabase Configuration =====
-const MISEBAN_CONFIG = window.__MISEBAN_CONFIG || {};
-const SUPABASE_URL = MISEBAN_CONFIG.supabaseUrl || 'https://misebanai.supabase.co';
-const SUPABASE_ANON_KEY = MISEBAN_CONFIG.supabaseAnonKey || '';
-
-let supabase = null;
-try {
-  supabase = window.supabase
-    ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
-    : null;
-} catch (e) {
-  console.warn('Supabase initialization skipped (demo mode):', e.message);
-}
-
 // ===== API Base URL =====
 const API_BASE = window.location.origin.includes('localhost')
     ? 'http://localhost:3000'
     : 'https://miseban-ai-api.fly.dev';
 
+// ===== Auth Token Management =====
+const AUTH_TOKEN_KEY = 'miseban_auth_token';
+const AUTH_USER_KEY = 'miseban_auth_user';
+
+function getStoredToken() {
+  return localStorage.getItem(AUTH_TOKEN_KEY);
+}
+
+function storeAuth(token, user) {
+  localStorage.setItem(AUTH_TOKEN_KEY, token);
+  localStorage.setItem(AUTH_USER_KEY, JSON.stringify(user));
+}
+
+function clearAuth() {
+  localStorage.removeItem(AUTH_TOKEN_KEY);
+  localStorage.removeItem(AUTH_USER_KEY);
+}
+
+function getStoredUser() {
+  try {
+    const raw = localStorage.getItem(AUTH_USER_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch { return null; }
+}
+
 // ===== API Helper =====
 async function apiFetch(path, options = {}) {
-  const token = supabase
-    ? (await supabase.auth.getSession())?.data?.session?.access_token
-    : null;
+  const token = getStoredToken();
   const headers = { 'Content-Type': 'application/json', ...options.headers };
   if (token) headers['Authorization'] = `Bearer ${token}`;
 
   const resp = await fetch(`${API_BASE}${path}`, { ...options, headers });
+  if (resp.status === 401) {
+    // Token expired or invalid — force re-login
+    clearAuth();
+    showLogin();
+    throw new Error('Session expired');
+  }
   if (!resp.ok) throw new Error(`API ${resp.status}: ${resp.statusText}`);
   return resp;
 }
@@ -2125,30 +2143,33 @@ loginForm.addEventListener('submit', async (e) => {
   const email = $('#email').value.trim();
   const password = $('#password').value;
 
-  if (!supabase) {
-    // Demo mode: skip actual auth
-    console.log('Demo mode: simulating login for', email);
-    currentUser = { email, id: 'demo-user-id' };
-    showDashboard();
-    setLoading(false);
-    return;
-  }
-
   try {
-    let result;
-    if (isSignupMode) {
-      result = await supabase.auth.signUp({ email, password });
-    } else {
-      result = await supabase.auth.signInWithPassword({ email, password });
-    }
+    const endpoint = isSignupMode ? '/api/v1/auth/signup' : '/api/v1/auth/login';
+    const resp = await fetch(`${API_BASE}${endpoint}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
+    });
 
-    if (result.error) {
-      showLoginError(result.error.message);
+    const data = await resp.json();
+
+    if (!resp.ok) {
+      showLoginError(data.error || '認証エラーが発生しました。');
       setLoading(false);
       return;
     }
 
-    currentUser = result.data.user;
+    // Store token and user info
+    storeAuth(data.token, { id: data.user_id, email });
+    currentUser = { id: data.user_id, email };
+
+    if (isSignupMode) {
+      console.log('Signup successful for', email);
+      if (typeof gtag === 'function') gtag('event', 'sign_up', {method: 'email'});
+    } else {
+      if (typeof gtag === 'function') gtag('event', 'login');
+    }
+
     showDashboard();
   } catch (err) {
     showLoginError('接続エラーが発生しました。もう一度お試しください。');
@@ -2158,21 +2179,29 @@ loginForm.addEventListener('submit', async (e) => {
 });
 
 logoutBtn.addEventListener('click', async () => {
-  if (supabase) {
-    await supabase.auth.signOut();
-  }
+  clearAuth();
   currentUser = null;
   showLogin();
 });
 
-// Check existing session
+// Check existing session (JWT stored in localStorage)
 async function checkSession() {
-  if (!supabase) return;
+  const token = getStoredToken();
+  if (!token) return;
+
   try {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (session) {
-      currentUser = session.user;
+    const resp = await fetch(`${API_BASE}/api/v1/auth/me`, {
+      headers: { 'Authorization': `Bearer ${token}` },
+    });
+    if (resp.ok) {
+      const data = await resp.json();
+      currentUser = { id: data.id, email: data.email };
+      // Update stored user info
+      storeAuth(token, currentUser);
       showDashboard();
+    } else {
+      // Token expired
+      clearAuth();
     }
   } catch (e) {
     console.warn('Session check failed:', e);
@@ -2203,19 +2232,15 @@ async function showDashboard() {
 }
 
 async function loadCurrentStore() {
-  if (!supabase || !currentUser) return;
+  if (!currentUser) return;
   try {
-    const { data, error } = await supabase
-      .from('stores')
-      .select('*')
-      .eq('owner_id', currentUser.id)
-      .limit(1)
-      .single();
-    if (!error && data) {
-      currentStore = data;
+    const resp = await apiFetch('/api/v1/auth/me');
+    const data = await resp.json();
+    if (data.store) {
+      currentStore = data.store;
     }
   } catch (e) {
-    console.warn('Store load skipped (demo mode):', e);
+    console.warn('Store load failed:', e);
   }
 }
 
@@ -2554,42 +2579,6 @@ async function renderAlerts() {
     console.warn('Alert API failed:', e.message);
   }
 
-  // Try Supabase direct query as second fallback
-  if (currentStore && supabase) {
-    try {
-      const { data, error } = await supabase
-        .from('alerts')
-        .select('*')
-        .eq('store_id', currentStore.id)
-        .order('created_at', { ascending: false })
-        .limit(10);
-
-      if (!error && data && data.length > 0) {
-        list.innerHTML = data.map(a => {
-          const typeClass = a.alert_type === 'intrusion' ? 'error' :
-                           a.alert_type === 'crowding' ? 'warn' : 'info';
-          const typeLabel = a.alert_type === 'intrusion' ? '侵入検知' :
-                           a.alert_type === 'crowding' ? '混雑検知' : '異常検知';
-          const time = new Date(a.created_at).toLocaleString('ja-JP', {hour:'2-digit', minute:'2-digit'});
-          const unreadClass = a.is_read ? '' : 'unread';
-          return `<div class="alert-item ${unreadClass}" data-id="${a.id}" onclick="markAlertRead('${a.id}')">
-              <div class="alert-dot ${typeClass}"></div>
-              <div class="alert-content">
-                  <div class="alert-label">${typeLabel}</div>
-                  <div class="alert-text">${a.message || typeLabel}</div>
-              </div>
-              <div class="alert-time">${time}</div>
-          </div>`;
-        }).join('');
-
-        updateUnreadBadge(data.filter(a => !a.is_read).length);
-        return;
-      }
-    } catch (e) {
-      console.warn('Supabase alert fetch failed:', e.message);
-    }
-  }
-
   // Fallback to demo data
   renderDemoAlerts();
 }
@@ -2607,11 +2596,7 @@ function renderDemoAlerts() {
 
 async function markAlertRead(alertId) {
   try {
-    await supabase
-      .from('alerts')
-      .update({ is_read: true })
-      .eq('id', alertId);
-
+    await apiFetch(`/api/v1/alerts/${alertId}/read`, { method: 'PATCH' });
     const el = document.querySelector(`[data-id="${alertId}"]`);
     if (el) el.classList.remove('unread');
     updateUnreadBadge();
@@ -2639,24 +2624,18 @@ function updateUnreadBadge(count) {
   }
 }
 
-// ===== Real-time Alert Subscription =====
+// ===== Alert Polling (replaces real-time subscription) =====
+let alertPollInterval = null;
 function subscribeToAlerts() {
-  if (!currentStore || !supabase) return;
-
-  supabase
-    .channel('alerts')
-    .on('postgres_changes', {
-      event: 'INSERT',
-      schema: 'public',
-      table: 'alerts',
-      filter: `store_id=eq.${currentStore.id}`
-    }, (payload) => {
-      // Re-render alerts when new one arrives
-      renderAlerts();
-      // Show toast notification
-      showToast(payload.new.message || 'New alert', payload.new.alert_type);
-    })
-    .subscribe();
+  if (!currentStore) return;
+  // Poll for new alerts every 60 seconds
+  alertPollInterval = setInterval(async () => {
+    try {
+      await renderAlerts();
+    } catch (e) {
+      console.warn('Alert poll error:', e);
+    }
+  }, 60 * 1000);
 }
 
 function showToast(message, type) {
@@ -2808,6 +2787,7 @@ $('#add-camera-form').addEventListener('submit', async (e) => {
   });
 
   await renderCameras();
+  if (typeof gtag === 'function') gtag('event', 'camera_added');
   e.target.reset();
   alert(`「${name}」を追加しました。接続確認中...`);
 });
@@ -2883,13 +2863,8 @@ async function startCheckout(tier) {
     if (!currentStore) { alert('ストアが見つかりません'); return; }
 
     try {
-        const token = (await supabase.auth.getSession()).data.session?.access_token;
-        const resp = await fetch(`${API_BASE}/api/v1/billing/checkout`, {
+        const resp = await apiFetch('/api/v1/billing/checkout', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            },
             body: JSON.stringify({
                 tier: tier,
                 success_url: window.location.origin + '/dashboard/?checkout=success',
@@ -2899,6 +2874,7 @@ async function startCheckout(tier) {
 
         const data = await resp.json();
         if (data.url) {
+            if (typeof gtag === 'function') gtag('event', 'begin_checkout', {value: 0, currency: 'JPY'});
             window.location.href = data.url;
         } else {
             alert('チェックアウトの作成に失敗しました');
@@ -2913,13 +2889,8 @@ async function openCustomerPortal() {
     if (!currentUser) return;
 
     try {
-        const token = (await supabase.auth.getSession()).data.session?.access_token;
-        const resp = await fetch(`${API_BASE}/api/v1/billing/portal`, {
+        const resp = await apiFetch('/api/v1/billing/portal', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            },
             body: JSON.stringify({
                 return_url: window.location.origin + '/dashboard/'
             })
@@ -2983,32 +2954,23 @@ async function loadBillingInfo() {
 
     // Update usage
     try {
-        if (supabase && currentStore) {
-            const { data: cameras } = await supabase
-                .from('cameras')
-                .select('id')
-                .eq('store_id', currentStore.id);
-
-            const cameraCount = cameras?.length || 0;
-            const maxCameras = tierCameras[tier] || 1;
-
-            document.getElementById('usage-cameras').textContent = cameraCount;
-            document.getElementById('usage-cameras-max').textContent = maxCameras >= 999 ? '\u221E' : maxCameras;
-            document.getElementById('usage-retention').textContent = tierRetention[tier] || '7日間';
-
-            const bar = document.getElementById('usage-cameras-bar');
-            if (bar) bar.style.width = Math.min(100, (cameraCount / Math.min(maxCameras, 16)) * 100) + '%';
-        } else {
-            // Demo mode fallback
-            const demoCamCount = DEMO_DATA.cameras.length;
-            const maxCameras = tierCameras[tier] || 1;
-            document.getElementById('usage-cameras').textContent = demoCamCount;
-            document.getElementById('usage-cameras-max').textContent = maxCameras >= 999 ? '\u221E' : maxCameras;
-            document.getElementById('usage-retention').textContent = tierRetention[tier] || '7日間';
-
-            const bar = document.getElementById('usage-cameras-bar');
-            if (bar) bar.style.width = Math.min(100, (demoCamCount / Math.min(maxCameras, 16)) * 100) + '%';
+        let cameraCount = DEMO_DATA.cameras.length;
+        if (currentStore) {
+            try {
+                const resp = await apiFetch('/api/v1/stores/me/usage');
+                const usage = await resp.json();
+                cameraCount = usage.cameras_current || cameraCount;
+            } catch (e) {
+                console.warn('Usage API failed, using fallback:', e.message);
+            }
         }
+        const maxCameras = tierCameras[tier] || 1;
+        document.getElementById('usage-cameras').textContent = cameraCount;
+        document.getElementById('usage-cameras-max').textContent = maxCameras >= 999 ? '\u221E' : maxCameras;
+        document.getElementById('usage-retention').textContent = tierRetention[tier] || '7日間';
+
+        const bar = document.getElementById('usage-cameras-bar');
+        if (bar) bar.style.width = Math.min(100, (cameraCount / Math.min(maxCameras, 16)) * 100) + '%';
     } catch (e) {
         console.error('Usage load error:', e);
     }
@@ -3023,6 +2985,7 @@ function checkCheckoutResult() {
     const params = new URLSearchParams(window.location.search);
     const checkout = params.get('checkout');
     if (checkout === 'success') {
+        if (typeof gtag === 'function') gtag('event', 'purchase');
         showToast('プランのアップグレードが完了しました！', 'success');
         // Remove param from URL
         window.history.replaceState({}, '', window.location.pathname);
@@ -3104,41 +3067,14 @@ async function onboardingSubmitStore() {
     return;
   }
 
-  // Submit store creation to Supabase
-  if (supabase && currentUser) {
-    try {
-      const { data, error } = await supabase
-        .from('stores')
-        .insert({
-          owner_id: currentUser.id,
-          name: storeName,
-          business_type: businessType,
-          plan_tier: 'free'
-        })
-        .select()
-        .single();
-
-      if (error) {
-        console.error('Store creation error:', error);
-        alert('店舗の作成中にエラーが発生しました: ' + error.message);
-        return;
-      }
-
-      if (data) {
-        currentStore = data;
-        // Update settings tab with new store info
-        const settingStoreName = document.getElementById('setting-store-name');
-        if (settingStoreName) settingStoreName.value = storeName;
-      }
-    } catch (e) {
-      console.error('Store creation error:', e);
-    }
-  } else {
-    // Demo mode: just update local state
-    currentStore = { name: storeName, business_type: businessType, plan_tier: 'free' };
-    const settingStoreName = document.getElementById('setting-store-name');
-    if (settingStoreName) settingStoreName.value = storeName;
-  }
+  // Store is already created by the signup API (free plan).
+  // Update local state with the entered name.
+  currentStore = currentStore || {};
+  currentStore.name = storeName;
+  currentStore.business_type = businessType;
+  currentStore.plan_tier = currentStore.plan_tier || 'free';
+  const settingStoreName = document.getElementById('setting-store-name');
+  if (settingStoreName) settingStoreName.value = storeName;
 
   onboardingNext();
 }
@@ -3151,7 +3087,7 @@ function onboardingComplete() {
 function checkOnboarding() {
   if (localStorage.getItem('onboarding_completed')) return;
 
-  // If Supabase is active, check if store exists
+  // If store already exists (created at signup), skip onboarding
   if (currentStore) return;
 
   // Show onboarding wizard
@@ -3175,41 +3111,35 @@ function showSessionExpiredToast() {
   }, 3000);
 }
 
-function handleSupabaseError(error) {
-  if (error && (error.status === 401 || error.message?.includes('JWT') || error.message?.includes('token'))) {
+function handleAuthError(error) {
+  if (error && (error.status === 401 || error.message?.includes('JWT') || error.message?.includes('token') || error.message?.includes('expired'))) {
     showSessionExpiredToast();
     return true;
   }
   return false;
 }
 
-// Wrap Supabase calls to catch 401 errors globally
+// Periodically validate token with /api/v1/auth/me
 function setupSessionCheck() {
-  if (!supabase) return;
+  const token = getStoredToken();
+  if (!token) return;
 
   // Check session validity every 5 minutes
   sessionCheckInterval = setInterval(async () => {
     try {
-      const { data: { session }, error } = await supabase.auth.getSession();
-      if (error || !session) {
-        if (currentUser) {
-          // Session has expired
-          showSessionExpiredToast();
-        }
+      const t = getStoredToken();
+      if (!t) { showSessionExpiredToast(); return; }
+      const resp = await fetch(`${API_BASE}/api/v1/auth/me`, {
+        headers: { 'Authorization': `Bearer ${t}` },
+      });
+      if (!resp.ok && currentUser) {
+        clearAuth();
+        showSessionExpiredToast();
       }
     } catch (e) {
       console.warn('Session check error:', e);
     }
   }, 5 * 60 * 1000); // 5 minutes
-
-  // Listen for auth state changes (e.g., token refresh failure)
-  supabase.auth.onAuthStateChange((event, session) => {
-    if (event === 'SIGNED_OUT' || event === 'TOKEN_REFRESHED') {
-      if (event === 'SIGNED_OUT' && currentUser) {
-        showSessionExpiredToast();
-      }
-    }
-  });
 }
 
 function clearSessionCheck() {
@@ -3299,8 +3229,27 @@ showLogin = function() {
 };
 
 // ===== Initialization =====
-document.addEventListener('DOMContentLoaded', () => {
-  checkSession();
+document.addEventListener('DOMContentLoaded', async () => {
+  // Check for signup mode from URL parameter (from landing page CTA)
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.get('mode') === 'signup') {
+    isSignupMode = true;
+    loginSubtitle.textContent = '新しいアカウントを作成';
+    loginBtnText.textContent = '新規登録';
+    toggleText.textContent = 'すでにアカウントをお持ちの方は';
+    toggleAuthBtn.textContent = 'ログイン';
+    if ($('#password')) $('#password').autocomplete = 'new-password';
+    // Pre-fill email if provided
+    const preEmail = urlParams.get('email');
+    if (preEmail && $('#email')) {
+      $('#email').value = preEmail;
+      // Focus password field
+      setTimeout(() => { if ($('#password')) $('#password').focus(); }, 100);
+    }
+    // Clean URL
+    window.history.replaceState({}, '', '/dashboard/');
+  }
+  await checkSession();
 });
 </script>
 </body>

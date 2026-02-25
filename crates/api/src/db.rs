@@ -123,6 +123,18 @@ pub async fn get_store_by_owner(pool: &PgPool, owner_id: &Uuid) -> Option<StoreR
     .flatten()
 }
 
+/// Fetch a store by its ID (regardless of owner).
+pub async fn get_store_by_owner_or_id(pool: &PgPool, store_id: &Uuid) -> Option<StoreRow> {
+    sqlx::query_as::<_, StoreRow>(
+        "SELECT id, owner_id, name, plan_tier FROM stores WHERE id = $1 LIMIT 1",
+    )
+    .bind(store_id)
+    .fetch_optional(pool)
+    .await
+    .ok()
+    .flatten()
+}
+
 /// Check if a user owns a specific store.
 pub async fn user_owns_store(pool: &PgPool, owner_id: &Uuid, store_id: &Uuid) -> bool {
     let row: Option<(i64,)> =
@@ -279,6 +291,102 @@ pub async fn get_hourly_visitor_counts(pool: &PgPool, store_id: &Uuid) -> Vec<(i
     .unwrap_or_default();
 
     rows
+}
+
+/// Look up a camera by its string name (or alias) within a store.
+///
+/// This handles the mismatch where agents use human-readable camera IDs
+/// (e.g. "cam-1") but the DB uses UUIDs. Returns the camera UUID if found.
+pub async fn find_camera_by_name(pool: &PgPool, store_id: &Uuid, name: &str) -> Option<Uuid> {
+    let row: Option<(Uuid,)> = sqlx::query_as(
+        "SELECT id FROM cameras WHERE store_id = $1 AND name = $2 LIMIT 1",
+    )
+    .bind(store_id)
+    .bind(name)
+    .fetch_optional(pool)
+    .await
+    .ok()
+    .flatten();
+
+    row.map(|r| r.0)
+}
+
+/// Register a new camera for a store (used during pairing / first frame).
+///
+/// Returns the newly created camera UUID.
+pub async fn register_camera(
+    pool: &PgPool,
+    store_id: &Uuid,
+    name: &str,
+) -> Result<Uuid, sqlx::Error> {
+    let row: (Uuid,) = sqlx::query_as(
+        "INSERT INTO cameras (store_id, name, status) VALUES ($1, $2, 'online') RETURNING id",
+    )
+    .bind(store_id)
+    .bind(name)
+    .fetch_one(pool)
+    .await?;
+
+    Ok(row.0)
+}
+
+/// Consume a pairing code and return the associated store's token + info.
+///
+/// The `pairing_codes` table is ephemeral; codes expire after 10 minutes.
+/// Returns `None` if the code is invalid or expired.
+pub async fn consume_pairing_code(
+    pool: &PgPool,
+    code: &str,
+) -> Option<(Uuid, String)> {
+    // Try to find and consume the code in one atomic operation.
+    let row: Option<(Uuid, String)> = sqlx::query_as(
+        "DELETE FROM pairing_codes \
+         WHERE code = $1 AND expires_at > NOW() \
+         RETURNING store_id, token",
+    )
+    .bind(code)
+    .fetch_optional(pool)
+    .await
+    .ok()
+    .flatten();
+
+    row
+}
+
+/// Create a pairing code for a store. Returns the 6-digit code.
+pub async fn create_pairing_code(
+    pool: &PgPool,
+    store_id: &Uuid,
+    token: &str,
+) -> Result<String, sqlx::Error> {
+    use std::fmt::Write;
+    // Generate a 6-digit numeric code.
+    let mut code = String::new();
+    let random_num: u32 = rand_u32() % 1_000_000;
+    write!(&mut code, "{:06}", random_num).unwrap();
+
+    sqlx::query(
+        "INSERT INTO pairing_codes (code, store_id, token, expires_at) \
+         VALUES ($1, $2, $3, NOW() + INTERVAL '10 minutes') \
+         ON CONFLICT (code) DO UPDATE SET store_id = $2, token = $3, expires_at = NOW() + INTERVAL '10 minutes'",
+    )
+    .bind(&code)
+    .bind(store_id)
+    .bind(token)
+    .execute(pool)
+    .await?;
+
+    Ok(code)
+}
+
+/// Simple deterministic random u32 seeded from current time (no external crate needed).
+fn rand_u32() -> u32 {
+    let ns = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap_or_default()
+        .subsec_nanos();
+    // Simple hash to spread the value.
+    ns.wrapping_mul(2654435761)
 }
 
 /// List cameras for a given store.

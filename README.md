@@ -8,9 +8,9 @@ Your existing camera becomes an AI store manager.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Rust](https://img.shields.io/badge/Rust-1.86.0-orange.svg)](https://www.rust-lang.org/)
-[![Deploy](https://img.shields.io/badge/Fly.io-Deployed-purple.svg)](https://miseban-ai.fly.dev)
+[![Deploy](https://img.shields.io/badge/Fly.io-Deployed-purple.svg)](https://misebanai.com)
 
-[Website](https://miseban-ai.fly.dev) | [Blog](https://miseban-ai.fly.dev/blog/) | [対応カメラ](https://miseban-ai.fly.dev/cameras.html)
+[Website](https://misebanai.com) | [Blog](https://misebanai.com/blog/) | [対応カメラ](https://misebanai.com/cameras.html)
 
 </div>
 
@@ -92,7 +92,7 @@ docker run -d miseban/agent \
 
 ```bash
 # Raspberry Pi OS Lite にセットアップ
-curl -sSL https://miseban-ai.fly.dev/install.sh | bash
+curl -sSL https://misebanai.com/install.sh | bash
 miseban-agent --camera /dev/video0 --token "your_api_token"
 ```
 
@@ -108,7 +108,7 @@ docker run -d --name miseban-agent \
   --token "your_api_token"
 
 # 2. ダッシュボードにアクセス
-open https://miseban-ai.fly.dev
+open https://misebanai.com
 
 # 3. LINE通知を設定（ダッシュボードから）
 ```
@@ -142,7 +142,7 @@ open https://miseban-ai.fly.dev
 | Ring | 対応予定 |
 | Arlo | 対応予定 |
 
-全対応カメラの詳細は [対応カメラページ](https://miseban-ai.fly.dev/cameras.html) をご覧ください。
+全対応カメラの詳細は [対応カメラページ](https://misebanai.com/cameras.html) をご覧ください。
 
 ---
 

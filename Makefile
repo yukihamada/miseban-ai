@@ -81,9 +81,17 @@ sbom: ## Generate Software Bill of Materials
 # ────────────────────────────────────────────
 
 .PHONY: docker
-docker: ## Build Docker images
+docker: ## Build Docker images (web + agent)
 	docker build -f Dockerfile.web -t $(IMAGE) .
 	docker tag $(IMAGE) $(REGISTRY)/$(IMAGE_NAME):latest
+
+.PHONY: docker-agent
+docker-agent: ## Build agent Docker image for home/self-hosted use
+	docker build -f Dockerfile.agent -t miseban/agent .
+
+.PHONY: docker-agent-multi
+docker-agent-multi: ## Build agent Docker image for amd64 + arm64
+	docker buildx build -f Dockerfile.agent --platform linux/amd64,linux/arm64 -t miseban/agent --push .
 
 .PHONY: docker-scan
 docker-scan: docker ## Scan Docker image with Trivy

@@ -162,8 +162,49 @@ async fn receive_frame(
     // Run AI inference.
     let result = ai::analyze_frame(&frame).await;
 
-    // Persist to DB: try to parse camera_id as UUID and insert visitor_count.
-    let camera_uuid = Uuid::parse_str(&result.camera_id).ok();
+    // Persist to DB: resolve camera_id to a UUID.
+    // The camera_id may be a UUID string or a human-readable name (e.g. "cam-1").
+    // If it's not a UUID, look it up by name within the user's store, or auto-register.
+    let camera_uuid = match Uuid::parse_str(&result.camera_id) {
+        Ok(uuid) => Some(uuid),
+        Err(_) => {
+            // Not a UUID -- try to resolve by name within the user's store.
+            if let Some(store) = db::get_store_by_owner(&state.pool, &user_id).await {
+                match db::find_camera_by_name(&state.pool, &store.id, &result.camera_id).await {
+                    Some(uuid) => Some(uuid),
+                    None => {
+                        // Auto-register the camera on first frame.
+                        match db::register_camera(&state.pool, &store.id, &result.camera_id).await
+                        {
+                            Ok(uuid) => {
+                                info!(
+                                    camera_id = %result.camera_id,
+                                    camera_uuid = %uuid,
+                                    store_id = %store.id,
+                                    "Auto-registered new camera from frame submission"
+                                );
+                                Some(uuid)
+                            }
+                            Err(e) => {
+                                warn!(
+                                    camera_id = %result.camera_id,
+                                    error = %e,
+                                    "Failed to auto-register camera (non-fatal)"
+                                );
+                                None
+                            }
+                        }
+                    }
+                }
+            } else {
+                warn!(
+                    camera_id = %frame.camera_id,
+                    "camera_id is not a UUID and user has no store; skipping DB insert"
+                );
+                None
+            }
+        }
+    };
 
     if let Some(ref cam_id) = camera_uuid {
         let demographics_json =
@@ -185,11 +226,6 @@ async fn receive_frame(
                 "Failed to persist visitor count (non-fatal)"
             );
         }
-    } else {
-        warn!(
-            camera_id = %frame.camera_id,
-            "camera_id is not a valid UUID; skipping DB insert"
-        );
     }
 
     // Evaluate and persist alerts from AI analysis.
@@ -984,6 +1020,103 @@ async fn line_webhook(headers: axum::http::HeaderMap, body: String) -> StatusCod
 }
 
 // ---------------------------------------------------------------------------
+// Camera pairing endpoint
+// ---------------------------------------------------------------------------
+
+/// Request body for POST /api/v1/pair.
+#[derive(Debug, Deserialize)]
+struct PairRequest {
+    code: String,
+}
+
+/// Response for POST /api/v1/pair.
+#[derive(Debug, Serialize)]
+struct PairResponse {
+    token: String,
+    store_id: String,
+    store_name: String,
+}
+
+/// POST /api/v1/pair
+///
+/// Accepts a 6-digit pairing code from the camera agent setup wizard.
+/// Validates the code, returns an API token and store info so the agent
+/// can start uploading frames.
+async fn handle_pair(
+    State(state): State<AppState>,
+    Json(body): Json<PairRequest>,
+) -> Result<Json<PairResponse>, ApiError> {
+    let code = body.code.trim().to_string();
+
+    // Validate code format: exactly 6 digits.
+    if code.len() != 6 || !code.chars().all(|c| c.is_ascii_digit()) {
+        return Err(ApiError::BadRequest(
+            "Pairing code must be exactly 6 digits".to_string(),
+        ));
+    }
+
+    // Look up and consume the pairing code.
+    let (store_id, token) = db::consume_pairing_code(&state.pool, &code)
+        .await
+        .ok_or_else(|| {
+            ApiError::NotFound(
+                "Invalid or expired pairing code. Please generate a new code from the dashboard."
+                    .to_string(),
+            )
+        })?;
+
+    // Fetch the store name.
+    let store = db::get_store_by_owner_or_id(&state.pool, &store_id).await;
+    let store_name = store
+        .map(|s| s.name)
+        .unwrap_or_else(|| "My Store".to_string());
+
+    info!(
+        store_id = %store_id,
+        store_name = %store_name,
+        "Camera agent paired successfully"
+    );
+
+    Ok(Json(PairResponse {
+        token,
+        store_id: store_id.to_string(),
+        store_name,
+    }))
+}
+
+/// POST /api/v1/pair/generate
+///
+/// Generates a new pairing code for the authenticated user's store.
+/// The code is valid for 10 minutes.
+async fn generate_pairing_code(
+    AuthUser(user_id): AuthUser,
+    State(state): State<AppState>,
+) -> Result<Json<serde_json::Value>, ApiError> {
+    let store = db::get_store_by_owner(&state.pool, &user_id)
+        .await
+        .ok_or_else(|| ApiError::NotFound("No store found for this user".to_string()))?;
+
+    // Issue a token for the agent to use.
+    let token = auth::issue_token(&user_id, &state.jwt_secret.0)
+        .map_err(|e| ApiError::Internal(format!("Token error: {e}")))?;
+
+    let code = db::create_pairing_code(&state.pool, &store.id, &token)
+        .await
+        .map_err(|e| ApiError::Internal(format!("Failed to create pairing code: {e}")))?;
+
+    info!(
+        store_id = %store.id,
+        code = %code,
+        "Pairing code generated"
+    );
+
+    Ok(Json(serde_json::json!({
+        "code": code,
+        "expires_in_seconds": 600,
+    })))
+}
+
+// ---------------------------------------------------------------------------
 // Auth endpoints (signup / login)
 // ---------------------------------------------------------------------------
 
@@ -1042,6 +1175,43 @@ async fn signup(
             user_id: user_id.to_string(),
         }),
     ))
+}
+
+/// GET /api/v1/auth/me
+///
+/// Returns the authenticated user's profile info (id, email, store, plan).
+async fn auth_me(
+    AuthUser(user_id): AuthUser,
+    State(state): State<AppState>,
+) -> Result<Json<serde_json::Value>, ApiError> {
+    // Look up the user record.
+    let user_row: Option<(String,)> =
+        sqlx::query_as("SELECT email FROM users WHERE id = $1")
+            .bind(user_id)
+            .fetch_optional(&state.pool)
+            .await
+            .map_err(|e| ApiError::Database(format!("DB error: {e}")))?;
+
+    let email = user_row
+        .map(|r| r.0)
+        .unwrap_or_default();
+
+    // Fetch the user's store info if available.
+    let store = db::get_store_by_owner(&state.pool, &user_id).await;
+
+    let store_json = store.map(|s| {
+        serde_json::json!({
+            "id": s.id.to_string(),
+            "name": s.name,
+            "plan_tier": s.plan_tier,
+        })
+    });
+
+    Ok(Json(serde_json::json!({
+        "id": user_id.to_string(),
+        "email": email,
+        "store": store_json,
+    })))
 }
 
 /// POST /api/v1/auth/login
@@ -1113,6 +1283,220 @@ async fn health_check(State(state): State<AppState>) -> Json<HealthResponse> {
 }
 
 // ---------------------------------------------------------------------------
+// Contact form + Resend auto-reply
+// ---------------------------------------------------------------------------
+
+#[derive(Deserialize)]
+struct ContactRequest {
+    name: String,
+    company: Option<String>,
+    email: String,
+    phone: Option<String>,
+    #[serde(rename = "type")]
+    contact_type: String,
+    message: String,
+}
+
+/// POST /api/v1/contact
+///
+/// Receives a contact form submission, sends notification to the team and
+/// an auto-reply to the sender via Resend.
+async fn handle_contact(Json(req): Json<ContactRequest>) -> Result<impl IntoResponse, ApiError> {
+    // Validate
+    if req.name.trim().is_empty() || req.email.trim().is_empty() || req.message.trim().is_empty() {
+        return Err(ApiError::BadRequest("name, email, message are required".into()));
+    }
+    if req.email.len() > 254 || !req.email.contains('@') {
+        return Err(ApiError::BadRequest("Invalid email".into()));
+    }
+
+    let resend_key = std::env::var("RESEND_API_KEY").unwrap_or_default();
+    if resend_key.is_empty() {
+        warn!("RESEND_API_KEY not set — contact form will not send emails");
+        return Ok((StatusCode::OK, Json(serde_json::json!({"ok": true, "note": "email delivery disabled"}))));
+    }
+
+    let client = reqwest::Client::new();
+    let contact_type = req.contact_type.as_str();
+
+    // Determine notification recipient
+    let notify_to = match contact_type {
+        "partner" => "partners@miseban.ai",
+        _ => "info@misebanai.com",
+    };
+
+    let type_label = match contact_type {
+        "service" => "サービスに関するご質問",
+        "trial" => "導入・トライアルのご相談",
+        "estimate" => "お見積りのご依頼",
+        "partner" => "パートナー提携のご相談",
+        "press" => "取材・プレスのご依頼",
+        _ => "その他",
+    };
+
+    // 1. Send notification to team
+    let company_line = req.company.as_deref().unwrap_or("-");
+    let phone_line = req.phone.as_deref().unwrap_or("-");
+    let notify_body = format!(
+        r#"<h2>📩 新しいお問い合わせ</h2>
+<table style="border-collapse:collapse;width:100%">
+<tr><td style="padding:8px;border:1px solid #ddd;font-weight:bold">種別</td><td style="padding:8px;border:1px solid #ddd">{type_label}</td></tr>
+<tr><td style="padding:8px;border:1px solid #ddd;font-weight:bold">お名前</td><td style="padding:8px;border:1px solid #ddd">{}</td></tr>
+<tr><td style="padding:8px;border:1px solid #ddd;font-weight:bold">会社名</td><td style="padding:8px;border:1px solid #ddd">{company_line}</td></tr>
+<tr><td style="padding:8px;border:1px solid #ddd;font-weight:bold">メール</td><td style="padding:8px;border:1px solid #ddd">{}</td></tr>
+<tr><td style="padding:8px;border:1px solid #ddd;font-weight:bold">電話</td><td style="padding:8px;border:1px solid #ddd">{phone_line}</td></tr>
+</table>
+<h3>メッセージ</h3>
+<p style="white-space:pre-wrap;background:#f5f5f5;padding:16px;border-radius:8px">{}</p>"#,
+        req.name, req.email, req.message
+    );
+
+    let notify_result = client
+        .post("https://api.resend.com/emails")
+        .header("Authorization", format!("Bearer {resend_key}"))
+        .json(&serde_json::json!({
+            "from": "ミセバンAI <noreply@misebanai.com>",
+            "to": [notify_to],
+            "subject": format!("[ミセバンAI] {} - {}", type_label, req.name),
+            "html": notify_body,
+            "reply_to": req.email,
+        }))
+        .send()
+        .await;
+
+    if let Err(e) = &notify_result {
+        error!("Failed to send notification email: {e}");
+    }
+
+    // 2. Send auto-reply to sender
+    let (reply_subject, reply_body) = build_auto_reply(contact_type, &req.name, company_line);
+
+    let reply_result = client
+        .post("https://api.resend.com/emails")
+        .header("Authorization", format!("Bearer {resend_key}"))
+        .json(&serde_json::json!({
+            "from": "ミセバンAI <noreply@misebanai.com>",
+            "to": [req.email],
+            "subject": reply_subject,
+            "html": reply_body,
+            "reply_to": notify_to,
+        }))
+        .send()
+        .await;
+
+    if let Err(e) = &reply_result {
+        error!("Failed to send auto-reply email: {e}");
+    }
+
+    info!(
+        "Contact form: type={}, name={}, email={}, notify={}, reply={}",
+        contact_type,
+        req.name,
+        req.email,
+        notify_result.is_ok(),
+        reply_result.is_ok()
+    );
+
+    Ok((StatusCode::OK, Json(serde_json::json!({"ok": true}))))
+}
+
+fn build_auto_reply(contact_type: &str, name: &str, company: &str) -> (String, String) {
+    let header = format!(
+        r#"<div style="font-family:sans-serif;max-width:600px;margin:0 auto;color:#1e293b">
+<div style="background:linear-gradient(135deg,#4f46e5,#7c3aed);padding:32px;border-radius:12px 12px 0 0;text-align:center">
+<h1 style="color:white;margin:0;font-size:24px">ミセバンAI</h1>
+<p style="color:rgba(255,255,255,0.8);margin:8px 0 0">AI店舗分析サービス</p>
+</div>
+<div style="padding:32px;background:white;border:1px solid #e2e8f0;border-top:none">
+<p>{name} 様</p>
+<p>お問い合わせいただきありがとうございます。<br>以下の内容で承りました。担当者より{timeframe}にご連絡いたします。</p>"#,
+        name = name,
+        timeframe = match contact_type {
+            "partner" | "press" => "2営業日以内",
+            _ => "1営業日以内",
+        }
+    );
+
+    let (subject, content) = match contact_type {
+        "service" => (
+            "【ミセバンAI】お問い合わせを受け付けました",
+            r#"<h3 style="color:#4f46e5">🏪 ミセバンAIサービスのご紹介</h3>
+<ul style="line-height:1.8">
+<li><strong>AIカメラ分析</strong>: 来店者数、属性（年齢・性別）、滞留時間をリアルタイムで可視化</li>
+<li><strong>ダッシュボード</strong>: 日次・週次・時間帯別レポートを自動生成</li>
+<li><strong>アラート機能</strong>: 異常検知時にLINE/メールで即座に通知</li>
+<li><strong>プライバシー</strong>: 映像はエッジ処理、個人情報は保存しません</li>
+</ul>
+<p>▶ <a href="https://misebanai.com/docs.html" style="color:#4f46e5">詳細ドキュメントはこちら</a></p>"#.to_string(),
+        ),
+        "trial" => (
+            "【ミセバンAI】トライアルのご相談を受け付けました",
+            r#"<h3 style="color:#4f46e5">🚀 導入までの流れ</h3>
+<ol style="line-height:2">
+<li><strong>ヒアリング</strong> — 店舗の課題と目標を伺います（30分程度）</li>
+<li><strong>プラン提案</strong> — 最適なカメラ台数・設置場所をご提案</li>
+<li><strong>設置・設定</strong> — 最短即日で稼働開始</li>
+<li><strong>トライアル</strong> — 2週間の無料お試し期間</li>
+</ol>
+<p>▶ <a href="https://misebanai.com/cameras.html" style="color:#4f46e5">対応カメラ一覧</a><br>
+▶ <a href="https://misebanai.com/" style="color:#4f46e5">料金プランを見る</a></p>"#.to_string(),
+        ),
+        "estimate" => (
+            "【ミセバンAI】お見積りのご依頼を受け付けました",
+            format!(
+                r#"<h3 style="color:#4f46e5">💰 料金プラン</h3>
+<table style="border-collapse:collapse;width:100%">
+<tr style="background:#f8fafc"><th style="padding:12px;border:1px solid #e2e8f0;text-align:left">プラン</th><th style="padding:12px;border:1px solid #e2e8f0">月額</th><th style="padding:12px;border:1px solid #e2e8f0">カメラ数</th></tr>
+<tr><td style="padding:12px;border:1px solid #e2e8f0">スターター</td><td style="padding:12px;border:1px solid #e2e8f0;text-align:center">¥4,980</td><td style="padding:12px;border:1px solid #e2e8f0;text-align:center">1台</td></tr>
+<tr><td style="padding:12px;border:1px solid #e2e8f0">プロ</td><td style="padding:12px;border:1px solid #e2e8f0;text-align:center">¥14,800</td><td style="padding:12px;border:1px solid #e2e8f0;text-align:center">5台</td></tr>
+<tr><td style="padding:12px;border:1px solid #e2e8f0">エンタープライズ</td><td style="padding:12px;border:1px solid #e2e8f0;text-align:center">お見積り</td><td style="padding:12px;border:1px solid #e2e8f0;text-align:center">無制限</td></tr>
+</table>
+<p>{company}様のご要件に合わせた詳細なお見積りを作成いたします。</p>"#, company = company),
+        ),
+        "partner" => (
+            "【ミセバンAI】パートナーシップのお問い合わせを受け付けました",
+            r#"<h3 style="color:#4f46e5">🤝 パートナープログラム</h3>
+<p>ミセバンAIでは以下のパートナーシップを募集しています：</p>
+<ul style="line-height:2">
+<li><strong>販売代理店</strong> — 紹介手数料型のリセラープログラム</li>
+<li><strong>技術提携</strong> — API連携によるOEM/ホワイトラベル提供</li>
+<li><strong>カメラメーカー</strong> — 対応カメラの拡充</li>
+<li><strong>不動産・商業施設</strong> — テナント向け一括導入</li>
+</ul>
+<p>パートナー担当より詳細資料をお送りいたします。</p>
+<p>▶ パートナー専用窓口: <a href="mailto:partners@miseban.ai" style="color:#4f46e5">partners@miseban.ai</a></p>"#.to_string(),
+        ),
+        "press" => (
+            "【ミセバンAI】プレスのお問い合わせを受け付けました",
+            r#"<h3 style="color:#4f46e5">📰 プレス・取材について</h3>
+<p>ミセバンAIへのご関心をいただきありがとうございます。</p>
+<ul style="line-height:2">
+<li>プレスキットは担当よりお送りいたします</li>
+<li>代表インタビュー・デモのご要望も承ります</li>
+<li>製品画像・ロゴデータもご提供可能です</li>
+</ul>"#.to_string(),
+        ),
+        _ => (
+            "【ミセバンAI】お問い合わせを受け付けました",
+            r#"<p>お問い合わせ内容を確認の上、担当者よりご連絡いたします。</p>"#.to_string(),
+        ),
+    };
+
+    let footer = r#"</div>
+<div style="padding:24px;background:#f8fafc;border:1px solid #e2e8f0;border-top:none;border-radius:0 0 12px 12px;text-align:center;font-size:13px;color:#64748b">
+<p>ミセバンAI — AI店舗分析サービス</p>
+<p>
+<a href="https://misebanai.com" style="color:#4f46e5">ウェブサイト</a> ・
+<a href="mailto:info@misebanai.com" style="color:#4f46e5">info@misebanai.com</a> ・
+<a href="mailto:partners@miseban.ai" style="color:#4f46e5">partners@miseban.ai</a>
+</p>
+</div></div>"#;
+
+    let full_body = format!("{header}\n{content}\n{footer}");
+    (subject.to_string(), full_body)
+}
+
+// ---------------------------------------------------------------------------
 // Router builder (extracted for testability)
 // ---------------------------------------------------------------------------
 
@@ -1158,6 +1542,7 @@ async fn get_public_config() -> Json<PublicConfig> {
             "cameras",
             "weekly_stats",
             "hourly_stats",
+            "pairing",
         ],
     })
 }
@@ -1213,13 +1598,18 @@ fn build_router(state: AppState) -> Router {
         .route("/api/v1/billing/checkout", post(create_checkout))
         .route("/api/v1/billing/portal", post(create_portal))
         .route("/api/v1/billing/subscription", get(get_subscription))
+        // Pairing routes
+        .route("/api/v1/pair", post(handle_pair))             // public (agent setup)
+        .route("/api/v1/pair/generate", post(generate_pairing_code)) // auth required
         // Auth routes (public)
         .route("/api/v1/auth/signup", post(signup))
         .route("/api/v1/auth/login", post(login))
+        .route("/api/v1/auth/me", get(auth_me))
         // Public routes
         .route("/api/v1/health", get(health_check))
         .route("/api/v1/config", get(get_public_config))
         .route("/api/v1/pricing", get(get_pricing))
+        .route("/api/v1/contact", post(handle_contact))
         .route("/api/v1/webhooks/line", post(line_webhook))
         .route("/api/v1/webhooks/stripe", post(stripe_webhook))
         .layer(axum::extract::DefaultBodyLimit::max(12 * 1024 * 1024)) // 12MB max
@@ -1616,6 +2006,7 @@ mod tests {
             ("/api/v1/stores/me/alerts", "GET"),
             ("/api/v1/stores/me/alerts/count", "GET"),
             ("/api/v1/stores/me/export/csv", "GET"),
+            ("/api/v1/auth/me", "GET"),
         ];
 
         for (uri, method) in endpoints {
@@ -1635,5 +2026,50 @@ mod tests {
                 uri
             );
         }
+    }
+
+    #[tokio::test]
+    async fn pair_rejects_invalid_code_format() {
+        let app = test_app();
+
+        // Too short
+        let request = Request::builder()
+            .uri("/api/v1/pair")
+            .method("POST")
+            .header("content-type", "application/json")
+            .body(axum::body::Body::from(r#"{"code":"123"}"#))
+            .unwrap();
+
+        let response = app.oneshot(request).await.unwrap();
+        assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+    }
+
+    #[tokio::test]
+    async fn pair_rejects_non_numeric_code() {
+        let app = test_app();
+
+        let request = Request::builder()
+            .uri("/api/v1/pair")
+            .method("POST")
+            .header("content-type", "application/json")
+            .body(axum::body::Body::from(r#"{"code":"abcdef"}"#))
+            .unwrap();
+
+        let response = app.oneshot(request).await.unwrap();
+        assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+    }
+
+    #[tokio::test]
+    async fn pair_generate_requires_auth() {
+        let app = test_app();
+
+        let request = Request::builder()
+            .uri("/api/v1/pair/generate")
+            .method("POST")
+            .body(axum::body::Body::empty())
+            .unwrap();
+
+        let response = app.oneshot(request).await.unwrap();
+        assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
     }
 }

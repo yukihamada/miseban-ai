@@ -305,6 +305,19 @@ mod inference {
 
 #[cfg(not(feature = "mock"))]
 pub fn init_model() -> Result<(), AiError> {
+    let path = std::env::var("MISEBAN_MODEL_PATH")
+        .unwrap_or_else(|_| "models/yolov8n.onnx".to_string());
+
+    if !std::path::Path::new(&path).exists() {
+        eprintln!(
+            "[ai] ONNX model not found at '{}'. \
+             Set MISEBAN_MODEL_PATH or download yolov8n.onnx into models/. \
+             Falling back to no-op mode (people_count will always be 0).",
+            path
+        );
+        return Ok(());
+    }
+
     inference::load_model()
 }
 

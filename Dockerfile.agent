@@ -1,0 +1,77 @@
+# ============================================================================
+# MisebanAI Camera Agent — Docker Image
+# Multi-stage build: Rust 1.86 → minimal runtime with ffmpeg
+#
+# Build:
+#   docker build -f Dockerfile.agent -t miseban/agent .
+#
+# Multi-arch build:
+#   docker buildx build -f Dockerfile.agent \
+#     --platform linux/amd64,linux/arm64 \
+#     -t miseban/agent --push .
+# ============================================================================
+
+# ---------------------------------------------------------------------------
+# Stage 1: Build the agent binary
+# ---------------------------------------------------------------------------
+FROM rust:1.86-slim-bookworm AS builder
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+       pkg-config libssl-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Cache dependencies: copy only manifests first
+COPY Cargo.toml Cargo.lock rust-toolchain.toml ./
+COPY crates/agent/Cargo.toml crates/agent/Cargo.toml
+COPY crates/shared/Cargo.toml crates/shared/Cargo.toml
+COPY crates/ai/Cargo.toml crates/ai/Cargo.toml
+COPY crates/api/Cargo.toml crates/api/Cargo.toml
+
+# Create dummy source files so cargo can resolve the workspace
+RUN mkdir -p crates/agent/src crates/shared/src crates/ai/src crates/api/src \
+    && echo "fn main() {}" > crates/agent/src/main.rs \
+    && echo "" > crates/shared/src/lib.rs \
+    && echo "" > crates/ai/src/lib.rs \
+    && echo "fn main() {}" > crates/api/src/main.rs \
+    && cargo build --release --package agent 2>/dev/null || true
+
+# Copy real source code
+COPY crates/ crates/
+
+# Touch source files to invalidate cached artifacts from dummy build
+RUN touch crates/agent/src/main.rs crates/shared/src/lib.rs
+
+# Build the real agent binary
+RUN cargo build --release --package agent
+
+# ---------------------------------------------------------------------------
+# Stage 2: Minimal runtime image
+# ---------------------------------------------------------------------------
+FROM debian:bookworm-slim
+
+# Install runtime dependencies:
+#   - ca-certificates: HTTPS to cloud API
+#   - libssl3: TLS support
+#   - ffmpeg: RTSP frame capture
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+       ca-certificates libssl3 ffmpeg \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy the agent binary from builder
+COPY --from=builder /app/target/release/miseban-agent /usr/local/bin/miseban-agent
+
+# Create config and data directories
+RUN mkdir -p /root/.miseban /tmp/miseban
+
+# Default environment
+ENV RUST_LOG=info
+
+# The agent listens on 3939 for the setup wizard
+EXPOSE 3939
+
+# Default: start the agent (will auto-enter setup if no config)
+ENTRYPOINT ["miseban-agent"]
