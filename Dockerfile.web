@@ -8,12 +8,18 @@ COPY web/landing/legal.html /usr/share/nginx/html/legal.html
 COPY web/landing/team.html /usr/share/nginx/html/team.html
 COPY web/landing/contact.html /usr/share/nginx/html/contact.html
 COPY web/landing/docs.html /usr/share/nginx/html/docs.html
+COPY web/landing/download.html /usr/share/nginx/html/download.html
 COPY web/landing/404.html /usr/share/nginx/html/404.html
 COPY web/landing/blog/ /usr/share/nginx/html/blog/
 COPY web/landing/ogp.png /usr/share/nginx/html/ogp.png
 COPY web/landing/robots.txt /usr/share/nginx/html/robots.txt
 COPY web/landing/sitemap.xml /usr/share/nginx/html/sitemap.xml
 COPY web/dashboard/ /usr/share/nginx/html/dashboard/
+
+# Agent binary release (built by `make build-pi`)
+COPY dist/miseban-agent-arm64.tar.gz /usr/share/nginx/html/releases/miseban-agent-arm64.tar.gz
+COPY dist/install.sh /usr/share/nginx/html/releases/install.sh
+
 COPY nginx.conf /etc/nginx/nginx.conf
 
 EXPOSE 8080

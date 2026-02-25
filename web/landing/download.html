@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-BEB4MS3Q5H"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-BEB4MS3Q5H');</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ダウンロード｜ミセバンAI カメラエージェント</title>
+<meta name="description" content="ミセバンAI カメラエージェントをRaspberry Piにインストール。5分で来客分析を開始できます。">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://misebanai.com/download.html">
+
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%234f46e5'/><text x='50%25' y='54%25' dominant-baseline='middle' text-anchor='middle' fill='white' font-size='18' font-weight='bold' font-family='sans-serif'>M</text></svg>">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
+
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --white:#ffffff;
+  --gray-50:#f8fafc;
+  --gray-100:#f1f5f9;
+  --gray-200:#e2e8f0;
+  --gray-300:#cbd5e1;
+  --gray-400:#94a3b8;
+  --gray-500:#64748b;
+  --slate-600:#475569;
+  --slate-700:#334155;
+  --slate-800:#1e293b;
+  --slate-900:#0f172a;
+  --indigo-50:#eef2ff;
+  --indigo-100:#e0e7ff;
+  --indigo-500:#6366f1;
+  --indigo-600:#4f46e5;
+  --indigo-700:#4338ca;
+  --indigo-900:#312e81;
+  --indigo-950:#1e1b4b;
+  --green-50:#f0fdf4;
+  --green-600:#16a34a;
+  --green-700:#15803d;
+  --radius-sm:8px;
+  --radius:12px;
+  --radius-lg:16px;
+  --shadow-sm:0 1px 3px rgba(0,0,0,.1),0 1px 2px rgba(0,0,0,.06);
+}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+body{font-family:'Noto Sans JP','Inter',system-ui,-apple-system,sans-serif;color:var(--slate-900);background:var(--white);line-height:1.8;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+a{text-decoration:none;color:inherit;transition:color .2s}
+.container{max-width:1200px;margin:0 auto;padding:0 24px}
+
+.header{background:var(--white);border-bottom:1px solid var(--gray-200);position:sticky;top:0;z-index:100}
+.header-inner{display:flex;align-items:center;justify-content:space-between;height:72px}
+.logo{display:flex;align-items:center;gap:2px;font-size:1.25rem;font-weight:700;color:var(--slate-900)}
+.logo-ai{color:var(--indigo-600);font-weight:700}
+.nav{display:flex;align-items:center;gap:24px}
+.nav a{font-size:.875rem;font-weight:400;color:var(--slate-600);transition:color .2s}
+.nav a:hover{color:var(--indigo-600)}
+
+.page-header{background:linear-gradient(165deg,var(--slate-900) 0%,#1a1647 50%,var(--indigo-950) 100%);padding:80px 0 48px;color:var(--white)}
+.page-header h1{font-size:clamp(1.75rem,4vw,2.5rem);font-weight:700;line-height:1.4;margin-bottom:8px}
+.page-header p{font-size:.9375rem;color:rgba(255,255,255,.7)}
+
+.content{max-width:800px;margin:0 auto;padding:56px 24px 80px}
+
+/* Download Card */
+.dl-card{background:var(--white);border:2px solid var(--indigo-100);border-radius:var(--radius-lg);padding:40px;margin-bottom:32px;text-align:center}
+.dl-card h2{font-size:1.5rem;font-weight:700;margin-bottom:8px}
+.dl-card .sub{font-size:.875rem;color:var(--gray-500);margin-bottom:24px}
+.dl-meta{display:flex;gap:24px;justify-content:center;margin-bottom:24px;flex-wrap:wrap}
+.dl-meta span{font-size:.8125rem;color:var(--slate-600);background:var(--gray-50);padding:6px 12px;border-radius:var(--radius-sm);border:1px solid var(--gray-200)}
+.dl-btn{display:inline-flex;align-items:center;gap:8px;padding:14px 32px;background:var(--indigo-600);color:var(--white);font-size:1rem;font-weight:600;border-radius:var(--radius);border:none;cursor:pointer;transition:background .2s}
+.dl-btn:hover{background:var(--indigo-700)}
+.dl-btn svg{width:20px;height:20px}
+
+/* Steps */
+.steps{margin-top:48px}
+.steps h2{font-size:1.375rem;font-weight:700;margin-bottom:24px;padding-bottom:8px;border-bottom:2px solid var(--indigo-100)}
+.step{display:flex;gap:20px;margin-bottom:32px;align-items:flex-start}
+.step-num{flex-shrink:0;width:36px;height:36px;background:var(--indigo-600);color:var(--white);border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.875rem}
+.step-body h3{font-size:1.0625rem;font-weight:700;margin-bottom:4px;color:var(--slate-800)}
+.step-body p{font-size:.9375rem;color:var(--slate-700);line-height:1.8}
+pre{background:var(--slate-900);color:#e2e8f0;padding:16px 20px;border-radius:var(--radius-sm);overflow-x:auto;font-size:.8125rem;line-height:1.7;margin:8px 0 0}
+code{font-family:'SF Mono','Fira Code',monospace}
+.inline-code{background:var(--gray-100);padding:2px 6px;border-radius:4px;font-size:.8125rem;color:var(--indigo-600)}
+
+/* Specs */
+.specs{margin-top:48px}
+.specs h2{font-size:1.375rem;font-weight:700;margin-bottom:16px;padding-bottom:8px;border-bottom:2px solid var(--indigo-100)}
+.spec-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-top:16px}
+.spec-item{background:var(--gray-50);padding:20px;border-radius:var(--radius-sm);border:1px solid var(--gray-200)}
+.spec-item dt{font-size:.75rem;text-transform:uppercase;letter-spacing:.05em;color:var(--gray-500);margin-bottom:4px}
+.spec-item dd{font-size:1rem;font-weight:600;color:var(--slate-800)}
+
+/* Req */
+.req{margin-top:48px}
+.req h2{font-size:1.375rem;font-weight:700;margin-bottom:16px;padding-bottom:8px;border-bottom:2px solid var(--indigo-100)}
+.req ul{list-style:none;padding:0}
+.req li{padding:8px 0;font-size:.9375rem;color:var(--slate-700);display:flex;align-items:center;gap:8px}
+.req li::before{content:"";display:inline-block;width:6px;height:6px;background:var(--green-600);border-radius:50%;flex-shrink:0}
+
+.footer{background:var(--slate-900);color:var(--gray-400);padding:48px 0 24px;margin-top:80px}
+.footer-inner{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:24px;margin-bottom:32px}
+.footer-brand{font-size:1.125rem;font-weight:700;color:var(--white)}
+.footer-links{display:flex;flex-wrap:wrap;gap:16px}
+.footer-links a{font-size:.8125rem;color:var(--gray-400);transition:color .2s}
+.footer-links a:hover{color:var(--white)}
+.footer-copy{font-size:.75rem;color:var(--gray-500);border-top:1px solid rgba(255,255,255,.1);padding-top:16px}
+
+@media(max-width:640px){
+  .nav{gap:12px}
+  .nav a{font-size:.75rem}
+  .dl-card{padding:24px}
+  .dl-meta{gap:8px}
+  .step{flex-direction:column;gap:12px}
+}
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="container">
+    <div class="header-inner">
+      <a href="/" class="logo">ミセバン<span class="logo-ai">AI</span></a>
+      <nav class="nav">
+        <a href="/">トップ</a>
+        <a href="/docs.html">API</a>
+        <a href="/blog/">ブログ</a>
+        <a href="/dashboard/">ダッシュボード</a>
+      </nav>
+    </div>
+  </div>
+</header>
+
+<div class="page-header">
+  <div class="container">
+    <h1>カメラエージェント ダウンロード</h1>
+    <p>Raspberry Piに5分でインストール。既存カメラをAI分析に接続します。</p>
+  </div>
+</div>
+
+<main class="content">
+
+  <div class="dl-card">
+    <h2>MisebanAI Camera Agent</h2>
+    <p class="sub">Raspberry Pi 4 / 5 (64-bit OS) 対応</p>
+    <div class="dl-meta">
+      <span>ARM64 (aarch64)</span>
+      <span>静的リンク</span>
+      <span>v0.1.0</span>
+      <span>~3 MB</span>
+    </div>
+    <a href="/releases/miseban-agent-arm64.tar.gz" class="dl-btn" download>
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3"/></svg>
+      ダウンロード (.tar.gz)
+    </a>
+  </div>
+
+  <!-- Quick Install -->
+  <div class="steps">
+    <h2>インストール手順</h2>
+
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-body">
+        <h3>Raspberry Piにダウンロード</h3>
+        <p>Pi上でターミナルを開き、以下を実行します。</p>
+        <pre><code>curl -fsSLO https://misebanai.com/releases/miseban-agent-arm64.tar.gz
+tar xzf miseban-agent-arm64.tar.gz
+cd miseban-agent</code></pre>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-body">
+        <h3>インストーラを実行</h3>
+        <p>ffmpegのインストールとsystemdサービスの設定を自動で行います。</p>
+        <pre><code>./install.sh</code></pre>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-body">
+        <h3>セットアップウィザードを開く</h3>
+        <p>ブラウザで <span class="inline-code">http://&lt;PiのIPアドレス&gt;:3939</span> にアクセスします。</p>
+        <pre><code># IPアドレスの確認
+hostname -I</code></pre>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">4</div>
+      <div class="step-body">
+        <h3>ペアリングコードを入力</h3>
+        <p><a href="/dashboard/" style="color:var(--indigo-600);text-decoration:underline">ダッシュボード</a>のカメラタブで「ペアリングコードを発行」をクリックし、表示された6桁のコードをウィザードに入力します。</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">5</div>
+      <div class="step-body">
+        <h3>カメラを選択して完了</h3>
+        <p>ネットワーク上のカメラが自動検出されます。カメラを選択すると、フレームの送信が開始されます。</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Specs -->
+  <div class="specs">
+    <h2>仕様</h2>
+    <dl class="spec-grid">
+      <div class="spec-item"><dt>バイナリサイズ</dt><dd>5.9 MB</dd></div>
+      <div class="spec-item"><dt>アーキテクチャ</dt><dd>ARM64 (aarch64)</dd></div>
+      <div class="spec-item"><dt>リンク方式</dt><dd>静的 (musl)</dd></div>
+      <div class="spec-item"><dt>TLS</dt><dd>rustls (OpenSSL不要)</dd></div>
+      <div class="spec-item"><dt>メモリ使用量</dt><dd>~50-100 MB</dd></div>
+      <div class="spec-item"><dt>ストレージ</dt><dd>~100 MB (バッファ含む)</dd></div>
+      <div class="spec-item"><dt>推論</dt><dd>クラウド側 (Pi不要)</dd></div>
+      <div class="spec-item"><dt>ネットワーク</dt><dd>1 Mbps以上推奨</dd></div>
+    </dl>
+  </div>
+
+  <!-- Requirements -->
+  <div class="req">
+    <h2>動作要件</h2>
+    <ul>
+      <li>Raspberry Pi 4 Model B / Pi 5 (64-bit Raspberry Pi OS)</li>
+      <li>ffmpeg (インストーラが自動インストール)</li>
+      <li>RTSP対応IPカメラ、またはHTTPスナップショット対応カメラ</li>
+      <li>インターネット接続 (フレームをクラウドAPIに送信)</li>
+      <li>ミセバンAIアカウント (<a href="/dashboard/?mode=signup" style="color:var(--indigo-600);text-decoration:underline">無料登録</a>)</li>
+    </ul>
+  </div>
+
+  <!-- CLI Install -->
+  <div class="steps" style="margin-top:48px">
+    <h2>ワンライナーインストール (上級者向け)</h2>
+    <div class="step">
+      <div class="step-num">$</div>
+      <div class="step-body">
+        <pre><code>curl -fsSL https://misebanai.com/releases/miseban-agent-arm64.tar.gz | tar xz && cd miseban-agent && ./install.sh</code></pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- Service Management -->
+  <div class="steps" style="margin-top:48px">
+    <h2>サービス管理</h2>
+    <div class="step">
+      <div class="step-num">$</div>
+      <div class="step-body">
+        <pre><code># ステータス確認
+sudo systemctl status miseban-agent
+
+# ログ確認
+sudo journalctl -u miseban-agent -f
+
+# 再起動
+sudo systemctl restart miseban-agent
+
+# 停止
+sudo systemctl stop miseban-agent</code></pre>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<footer class="footer">
+  <div class="container">
+    <div class="footer-inner">
+      <div class="footer-brand">ミセバン<span class="logo-ai">AI</span></div>
+      <div class="footer-links">
+        <a href="/">トップ</a>
+        <a href="/download.html">ダウンロード</a>
+        <a href="/docs.html">API</a>
+        <a href="/blog/">ブログ</a>
+        <a href="/privacy.html">プライバシー</a>
+        <a href="/terms.html">利用規約</a>
+      </div>
+    </div>
+    <div class="footer-copy">&copy; 2026 MisebanAI. All rights reserved.</div>
+  </div>
+</footer>
+
+</body>
+</html>
