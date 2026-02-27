@@ -305,8 +305,8 @@ mod inference {
 
 #[cfg(not(feature = "mock"))]
 pub fn init_model() -> Result<(), AiError> {
-    let path = std::env::var("MISEBAN_MODEL_PATH")
-        .unwrap_or_else(|_| "models/yolov8n.onnx".to_string());
+    let path =
+        std::env::var("MISEBAN_MODEL_PATH").unwrap_or_else(|_| "models/yolov8n.onnx".to_string());
 
     if !std::path::Path::new(&path).exists() {
         eprintln!(

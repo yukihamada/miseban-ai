@@ -174,8 +174,7 @@ async fn receive_frame(
                     Some(uuid) => Some(uuid),
                     None => {
                         // Auto-register the camera on first frame.
-                        match db::register_camera(&state.pool, &store.id, &result.camera_id).await
-                        {
+                        match db::register_camera(&state.pool, &store.id, &result.camera_id).await {
                             Ok(uuid) => {
                                 info!(
                                     camera_id = %result.camera_id,
@@ -1185,16 +1184,13 @@ async fn auth_me(
     State(state): State<AppState>,
 ) -> Result<Json<serde_json::Value>, ApiError> {
     // Look up the user record.
-    let user_row: Option<(String,)> =
-        sqlx::query_as("SELECT email FROM users WHERE id = $1")
-            .bind(user_id)
-            .fetch_optional(&state.pool)
-            .await
-            .map_err(|e| ApiError::Database(format!("DB error: {e}")))?;
+    let user_row: Option<(String,)> = sqlx::query_as("SELECT email FROM users WHERE id = $1")
+        .bind(user_id)
+        .fetch_optional(&state.pool)
+        .await
+        .map_err(|e| ApiError::Database(format!("DB error: {e}")))?;
 
-    let email = user_row
-        .map(|r| r.0)
-        .unwrap_or_default();
+    let email = user_row.map(|r| r.0).unwrap_or_default();
 
     // Fetch the user's store info if available.
     let store = db::get_store_by_owner(&state.pool, &user_id).await;
@@ -1304,7 +1300,9 @@ struct ContactRequest {
 async fn handle_contact(Json(req): Json<ContactRequest>) -> Result<impl IntoResponse, ApiError> {
     // Validate
     if req.name.trim().is_empty() || req.email.trim().is_empty() || req.message.trim().is_empty() {
-        return Err(ApiError::BadRequest("name, email, message are required".into()));
+        return Err(ApiError::BadRequest(
+            "name, email, message are required".into(),
+        ));
     }
     if req.email.len() > 254 || !req.email.contains('@') {
         return Err(ApiError::BadRequest("Invalid email".into()));
@@ -1313,7 +1311,10 @@ async fn handle_contact(Json(req): Json<ContactRequest>) -> Result<impl IntoResp
     let resend_key = std::env::var("RESEND_API_KEY").unwrap_or_default();
     if resend_key.is_empty() {
         warn!("RESEND_API_KEY not set — contact form will not send emails");
-        return Ok((StatusCode::OK, Json(serde_json::json!({"ok": true, "note": "email delivery disabled"}))));
+        return Ok((
+            StatusCode::OK,
+            Json(serde_json::json!({"ok": true, "note": "email delivery disabled"})),
+        ));
     }
 
     let client = reqwest::Client::new();
@@ -1599,7 +1600,7 @@ fn build_router(state: AppState) -> Router {
         .route("/api/v1/billing/portal", post(create_portal))
         .route("/api/v1/billing/subscription", get(get_subscription))
         // Pairing routes
-        .route("/api/v1/pair", post(handle_pair))             // public (agent setup)
+        .route("/api/v1/pair", post(handle_pair)) // public (agent setup)
         .route("/api/v1/pair/generate", post(generate_pairing_code)) // auth required
         // Auth routes (public)
         .route("/api/v1/auth/signup", post(signup))

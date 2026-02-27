@@ -298,15 +298,14 @@ pub async fn get_hourly_visitor_counts(pool: &PgPool, store_id: &Uuid) -> Vec<(i
 /// This handles the mismatch where agents use human-readable camera IDs
 /// (e.g. "cam-1") but the DB uses UUIDs. Returns the camera UUID if found.
 pub async fn find_camera_by_name(pool: &PgPool, store_id: &Uuid, name: &str) -> Option<Uuid> {
-    let row: Option<(Uuid,)> = sqlx::query_as(
-        "SELECT id FROM cameras WHERE store_id = $1 AND name = $2 LIMIT 1",
-    )
-    .bind(store_id)
-    .bind(name)
-    .fetch_optional(pool)
-    .await
-    .ok()
-    .flatten();
+    let row: Option<(Uuid,)> =
+        sqlx::query_as("SELECT id FROM cameras WHERE store_id = $1 AND name = $2 LIMIT 1")
+            .bind(store_id)
+            .bind(name)
+            .fetch_optional(pool)
+            .await
+            .ok()
+            .flatten();
 
     row.map(|r| r.0)
 }
@@ -334,10 +333,7 @@ pub async fn register_camera(
 ///
 /// The `pairing_codes` table is ephemeral; codes expire after 10 minutes.
 /// Returns `None` if the code is invalid or expired.
-pub async fn consume_pairing_code(
-    pool: &PgPool,
-    code: &str,
-) -> Option<(Uuid, String)> {
+pub async fn consume_pairing_code(pool: &PgPool, code: &str) -> Option<(Uuid, String)> {
     // Try to find and consume the code in one atomic operation.
     let row: Option<(Uuid, String)> = sqlx::query_as(
         "DELETE FROM pairing_codes \
