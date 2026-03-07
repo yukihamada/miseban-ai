@@ -7,6 +7,7 @@ use axum::{
 };
 use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, Validation};
 use serde::{Deserialize, Serialize};
+use sqlx::PgPool;
 use uuid::Uuid;
 
 // ---------------------------------------------------------------------------
@@ -102,6 +103,7 @@ impl<S> FromRequestParts<S> for AuthUser
 where
     S: Send + Sync,
     JwtSecret: FromRef<S>,
+    PgPool: FromRef<S>,
 {
     type Rejection = AuthError;
 
@@ -119,21 +121,31 @@ where
             .strip_prefix("Bearer ")
             .ok_or(AuthError::MissingHeader)?;
 
-        // Decode and validate JWT.
+        // Try JWT first.
         let mut validation = Validation::new(jsonwebtoken::Algorithm::HS256);
         validation.validate_aud = false;
 
-        let token_data = decode::<Claims>(
+        if let Ok(token_data) = decode::<Claims>(
             token,
             &DecodingKey::from_secret(secret.0.as_bytes()),
             &validation,
-        )
-        .map_err(|e| AuthError::InvalidToken(e.to_string()))?;
+        ) {
+            let user_id = Uuid::parse_str(&token_data.claims.sub)
+                .map_err(|e| AuthError::InvalidSubject(e.to_string()))?;
+            return Ok(AuthUser(user_id));
+        }
 
-        // Parse the `sub` claim as a UUID.
-        let user_id = Uuid::parse_str(&token_data.claims.sub)
-            .map_err(|e| AuthError::InvalidSubject(e.to_string()))?;
+        // JWT failed — try as raw API token.
+        let pool = PgPool::from_ref(state);
+        let store_id = crate::db::validate_api_token(&pool, token)
+            .await
+            .ok_or_else(|| AuthError::InvalidToken("InvalidToken".to_string()))?;
 
-        Ok(AuthUser(user_id))
+        // Get the store's owner_id to return as user_id.
+        let store = crate::db::get_store_by_owner_or_id(&pool, &store_id)
+            .await
+            .ok_or_else(|| AuthError::InvalidToken("store not found".to_string()))?;
+
+        Ok(AuthUser(store.owner_id))
     }
 }

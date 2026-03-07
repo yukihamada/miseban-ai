@@ -45,7 +45,7 @@ struct Cli {
     token: Option<String>,
 
     /// API endpoint for quick mode.
-    #[arg(long, default_value = "https://api.misebanai.com/v1/frames")]
+    #[arg(long, default_value = "https://api.misebanai.com/api/v1/frames")]
     endpoint: String,
 
     /// Capture frames but don't upload. Saves JPEGs to /tmp/miseban/ for testing.
@@ -73,7 +73,7 @@ struct AgentConfig {
 
 #[derive(Debug, Deserialize, Clone)]
 struct ServerConfig {
-    /// Cloud API endpoint URL (e.g. https://api.misebanai.com/v1/frames).
+    /// Cloud API endpoint URL (e.g. https://api.misebanai.com/api/v1/frames).
     endpoint: String,
     /// API token for authentication.
     token: String,
