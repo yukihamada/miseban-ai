@@ -95,8 +95,14 @@ jobs:
         run: |
           BINARY=target/${{ matrix.target }}/release/miseban-agent
           chmod +x "$BINARY"
-          tar -czf "${{ matrix.artifact }}.tar.gz" -C "$(dirname $BINARY)" miseban-agent
-          sha256sum "${{ matrix.artifact }}.tar.gz" > "${{ matrix.artifact }}.tar.gz.sha256"
+          cp "$BINARY" ./miseban-agent
+          tar -czf "${{ matrix.artifact }}.tar.gz" miseban-agent
+          # sha256sum on Linux, shasum on macOS
+          if command -v sha256sum >/dev/null 2>&1; then
+            sha256sum "${{ matrix.artifact }}.tar.gz" > "${{ matrix.artifact }}.tar.gz.sha256"
+          else
+            shasum -a 256 "${{ matrix.artifact }}.tar.gz" > "${{ matrix.artifact }}.tar.gz.sha256"
+          fi
 
       - name: Package (Windows)
         if: runner.os == 'Windows'
@@ -154,7 +160,7 @@ jobs:
             x86_64/miseban-agent
           chmod +x miseban-agent
           tar -czf miseban-agent-macos-universal.tar.gz miseban-agent
-          sha256sum miseban-agent-macos-universal.tar.gz > miseban-agent-macos-universal.tar.gz.sha256
+          shasum -a 256 miseban-agent-macos-universal.tar.gz > miseban-agent-macos-universal.tar.gz.sha256
 
       - uses: actions/upload-artifact@v4
         with:
