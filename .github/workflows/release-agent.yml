@@ -151,7 +151,28 @@ jobs:
           name: miseban-agent-macos-x86_64
           path: x86_64/
 
-      - name: Create universal binary
+      - name: Import Developer ID certificate
+        env:
+          MACOS_CERTIFICATE: ${{ secrets.MACOS_CERTIFICATE }}
+          MACOS_CERTIFICATE_PWD: ${{ secrets.MACOS_CERTIFICATE_PWD }}
+        run: |
+          echo "$MACOS_CERTIFICATE" | base64 --decode > /tmp/certificate.p12
+          security create-keychain -p "ci-keychain-pwd" build.keychain
+          security default-keychain -s build.keychain
+          security unlock-keychain -p "ci-keychain-pwd" build.keychain
+          security import /tmp/certificate.p12 \
+            -k build.keychain \
+            -P "$MACOS_CERTIFICATE_PWD" \
+            -T /usr/bin/codesign
+          security set-key-partition-list \
+            -S apple-tool:,apple: \
+            -s -k "ci-keychain-pwd" build.keychain
+
+      - name: Create universal binary + sign + notarize
+        env:
+          NOTARIZE_APPLE_ID: ${{ secrets.NOTARIZE_APPLE_ID }}
+          NOTARIZE_TEAM_ID: ${{ secrets.NOTARIZE_TEAM_ID }}
+          NOTARIZE_PASSWORD: ${{ secrets.NOTARIZE_PASSWORD }}
         run: |
           tar -xzf arm64/miseban-agent-macos-arm64.tar.gz -C arm64/
           tar -xzf x86_64/miseban-agent-macos-x86_64.tar.gz -C x86_64/
@@ -159,6 +180,23 @@ jobs:
             arm64/miseban-agent \
             x86_64/miseban-agent
           chmod +x miseban-agent
+
+          # Sign with Developer ID
+          codesign --sign "Developer ID Application: Yuki Hamada (5BV85JW8US)" \
+            --options runtime \
+            --timestamp \
+            --force \
+            miseban-agent
+
+          # Notarize
+          zip -j miseban-agent-notarize.zip miseban-agent
+          xcrun notarytool submit miseban-agent-notarize.zip \
+            --apple-id "$NOTARIZE_APPLE_ID" \
+            --team-id "$NOTARIZE_TEAM_ID" \
+            --password "$NOTARIZE_PASSWORD" \
+            --wait
+          rm miseban-agent-notarize.zip
+
           tar -czf miseban-agent-macos-universal.tar.gz miseban-agent
           shasum -a 256 miseban-agent-macos-universal.tar.gz > miseban-agent-macos-universal.tar.gz.sha256
 
