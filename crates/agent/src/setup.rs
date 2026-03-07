@@ -108,7 +108,7 @@ async fn handle_pair(
     let payload = serde_json::json!({ "code": code });
     let result = state
         .http
-        .post("https://api.misebanai.com/v1/pair")
+        .post("https://api.misebanai.com/api/v1/pair")
         .json(&payload)
         .send()
         .await;
