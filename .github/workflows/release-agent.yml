@@ -183,16 +183,20 @@ jobs:
           cat *.sha256 > SHA256SUMS
           echo "=== SHA256SUMS ===" && cat SHA256SUMS
 
-      - name: Create Release
+      - name: Upload to Release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           TAG="${GITHUB_REF#refs/tags/}"
           [ -z "$TAG" ] && TAG="${{ github.event.inputs.tag }}"
 
-          gh release create "$TAG" \
-            --title "miseban-agent $TAG" \
-            --notes "## インストール方法
+          # Create release if it doesn't exist yet, otherwise upload to existing
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" dist/*.tar.gz dist/*.zip dist/SHA256SUMS --clobber
+          else
+            gh release create "$TAG" \
+              --title "miseban-agent $TAG" \
+              --notes "## インストール方法
 
           ### macOS
           \`\`\`bash
@@ -216,4 +220,5 @@ jobs:
 
           ---
           ffmpeg が必要です: https://ffmpeg.org/download.html" \
-            dist/*.tar.gz dist/*.zip dist/SHA256SUMS
+              dist/*.tar.gz dist/*.zip dist/SHA256SUMS
+          fi
