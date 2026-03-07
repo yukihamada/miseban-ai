@@ -51,7 +51,73 @@ echo -e "${CYAN}Platform: ${OS}/${ARCH}${NC}"
 echo ""
 
 # ---------------------------------------------------------------------------
-# 2. Choose install mode: Docker (preferred) or Binary
+# 2. macOS: install CLI binary
+# ---------------------------------------------------------------------------
+if [ "$OS" = "darwin" ]; then
+    echo -e "${BOLD}macOS を検出しました${NC}"
+    echo ""
+
+    # Install ffmpeg via brew if missing
+    if ! command -v ffmpeg &>/dev/null; then
+        if command -v brew &>/dev/null; then
+            echo -e "${CYAN}Installing ffmpeg via Homebrew...${NC}"
+            brew install ffmpeg
+        else
+            echo -e "${YELLOW}ffmpeg が見つかりません。brew install ffmpeg を実行してください。${NC}"
+        fi
+    else
+        echo -e "${GREEN}ffmpeg: OK${NC}"
+    fi
+
+    ARTIFACT="miseban-agent-macos-universal.tar.gz"
+    ARTIFACT_URL="https://github.com/${REPO}/releases/latest/download/${ARTIFACT}"
+    TMPDIR=$(mktemp -d)
+
+    echo -e "${CYAN}Downloading miseban-agent...${NC}"
+    curl -fsSL -o "${TMPDIR}/${ARTIFACT}" "${ARTIFACT_URL}"
+    tar -xzf "${TMPDIR}/${ARTIFACT}" -C "${TMPDIR}"
+    chmod +x "${TMPDIR}/miseban-agent"
+
+    if [ -w "${INSTALL_DIR}" ]; then
+        mv "${TMPDIR}/miseban-agent" "${INSTALL_DIR}/miseban-agent"
+    else
+        sudo mv "${TMPDIR}/miseban-agent" "${INSTALL_DIR}/miseban-agent"
+    fi
+    rm -rf "${TMPDIR}"
+    echo -e "${GREEN}✓ インストール: ${INSTALL_DIR}/miseban-agent${NC}"
+
+    # launchd plist for auto-start
+    PLIST="$HOME/Library/LaunchAgents/com.misebanai.agent.plist"
+    mkdir -p "$(dirname "$PLIST")" "$CONFIG_DIR"
+    cat > "$PLIST" <<PLIST
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key><string>com.misebanai.agent</string>
+  <key>ProgramArguments</key>
+  <array><string>${INSTALL_DIR}/miseban-agent</string></array>
+  <key>RunAtLoad</key><true/>
+  <key>KeepAlive</key><true/>
+  <key>StandardOutPath</key><string>$CONFIG_DIR/agent.log</string>
+  <key>StandardErrorPath</key><string>$CONFIG_DIR/agent.log</string>
+</dict>
+</plist>
+PLIST
+    launchctl load "$PLIST" 2>/dev/null || true
+
+    echo ""
+    echo "  ╔══════════════════════════════════════════╗"
+    echo "  ║     MisebanAI インストール完了!            ║"
+    echo "  ╚══════════════════════════════════════════╝"
+    echo ""
+    echo -e "  ${GREEN}セットアップ: http://localhost:3939${NC}"
+    echo ""
+    exit 0
+fi
+
+# ---------------------------------------------------------------------------
+# 2b. Choose install mode: Docker (preferred) or Binary (Linux)
 # ---------------------------------------------------------------------------
 USE_DOCKER=false
 
@@ -334,16 +400,27 @@ else
 
     # Download binary
     case "$OS" in
-        linux)  TARGET="${ARCH}-unknown-linux-gnu" ;;
-        darwin) TARGET="${ARCH}-apple-darwin" ;;
+        linux)
+            case "$ARCH" in
+                x86_64)  TARGET="linux-x86_64" ;;
+                aarch64) TARGET="linux-arm64" ;;
+                armv7)   TARGET="linux-armv7" ;;
+                *)       TARGET="linux-x86_64" ;;
+            esac
+            ARTIFACT="${BINARY}-${TARGET}.tar.gz"
+            ;;
+        darwin) ARTIFACT="${BINARY}-macos-universal.tar.gz" ;;
     esac
 
-    echo -e "${CYAN}Downloading miseban-agent (${TARGET})...${NC}"
-    LATEST_URL="https://github.com/${REPO}/releases/latest/download/${BINARY}-${TARGET}"
+    echo -e "${CYAN}Downloading miseban-agent (${ARTIFACT})...${NC}"
+    LATEST_URL="https://github.com/${REPO}/releases/latest/download/${ARTIFACT}"
+    TMPDIR_DL=$(mktemp -d)
 
-    if curl -fsSL -o "/tmp/${BINARY}" "${LATEST_URL}" 2>/dev/null; then
-        chmod +x "/tmp/${BINARY}"
-        sudo mv "/tmp/${BINARY}" "${INSTALL_DIR}/${BINARY}"
+    if curl -fsSL -o "${TMPDIR_DL}/${ARTIFACT}" "${LATEST_URL}" 2>/dev/null; then
+        tar -xzf "${TMPDIR_DL}/${ARTIFACT}" -C "${TMPDIR_DL}"
+        chmod +x "${TMPDIR_DL}/${BINARY}"
+        sudo mv "${TMPDIR_DL}/${BINARY}" "${INSTALL_DIR}/${BINARY}"
+        rm -rf "${TMPDIR_DL}"
         echo -e "${GREEN}Installed ${BINARY} to ${INSTALL_DIR}${NC}"
     else
         echo -e "${YELLOW}Pre-built binary not found. Building from source...${NC}"
