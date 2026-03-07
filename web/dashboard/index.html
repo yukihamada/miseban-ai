@@ -1898,20 +1898,6 @@ body {
       <!-- ===== CAMERAS TAB ===== -->
       <div class="tab-panel" id="tab-cameras">
 
-        <!-- Connection method tabs -->
-        <div style="display:flex;gap:8px;margin-bottom:20px;border-bottom:2px solid var(--gray-100);padding-bottom:0">
-          <button id="cam-method-agent" onclick="switchCamMethod('agent')"
-            style="padding:10px 20px;font-size:.875rem;font-weight:600;border:none;background:none;cursor:pointer;border-bottom:3px solid var(--indigo-600);color:var(--indigo-600);margin-bottom:-2px;display:flex;align-items:center;gap:6px">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8m-4-4v4"/></svg>
-            エージェントアプリ接続 <span style="font-size:.7rem;background:var(--indigo-600);color:#fff;padding:1px 6px;border-radius:99px;margin-left:2px">おすすめ</span>
-          </button>
-          <button id="cam-method-rtsp" onclick="switchCamMethod('rtsp')"
-            style="padding:10px 20px;font-size:.875rem;font-weight:600;border:none;background:none;cursor:pointer;border-bottom:3px solid transparent;color:var(--gray-500);margin-bottom:-2px;display:flex;align-items:center;gap:6px">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15.75 10.5 4.72-4.72a.75.75 0 0 1 1.28.53v11.38a.75.75 0 0 1-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 0 0 2.25-2.25v-9a2.25 2.25 0 0 0-2.25-2.25h-9A2.25 2.25 0 0 0 2.25 7.5v9a2.25 2.25 0 0 0 2.25 2.25Z"/></svg>
-            RTSP直接接続
-          </button>
-        </div>
-
         <!-- ── エージェント接続パネル ── -->
         <div id="cam-panel-agent">
 
@@ -1979,53 +1965,6 @@ body {
           <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:12px 16px;font-size:.8125rem;color:#92400e;display:flex;align-items:flex-start;gap:10px;margin-bottom:24px">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:1px"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
             <span>ペアリングコードは<b>10分間有効</b>です。期限切れになった場合はコードを再発行してください。アプリのセットアップ画面 (<code style="background:rgba(0,0,0,.07);padding:0 4px;border-radius:3px">localhost:3939</code>) はagent起動中のみ表示されます。</span>
-          </div>
-        </div>
-
-        <!-- ── RTSP直接接続パネル ── -->
-        <div id="cam-panel-rtsp" style="display:none">
-          <div style="background:linear-gradient(135deg,#0f172a,#1e3a5f);border-radius:16px;padding:28px 32px;margin-bottom:24px;color:#fff">
-            <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15.75 10.5 4.72-4.72a.75.75 0 0 1 1.28.53v11.38a.75.75 0 0 1-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 0 0 2.25-2.25v-9a2.25 2.25 0 0 0-2.25-2.25h-9A2.25 2.25 0 0 0 2.25 7.5v9a2.25 2.25 0 0 0 2.25 2.25Z"/></svg>
-              <span style="font-size:.75rem;font-weight:700;color:#60a5fa;letter-spacing:.07em;text-transform:uppercase">RTSP カメラを接続</span>
-            </div>
-            <h3 style="font-size:1.25rem;font-weight:700;margin-bottom:4px">カメラのRTSP URLを入力するだけで接続完了</h3>
-            <p style="font-size:.875rem;opacity:.7;margin-bottom:20px">既存の防犯カメラ・IPカメラがそのまま使えます。映像はサーバーに保存されません。</p>
-            <form id="add-camera-form">
-              <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px">
-                <div style="flex:1;min-width:200px">
-                  <label style="display:block;font-size:.75rem;font-weight:600;color:rgba(255,255,255,.6);margin-bottom:6px">カメラ名</label>
-                  <input class="form-input" type="text" placeholder="例: 入口カメラ" id="cam-name" style="background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.2);color:#fff">
-                </div>
-                <div style="flex:1;min-width:200px">
-                  <label style="display:block;font-size:.75rem;font-weight:600;color:rgba(255,255,255,.6);margin-bottom:6px">設置場所</label>
-                  <input class="form-input" type="text" placeholder="例: 正面入口" id="cam-location" style="background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.2);color:#fff">
-                </div>
-              </div>
-              <div style="margin-bottom:16px">
-                <label style="display:block;font-size:.75rem;font-weight:600;color:rgba(255,255,255,.6);margin-bottom:6px">RTSP URL <span style="font-weight:400;opacity:.6">— カメラの管理画面で確認できます</span></label>
-                <div style="display:flex;gap:8px">
-                  <input class="form-input" type="text" placeholder="rtsp://192.168.1.100:554/stream" id="cam-rtsp"
-                    style="flex:1;background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.25);color:#fff;font-family:monospace;font-size:.875rem"
-                    spellcheck="false" autocomplete="off" autocapitalize="off">
-                  <button class="btn btn-primary" type="submit" style="white-space:nowrap;flex-shrink:0">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4.5v15m7.5-7.5h-15"/></svg>
-                    接続する
-                  </button>
-                </div>
-              </div>
-            </form>
-            <div style="border-top:1px solid rgba(255,255,255,.1);padding-top:16px">
-              <div style="font-size:.75rem;font-weight:600;color:rgba(255,255,255,.5);margin-bottom:10px">よく使われるカメラのURL形式 — クリックで自動入力</div>
-              <div style="display:flex;flex-wrap:wrap;gap:8px">
-                <button type="button" onclick="fillRtsp('rtsp://admin:password@{IP}:554/Streaming/Channels/101')" style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);color:rgba(255,255,255,.8);font-size:.75rem;padding:5px 10px;border-radius:6px;cursor:pointer;font-family:monospace">Hikvision</button>
-                <button type="button" onclick="fillRtsp('rtsp://admin:password@{IP}:554/cam/realmonitor?channel=1&subtype=0')" style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);color:rgba(255,255,255,.8);font-size:.75rem;padding:5px 10px;border-radius:6px;cursor:pointer;font-family:monospace">Dahua</button>
-                <button type="button" onclick="fillRtsp('rtsp://admin:password@{IP}:554/h264Preview_01_main')" style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);color:rgba(255,255,255,.8);font-size:.75rem;padding:5px 10px;border-radius:6px;cursor:pointer;font-family:monospace">Reolink</button>
-                <button type="button" onclick="fillRtsp('rtsp://admin:password@{IP}:554/live')" style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);color:rgba(255,255,255,.8);font-size:.75rem;padding:5px 10px;border-radius:6px;cursor:pointer;font-family:monospace">Axis</button>
-                <button type="button" onclick="fillRtsp('rtsp://admin:password@{IP}:554/stream1')" style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);color:rgba(255,255,255,.8);font-size:.75rem;padding:5px 10px;border-radius:6px;cursor:pointer;font-family:monospace">汎用 ONVIF</button>
-              </div>
-              <p style="font-size:.6875rem;opacity:.45;margin-top:8px;margin-bottom:0">{IP} をカメラのIPアドレスに置き換えてください。パスワードも変更が必要です。</p>
-            </div>
           </div>
         </div>
 
