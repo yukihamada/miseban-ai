@@ -213,3 +213,73 @@ mod base64_bytes {
             .map_err(serde::de::Error::custom)
     }
 }
+
+// ---------------------------------------------------------------------------
+// Tests — core domain invariants (no network, no I/O).
+// These guard the billing boundary (plan limits) and the agent→API wire
+// format (frame (de)serialization). If they break, customers get the wrong
+// camera limits/retention, or frames silently fail to parse.
+// ---------------------------------------------------------------------------
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// Plan tiers map to the exact camera limits and retention the pricing page
+    /// promises. A regression here = over-provisioning or wrongly blocking a
+    /// paying customer.
+    #[test]
+    fn plan_limits_match_pricing() {
+        assert_eq!(PlanTier::Free.max_cameras(), 1);
+        assert_eq!(PlanTier::Starter.max_cameras(), 4);
+        assert_eq!(PlanTier::Pro.max_cameras(), 16);
+        assert_eq!(PlanTier::Enterprise.max_cameras(), usize::MAX);
+
+        assert_eq!(PlanTier::Free.retention_days(), 7);
+        assert_eq!(PlanTier::Starter.retention_days(), 30);
+        assert_eq!(PlanTier::Pro.retention_days(), 90);
+        assert_eq!(PlanTier::Enterprise.retention_days(), u32::MAX);
+
+        // Higher tiers must never offer fewer cameras / less retention.
+        assert!(PlanTier::Free.max_cameras() <= PlanTier::Starter.max_cameras());
+        assert!(PlanTier::Starter.max_cameras() <= PlanTier::Pro.max_cameras());
+        assert!(PlanTier::Pro.max_cameras() <= PlanTier::Enterprise.max_cameras());
+    }
+
+    /// A FrameData with raw JPEG bytes survives a JSON round-trip (base64) and
+    /// comes back byte-identical. This is the agent→API wire contract.
+    #[test]
+    fn frame_data_json_round_trips() {
+        let frame = FrameData {
+            camera_id: "cam-01".to_string(),
+            timestamp: Utc::now(),
+            jpeg_bytes: vec![0xFF, 0xD8, 0xFF, 0xE0, 0x00, 0x10, 0x4A, 0x46],
+            resolution: Resolution {
+                width: 1920,
+                height: 1080,
+            },
+        };
+        let json = serde_json::to_string(&frame).expect("serialize");
+        let back: FrameData = serde_json::from_str(&json).expect("deserialize");
+        assert_eq!(back.camera_id, frame.camera_id);
+        assert_eq!(back.jpeg_bytes, frame.jpeg_bytes);
+        assert_eq!(back.resolution.width, 1920);
+        assert_eq!(back.resolution.height, 1080);
+    }
+
+    /// Malformed input must return an Err, never panic. A single bad frame
+    /// from a flaky agent must not take down the request handler.
+    #[test]
+    fn malformed_frame_json_errors_not_panics() {
+        // Invalid base64 in jpeg_bytes.
+        let bad_b64 = r#"{"camera_id":"c","timestamp":"2026-01-01T00:00:00Z","jpeg_bytes":"!!!not-base64!!!","resolution":{"width":1,"height":1}}"#;
+        assert!(serde_json::from_str::<FrameData>(bad_b64).is_err());
+
+        // Missing required field (resolution).
+        let missing = r#"{"camera_id":"c","timestamp":"2026-01-01T00:00:00Z","jpeg_bytes":"AAAA"}"#;
+        assert!(serde_json::from_str::<FrameData>(missing).is_err());
+
+        // Completely unrelated JSON.
+        assert!(serde_json::from_str::<FrameData>("[]").is_err());
+    }
+}
