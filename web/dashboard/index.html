@@ -2308,7 +2308,7 @@ body {
             <ul class="pricing-features">
               <li>カメラ 無制限</li>
               <li>全機能</li>
-              <li>無制限データ保持<span style="display:block;font-size:.75rem;color:var(--gray-400);margin-top:2px">※現在は全プランで全データ保持中です</span></li>
+              <li>無制限データ保持<span style="display:block;font-size:.75rem;color:var(--gray-400);margin-top:2px">※統計データの期限削除は現在未実施です</span></li>
               <li>カスタムモデル</li>
               <li>専任サポート</li>
               <li>SLA保証</li>
@@ -3061,7 +3061,7 @@ function updateOverviewCards() {
 
   // Update camera status badge (offline and analysis-error are distinct)
   const camStatusBadge = document.getElementById('change-cameras');
-  const offlineCount = (DEMO_DATA.camerasTotal || 0) - (DEMO_DATA.camerasOnline || 0);
+  const offlineCount = (DEMO_DATA.cameras || []).filter(c => c.status === 'offline').length;
   const errorCount = (DEMO_DATA.cameras || []).filter(c => c.status === 'error').length;
   if (camStatusBadge) {
     if (offlineCount > 0 || errorCount > 0) {

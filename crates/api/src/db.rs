@@ -182,8 +182,9 @@ pub async fn get_store_stats_db(pool: &PgPool, store_id: &Uuid) -> (i64, i64) {
     let cameras_row: Option<(i64,)> = sqlx::query_as(
         "SELECT COUNT(*)::bigint FROM cameras \
          WHERE store_id = $1 \
+           AND status = 'online' \
            AND last_seen_at IS NOT NULL \
-           AND last_seen_at >= now() - $2::interval",
+           AND last_seen_at > now() - $2::interval",
     )
     .bind(store_id)
     .bind(threshold)
