@@ -49,11 +49,10 @@ jobs:
 
       # cargo-deny: check advisories and licenses
       - name: Install cargo-deny
-        run: cargo install cargo-deny@0.18.3 --locked
+        run: cargo install cargo-deny@0.20.2 --locked
 
       - name: cargo deny check advisories
         run: cargo deny check advisories
-        continue-on-error: true  # CVSS 4.0 entries in advisory-db not supported by 0.18.x
 
       - name: cargo deny check licenses
         run: cargo deny check licenses
@@ -83,7 +82,7 @@ jobs:
 
       - name: Upload Trivy SARIF
         uses: github/codeql-action/upload-sarif@v3
-        if: always()
+        if: always() && hashFiles('trivy-fs-results.sarif') != ''
         with:
           sarif_file: "trivy-fs-results.sarif"
 
