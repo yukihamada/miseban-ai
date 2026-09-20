@@ -199,7 +199,10 @@ impl Tracker {
 
     /// Number of active tracks (people currently in frame).
     pub fn current_count(&self) -> u32 {
-        self.tracks.values().filter(|track| track.missed == 0).count() as u32
+        self.tracks
+            .values()
+            .filter(|track| track.missed == 0)
+            .count() as u32
     }
 
     /// Average dwell time across completed tracks.
