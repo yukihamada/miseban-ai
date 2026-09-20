@@ -3672,53 +3672,8 @@ async function deleteCameraFromDashboard(cameraId, btn) {
   }
 }
 
-// Add camera form
-$('#add-camera-form').addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const name = $('#cam-name').value.trim();
-  const location = $('#cam-location').value.trim();
-  const rtsp = $('#cam-rtsp').value.trim();
-
-  if (!name) {
-    showToast('カメラ名を入力してください。', 'error');
-    return;
-  }
-
-  // Free plan: max 1 camera
-  const _tier = (currentStore && currentStore.plan_tier) || 'free';
-  if (_tier === 'free' && DEMO_DATA.camerasTotal >= 1) { showUpgradeModal(); return; }
-
-  const submitBtn = e.target.querySelector('button[type="submit"]');
-  const origText = submitBtn.innerHTML;
-  submitBtn.disabled = true;
-  submitBtn.textContent = '追加中...';
-
-  try {
-    const resp = await apiFetch('/api/v1/stores/me/cameras', {
-      method: 'POST',
-      body: JSON.stringify({ name, rtsp_url: rtsp || null, location: location || null })
-    });
-    if (!resp.ok) {
-      const err = await resp.json().catch(() => ({}));
-      showToast(err.error || 'カメラの追加に失敗しました。', 'error');
-      submitBtn.disabled = false;
-      submitBtn.innerHTML = origText;
-      return;
-    }
-    if (typeof gtag === 'function') gtag('event', 'camera_added');
-    e.target.reset();
-    showToast(`「${name}」を追加しました ✓`, 'success');
-    // Reload cameras and stats from API
-    await renderCameras();
-    await loadStoreData();
-  } catch (err) {
-    showToast('接続エラーが発生しました。', 'error');
-    console.warn('Camera add failed:', err.message);
-  } finally {
-    submitBtn.disabled = false;
-    submitBtn.innerHTML = origText;
-  }
-});
+// Camera creation is handled by addCameraFromDashboard and #btn-add-cam.
+// The removed #add-camera-form must not abort registration of later handlers.
 
 // ===== Reports =====
 function initReportDates() {
