@@ -25,22 +25,24 @@ pub struct JwtSecret(pub String);
 struct Claims {
     sub: String,
     exp: usize,
+    aud: Vec<String>,
 }
 
 // ---------------------------------------------------------------------------
 // JWT token generation
 // ---------------------------------------------------------------------------
 
-/// Issue a JWT token for a given user ID. Expires in 7 days.
+/// Issue a JWT token for a given user ID. Expires in 30 days.
 pub fn issue_token(user_id: &Uuid, secret: &str) -> Result<String, String> {
     let expiration = chrono::Utc::now()
-        .checked_add_signed(chrono::Duration::days(7))
+        .checked_add_signed(chrono::Duration::days(30))
         .expect("valid timestamp")
         .timestamp() as usize;
 
     let claims = Claims {
         sub: user_id.to_string(),
         exp: expiration,
+        aud: vec!["miseban".to_string()],
     };
 
     encode(
@@ -49,6 +51,20 @@ pub fn issue_token(user_id: &Uuid, secret: &str) -> Result<String, String> {
         &EncodingKey::from_secret(secret.as_bytes()),
     )
     .map_err(|e| e.to_string())
+}
+
+/// Returns the Set-Cookie header value for a session cookie.
+/// HttpOnly prevents JS access; Secure requires HTTPS; SameSite=Lax allows cross-site navigation.
+pub fn session_cookie_value(token: &str) -> String {
+    format!(
+        "miseban_session={}; HttpOnly; Secure; SameSite=Lax; Path=/api; Max-Age=2592000",
+        token
+    )
+}
+
+/// Returns a Set-Cookie header value that clears the session cookie.
+pub fn clear_session_cookie_value() -> &'static str {
+    "miseban_session=; HttpOnly; Secure; SameSite=Lax; Path=/api; Max-Age=0; Expires=Thu, 01 Jan 1970 00:00:00 GMT"
 }
 
 /// Hash a password using bcrypt.
@@ -65,7 +81,7 @@ pub fn verify_password(password: &str, hash: &str) -> bool {
 // AuthUser extractor
 // ---------------------------------------------------------------------------
 
-/// Extractor that validates a Bearer JWT and yields the authenticated user's UUID.
+/// Extractor that validates a Bearer JWT or session cookie and yields the authenticated user's UUID.
 #[derive(Debug, Clone)]
 pub struct AuthUser(pub Uuid);
 
@@ -110,7 +126,30 @@ where
     async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
         let secret = JwtSecret::from_ref(state);
 
-        // Extract Bearer token from Authorization header.
+        let mut validation = Validation::new(jsonwebtoken::Algorithm::HS256);
+        validation.set_audience(&["miseban"]);
+
+        // 1. Try HttpOnly session cookie first (browser clients).
+        if let Some(cookie_header) = parts.headers.get(header::COOKIE) {
+            if let Ok(cookie_str) = cookie_header.to_str() {
+                for part in cookie_str.split(';') {
+                    let part = part.trim();
+                    if let Some(jwt) = part.strip_prefix("miseban_session=") {
+                        if let Ok(token_data) = decode::<Claims>(
+                            jwt,
+                            &DecodingKey::from_secret(secret.0.as_bytes()),
+                            &validation,
+                        ) {
+                            let user_id = Uuid::parse_str(&token_data.claims.sub)
+                                .map_err(|e| AuthError::InvalidSubject(e.to_string()))?;
+                            return Ok(AuthUser(user_id));
+                        }
+                    }
+                }
+            }
+        }
+
+        // 2. Fall back to Authorization: Bearer <token> (API clients / backwards compat).
         let auth_header = parts
             .headers
             .get(header::AUTHORIZATION)
@@ -122,9 +161,6 @@ where
             .ok_or(AuthError::MissingHeader)?;
 
         // Try JWT first.
-        let mut validation = Validation::new(jsonwebtoken::Algorithm::HS256);
-        validation.validate_aud = false;
-
         if let Ok(token_data) = decode::<Claims>(
             token,
             &DecodingKey::from_secret(secret.0.as_bytes()),

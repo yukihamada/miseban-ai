@@ -95,6 +95,12 @@ pub struct AnalysisResult {
     pub demographics: Vec<DemographicEstimate>,
     pub zones: Vec<ZoneHeatmap>,
     pub alerts: Vec<Alert>,
+    /// Average dwell time in seconds across completed tracks (0.0 if no tracking data yet).
+    #[serde(default)]
+    pub avg_dwell_secs: f32,
+    /// Cumulative unique visitors tracked since the agent session started.
+    #[serde(default)]
+    pub unique_visitors: u32,
 }
 
 /// Estimated demographics for a detected person.

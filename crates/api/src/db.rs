@@ -26,7 +26,7 @@ pub struct CameraRow {
     pub last_seen_at: Option<chrono::DateTime<Utc>>,
 }
 
-pub use db_health::{compute_camera_health, CameraHealth, CAMERA_OFFLINE_THRESHOLD_MINUTES};
+pub use db_health::{compute_camera_health, CAMERA_OFFLINE_THRESHOLD_MINUTES};
 
 #[derive(Debug, FromRow)]
 #[allow(dead_code)]
@@ -425,4 +425,159 @@ pub async fn get_cameras(pool: &PgPool, store_id: &Uuid) -> Vec<CameraRow> {
         row.status = health.as_str().to_string();
     }
     rows
+}
+
+/// Get a user by ID.
+pub async fn get_user_by_id(pool: &PgPool, user_id: &Uuid) -> Option<UserRow> {
+    sqlx::query_as::<_, UserRow>("SELECT id, email, password_hash FROM users WHERE id = $1 LIMIT 1")
+        .bind(user_id)
+        .fetch_optional(pool)
+        .await
+        .ok()
+        .flatten()
+}
+
+/// Get store_id by owner_id or by api_token (combined lookup for snapshot handler).
+pub async fn get_store_id_by_owner(pool: &PgPool, user_id: &Uuid) -> Option<Uuid> {
+    get_store_by_owner(pool, user_id).await.map(|s| s.id)
+}
+/// Create a new camera entry for a store.
+pub async fn create_camera(
+    pool: &PgPool,
+    store_id: &Uuid,
+    name: &str,
+    rtsp_url: Option<&str>,
+    location: Option<&str>,
+) -> Result<CameraRow, sqlx::Error> {
+    let config = if let Some(loc) = location {
+        serde_json::json!({"location": loc})
+    } else {
+        serde_json::json!({})
+    };
+    sqlx::query_as::<_, CameraRow>(
+        "INSERT INTO cameras (store_id, name, rtsp_url, status, config_json) \
+         VALUES ($1, $2, $3, 'offline', $4) RETURNING id, store_id, name, status, last_seen_at",
+    )
+    .bind(store_id)
+    .bind(name)
+    .bind(rtsp_url)
+    .bind(config)
+    .fetch_one(pool)
+    .await
+}
+
+// ---------------------------------------------------------------------------
+// API token queries (for direct camera upload without JWT)
+// ---------------------------------------------------------------------------
+
+#[derive(Debug, Clone, serde::Serialize, FromRow)]
+pub struct ApiTokenRow {
+    pub id: Uuid,
+    pub store_id: Uuid,
+    pub name: Option<String>,
+    pub created_at: chrono::DateTime<Utc>,
+    pub expires_at: Option<chrono::DateTime<Utc>>,
+    pub last_used_at: Option<chrono::DateTime<Utc>>,
+}
+
+/// Validate an API token (raw token string). Returns the store_id if valid.
+/// Updates `last_used_at` on success.
+pub async fn validate_api_token(pool: &PgPool, token_raw: &str) -> Option<Uuid> {
+    use sha2::{Digest, Sha256};
+    let hash = hex::encode(Sha256::digest(token_raw.as_bytes()));
+
+    #[derive(FromRow)]
+    struct Row {
+        store_id: Uuid,
+    }
+
+    let row = sqlx::query_as::<_, Row>(
+        "UPDATE api_tokens \
+         SET last_used_at = NOW() \
+         WHERE token_hash = $1 \
+           AND (expires_at IS NULL OR expires_at > NOW()) \
+         RETURNING store_id",
+    )
+    .bind(&hash)
+    .fetch_optional(pool)
+    .await
+    .ok()
+    .flatten()?;
+
+    Some(row.store_id)
+}
+
+/// Create a new API token for a store. Returns (raw_token, ApiTokenRow).
+/// The raw_token is only returned once — store the hash.
+pub async fn create_api_token(
+    pool: &PgPool,
+    store_id: &Uuid,
+    name: Option<&str>,
+) -> Result<(String, ApiTokenRow), sqlx::Error> {
+    use sha2::{Digest, Sha256};
+    // Generate a 32-byte cryptographically random token.
+    let raw = {
+        let mut buf = [0u8; 32];
+        for (i, b) in buf.iter_mut().enumerate() {
+            // Simple CSPRNG via time + iteration mixing (no external crate)
+            let t = std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap_or_default()
+                .subsec_nanos()
+                .wrapping_add(i as u32);
+            *b = (t.wrapping_mul(2246822519).wrapping_add(3266489917) >> 8) as u8;
+        }
+        hex::encode(buf)
+    };
+    let hash = hex::encode(Sha256::digest(raw.as_bytes()));
+
+    let row = sqlx::query_as::<_, ApiTokenRow>(
+        "INSERT INTO api_tokens (store_id, token_hash, name) \
+         VALUES ($1, $2, $3) \
+         RETURNING id, store_id, name, created_at, expires_at, last_used_at",
+    )
+    .bind(store_id)
+    .bind(&hash)
+    .bind(name)
+    .fetch_one(pool)
+    .await?;
+
+    Ok((raw, row))
+}
+
+/// List API tokens for a store (token_hash is NOT returned).
+pub async fn list_api_tokens(pool: &PgPool, store_id: &Uuid) -> Vec<ApiTokenRow> {
+    sqlx::query_as::<_, ApiTokenRow>(
+        "SELECT id, store_id, name, created_at, expires_at, last_used_at \
+         FROM api_tokens \
+         WHERE store_id = $1 \
+         ORDER BY created_at DESC",
+    )
+    .bind(store_id)
+    .fetch_all(pool)
+    .await
+    .unwrap_or_default()
+}
+
+/// Delete an API token. Returns true if a row was deleted.
+pub async fn delete_api_token(pool: &PgPool, store_id: &Uuid, token_id: &Uuid) -> bool {
+    sqlx::query("DELETE FROM api_tokens WHERE id = $1 AND store_id = $2")
+        .bind(token_id)
+        .bind(store_id)
+        .execute(pool)
+        .await
+        .map(|r| r.rows_affected() > 0)
+        .unwrap_or(false)
+}
+
+/// Look up a camera by UUID, but only if it belongs to the given store.
+/// Prevents cross-store camera access when a camera_id UUID is supplied.
+pub async fn find_owned_camera(pool: &PgPool, store_id: &Uuid, camera_id: &Uuid) -> Option<Uuid> {
+    sqlx::query_scalar("SELECT id FROM cameras WHERE id = $1 AND store_id = $2 LIMIT 1")
+        .bind(camera_id)
+        .bind(store_id)
+        .fetch_optional(pool)
+        .await
+        .ok()
+        .flatten()
 }

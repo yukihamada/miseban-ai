@@ -351,5 +351,11 @@ mod tests {
         assert_eq!(out2.people_count, 1);
         assert_eq!(out2.new_visitors, 0); // not new
         assert_eq!(out2.total_unique, 1);
+
+        // Tracking may retain identity briefly, but a valid empty frame is zero.
+        let empty = tracker.update(&[]);
+        assert_eq!(empty.people_count, 0);
+        assert_eq!(tracker.current_count(), 0);
+        assert_eq!(empty.total_unique, 1);
     }
 }

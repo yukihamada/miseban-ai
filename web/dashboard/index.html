@@ -8,7 +8,7 @@
 
 <!-- GA4 -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-BEB4MS3Q5H"></script>
-<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-BEB4MS3Q5H');</script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-BEB4MS3Q5H');gtag('config','AW-17994183406');</script>
 
 <!-- Favicon -->
 <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
@@ -556,6 +556,9 @@ body {
   grid-template-columns: 1fr 1fr;
   gap: 1.25rem;
   margin-bottom: 1.75rem;
+}
+@media (max-width: 768px) {
+  .chart-grid { grid-template-columns: 1fr; }
 }
 
 .card {
@@ -1516,26 +1519,51 @@ body {
           <input class="form-input" type="email" id="email" placeholder="you@example.com" required autocomplete="email">
         </div>
         <button class="btn btn-primary" type="submit" id="login-btn">
-          <span id="login-btn-text">コードを送信</span>
+          <span id="login-btn-text">ログインリンクを送信</span>
         </button>
       </form>
+      <div style="text-align:center;margin-top:16px">
+        <span style="font-size:.8125rem;color:var(--gray-500)">アカウントをお持ちでないですか？</span>
+        <button id="switch-to-signup" type="button" style="background:none;border:none;color:var(--indigo-600);font-size:.8125rem;cursor:pointer;font-family:var(--font-sans);font-weight:600">新規登録</button>
+      </div>
     </div>
 
-    <!-- Step 2: OTP input -->
-    <div id="auth-step-otp" style="display:none">
-      <p style="font-size:.875rem;color:var(--gray-600);margin-bottom:16px;line-height:1.6">
-        <strong id="otp-email-display"></strong> に6桁のコードを送信しました。<br>メールを確認して入力してください。
-      </p>
-      <div id="mail-app-links" style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap"></div>
-      <form id="otp-form" autocomplete="off">
+    <!-- Step 1b: Signup (email + password + store name) -->
+    <div id="auth-step-signup" style="display:none">
+      <form id="signup-form" autocomplete="on">
         <div class="form-group">
-          <label class="form-label" for="otp-code">確認コード（6桁）</label>
-          <input class="form-input" type="text" id="otp-code" placeholder="123456" maxlength="6" inputmode="numeric" pattern="[0-9]{6}" required autocomplete="one-time-code" style="font-size:1.5rem;letter-spacing:.2em;text-align:center;font-family:monospace">
+          <label class="form-label" for="signup-store-name">店舗名</label>
+          <input class="form-input" type="text" id="signup-store-name" placeholder="例: サクラカフェ 渋谷店" autocomplete="organization">
         </div>
-        <button class="btn btn-primary" type="submit" id="otp-btn">
-          <span id="otp-btn-text">ログイン</span>
+        <div class="form-group">
+          <label class="form-label" for="signup-email">メールアドレス</label>
+          <input class="form-input" type="email" id="signup-email" placeholder="you@example.com" required autocomplete="email">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="signup-password">パスワード</label>
+          <input class="form-input" type="password" id="signup-password" placeholder="8文字以上" required minlength="8" autocomplete="new-password">
+        </div>
+        <div id="signup-error" class="login-error" style="display:none"></div>
+        <button class="btn btn-primary" type="submit" id="signup-btn" style="background:linear-gradient(135deg,#10b981,#059669)">
+          <span id="signup-btn-text">無料でアカウント作成</span>
         </button>
       </form>
+      <div style="text-align:center;margin-top:16px">
+        <span style="font-size:.8125rem;color:var(--gray-500)">すでにアカウントをお持ちですか？</span>
+        <button id="switch-to-login" type="button" style="background:none;border:none;color:var(--indigo-600);font-size:.8125rem;cursor:pointer;font-family:var(--font-sans);font-weight:600">ログイン</button>
+      </div>
+    </div>
+
+    <!-- Step 2: Magic link waiting -->
+    <div id="auth-step-otp" style="display:none">
+      <div style="text-align:center;padding:8px 0 16px">
+        <div style="font-size:2.5rem;margin-bottom:12px">📬</div>
+        <p style="font-size:.9375rem;font-weight:700;color:var(--slate-800);margin-bottom:6px">メールを確認してください</p>
+        <p style="font-size:.875rem;color:var(--gray-500);line-height:1.6;margin-bottom:16px">
+          <strong id="otp-email-display"></strong> にログインリンクを送信しました。<br>メール内の「ログインする」をクリックしてください。
+        </p>
+      </div>
+      <div id="mail-app-links" style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;justify-content:center"></div>
       <div style="margin-top:12px;text-align:center">
         <button id="otp-back-btn" type="button" style="background:none;border:none;color:var(--gray-500);font-size:.8125rem;cursor:pointer;font-family:var(--font-sans)">← メールアドレスを変更</button>
         <span style="color:var(--gray-300);margin:0 8px">|</span>
@@ -1738,6 +1766,13 @@ body {
           </p>
         </div>
 
+        <!-- Demo data banner (shown when no cameras connected) -->
+        <div id="demo-data-banner" style="background:#fef9c3;border:1px solid #fde047;border-radius:10px;padding:10px 16px;margin-bottom:16px;display:flex;align-items:center;gap:10px;font-size:.8125rem;color:#713f12;">
+          <span style="font-size:1rem">📊</span>
+          <span><strong>デモデータを表示中</strong> — カメラを接続すると、実際のデータに自動で切り替わります。</span>
+          <button onclick="switchTab('cameras')" style="margin-left:auto;background:#4f46e5;color:#fff;border:none;border-radius:6px;padding:5px 12px;font-size:.8125rem;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap">カメラを追加 →</button>
+        </div>
+
         <!-- Charts -->
         <div class="chart-grid" id="charts-area">
           <div class="card">
@@ -1900,77 +1935,133 @@ body {
       <!-- ===== CAMERAS TAB ===== -->
       <div class="tab-panel" id="tab-cameras">
 
+        <!-- ── エージェントステータス ── -->
+        <div id="agent-status-bar" style="display:flex;align-items:center;justify-content:space-between;background:#f8faff;border:1.5px solid #e0e7ff;border-radius:12px;padding:14px 18px;margin-bottom:20px">
+          <div style="display:flex;align-items:center;gap:10px">
+            <span id="agent-dot" style="width:10px;height:10px;border-radius:50%;background:#cbd5e1;flex-shrink:0;display:inline-block"></span>
+            <span id="agent-status-text" style="font-size:.875rem;font-weight:600;color:#475569">エージェント状態を確認中...</span>
+          </div>
+          <a href="https://misebanai.com/download.html" target="_blank"
+            style="font-size:.8125rem;color:var(--indigo-600);text-decoration:none;font-weight:500">インストール →</a>
+        </div>
+
         <!-- ── エージェント接続パネル ── -->
         <div id="cam-panel-agent">
 
-          <!-- 3-step flow -->
-          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin-bottom:24px">
+          <!-- Section header -->
+          <div style="margin-bottom:24px">
+            <h2 style="font-size:1.125rem;font-weight:700;color:#1e293b;margin:0 0 6px">カメラを接続する</h2>
+            <p style="font-size:.875rem;color:#64748b;margin:0">3ステップで完了します。まずこのページでコードを発行し、次にカメラを設置したデバイスで設定します。</p>
+          </div>
+
+          <!-- Vertical stepper -->
+          <div style="display:flex;flex-direction:column;gap:0;margin-bottom:28px">
 
             <!-- Step 1 -->
-            <div style="background:#f8faff;border:1.5px solid #e0e7ff;border-radius:14px;padding:20px 24px">
-              <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
-                <div style="width:28px;height:28px;background:var(--indigo-600);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.875rem;flex-shrink:0">1</div>
-                <span style="font-weight:700;font-size:.9375rem;color:#1e293b">アプリをインストール</span>
+            <div style="display:flex;gap:20px;padding-bottom:8px">
+              <div style="display:flex;flex-direction:column;align-items:center;flex-shrink:0">
+                <div style="width:36px;height:36px;background:var(--indigo-600);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.9375rem">1</div>
+                <div style="width:2px;flex:1;background:#e0e7ff;margin-top:6px;min-height:32px"></div>
               </div>
-              <p style="font-size:.8125rem;color:#64748b;margin-bottom:12px;line-height:1.6">Mac / Windows / Linux に1コマンドで入ります。</p>
-              <div style="background:#1e293b;border-radius:8px;padding:10px 14px;font-family:monospace;font-size:.75rem;color:#a5f3fc;word-break:break-all;margin-bottom:10px;position:relative">
-                curl -fsSL https://misebanai.com/install.sh | sh
-                <button onclick="navigator.clipboard.writeText('curl -fsSL https://misebanai.com/install.sh | sh')" title="コピー"
-                  style="position:absolute;top:6px;right:8px;background:rgba(255,255,255,.1);border:none;border-radius:4px;color:#94a3b8;cursor:pointer;padding:2px 6px;font-size:.7rem">コピー</button>
+              <div style="background:#fff;border:1.5px solid #e0e7ff;border-radius:14px;padding:20px 24px;flex:1;margin-bottom:8px">
+                <div style="font-weight:700;font-size:1rem;color:#1e293b;margin-bottom:6px">カメラを繋ぐデバイスにアプリをインストール</div>
+                <p style="font-size:.8125rem;color:#64748b;margin:0 0 14px;line-height:1.6">エージェントを動かすデバイス（Mac・Raspberry Pi・Windows・Linux）にインストールしてください。</p>
+                <a href="https://misebanai.com/download.html" target="_blank"
+                  style="display:flex;align-items:center;justify-content:center;gap:8px;background:var(--indigo-600);color:#fff;border-radius:10px;padding:12px 20px;font-weight:600;font-size:.9375rem;text-decoration:none;margin-bottom:12px">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                  インストーラーをダウンロード
+                </a>
+                <details style="font-size:.8125rem;color:#64748b">
+                  <summary style="cursor:pointer;color:#64748b;list-style:none;display:flex;align-items:center;gap:4px">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+                    コマンドラインでインストールする場合
+                  </summary>
+                  <div style="background:#1e293b;border-radius:8px;padding:10px 14px;font-family:monospace;font-size:.75rem;color:#a5f3fc;word-break:break-all;position:relative;margin-top:8px">
+                    curl -fsSL https://misebanai.com/install.sh | sh
+                    <button onclick="navigator.clipboard.writeText('curl -fsSL https://misebanai.com/install.sh | sh');this.textContent='コピー済み';setTimeout(()=>this.textContent='コピー',2000)" title="コピー"
+                      style="position:absolute;top:8px;right:10px;background:rgba(255,255,255,.15);border:none;border-radius:5px;color:#cbd5e1;cursor:pointer;padding:3px 10px;font-size:.75rem">コピー</button>
+                  </div>
+                </details>
               </div>
-              <a href="https://misebanai.com/download.html" target="_blank"
-                style="font-size:.75rem;color:var(--indigo-600);text-decoration:none;display:flex;align-items:center;gap:4px">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                Windows / Linux バイナリはこちら →
-              </a>
             </div>
 
             <!-- Step 2 -->
-            <div style="background:#f8faff;border:1.5px solid #e0e7ff;border-radius:14px;padding:20px 24px">
-              <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
-                <div style="width:28px;height:28px;background:var(--indigo-600);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.875rem;flex-shrink:0">2</div>
-                <span style="font-weight:700;font-size:.9375rem;color:#1e293b">ペアリングコードを発行</span>
+            <div style="display:flex;gap:20px;padding-bottom:8px">
+              <div style="display:flex;flex-direction:column;align-items:center;flex-shrink:0">
+                <div style="width:36px;height:36px;background:var(--indigo-600);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.9375rem">2</div>
+                <div style="width:2px;flex:1;background:#e0e7ff;margin-top:6px;min-height:32px"></div>
               </div>
-              <p style="font-size:.8125rem;color:#64748b;margin-bottom:14px;line-height:1.6">下のボタンで6桁のコードを発行。アプリの初期設定画面に入力します。</p>
+              <div style="background:#fff;border:1.5px solid #e0e7ff;border-radius:14px;padding:20px 24px;flex:1;margin-bottom:8px">
+                <div style="font-weight:700;font-size:1rem;color:#1e293b;margin-bottom:6px">ペアリングコードを発行する</div>
+                <p style="font-size:.8125rem;color:#64748b;margin:0 0 18px;line-height:1.6">下のボタンを押して6桁のコードを発行してください。このコードをデバイス上のアプリ（<code style="background:#f1f5f9;padding:1px 6px;border-radius:4px">localhost:3939</code>）に入力します。</p>
 
-              <!-- Code display -->
-              <div id="pairing-code-display" style="display:none;text-align:center;margin-bottom:12px">
-                <div style="font-size:2.25rem;font-weight:800;letter-spacing:.3em;color:var(--indigo-600);font-family:monospace;background:#ede9fe;padding:14px 20px;border-radius:10px;display:inline-block;min-width:180px" id="pairing-code-value">------</div>
-                <div style="font-size:.75rem;color:var(--gray-500);margin-top:6px;display:flex;align-items:center;justify-content:center;gap:6px">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                  <span id="pairing-code-expires">有効期限: --:--</span>
+                <!-- Code display (hidden until generated) -->
+                <div id="pairing-code-display" style="display:none;background:linear-gradient(135deg,#ede9fe,#e0e7ff);border-radius:14px;padding:22px 24px;text-align:center;margin-bottom:16px">
+                  <div style="font-size:.75rem;font-weight:600;color:#7c3aed;letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px">ペアリングコード</div>
+                  <div id="pairing-code-value" style="font-size:3rem;font-weight:800;letter-spacing:.4em;color:#4f46e5;font-family:monospace;line-height:1">------</div>
+                  <div style="font-size:.75rem;color:#6d28d9;margin-top:10px;display:flex;align-items:center;justify-content:center;gap:5px">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                    <span id="pairing-code-expires">有効期限: --:--</span>
+                  </div>
+                  <p style="font-size:.8125rem;color:#4f46e5;margin:12px 0 0;font-weight:500">このコードをデバイスのアプリに入力してください</p>
+                  <!-- Auto-send button: opens agent wizard with code pre-filled -->
+                  <a id="auto-pair-link" href="#" target="_blank" rel="noopener"
+                    style="display:inline-flex;align-items:center;gap:6px;margin-top:14px;background:#4f46e5;color:#fff;padding:10px 20px;border-radius:8px;font-size:.875rem;font-weight:700;text-decoration:none;transition:background .15s"
+                    onmouseover="this.style.background='#4338ca'" onmouseout="this.style.background='#4f46e5'">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 22V12m0 0L8 16m4-4 4 4M4 7V4h16v3"/></svg>
+                    エージェントに自動送信（同じPC上で起動中の場合）
+                  </a>
                 </div>
-              </div>
 
-              <button class="btn btn-primary" type="button" id="generate-pairing-btn" style="width:100%">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" d="M13.19 8.688a4.5 4.5 0 0 1 1.242 7.244l-4.5 4.5a4.5 4.5 0 0 1-6.364-6.364l1.757-1.757m13.35-.622 1.757-1.757a4.5 4.5 0 0 0-6.364-6.364l-4.5 4.5a4.5 4.5 0 0 0 1.242 7.244"/></svg>
-                ペアリングコードを発行
-              </button>
+                <button class="btn btn-primary" type="button" id="generate-pairing-btn" style="width:100%;padding:12px;font-size:1rem">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" width="18" height="18"><path stroke-linecap="round" stroke-linejoin="round" d="M13.19 8.688a4.5 4.5 0 0 1 1.242 7.244l-4.5 4.5a4.5 4.5 0 0 1-6.364-6.364l1.757-1.757m13.35-.622 1.757-1.757a4.5 4.5 0 0 0-6.364-6.364l-4.5 4.5a4.5 4.5 0 0 0 1.242 7.244"/></svg>
+                  コードを発行する
+                </button>
+              </div>
             </div>
 
             <!-- Step 3 -->
-            <div style="background:#f8faff;border:1.5px solid #e0e7ff;border-radius:14px;padding:20px 24px">
-              <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
-                <div style="width:28px;height:28px;background:var(--indigo-600);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.875rem;flex-shrink:0">3</div>
-                <span style="font-weight:700;font-size:.9375rem;color:#1e293b">カメラのRTSPを入力</span>
+            <div style="display:flex;gap:20px">
+              <div style="display:flex;flex-direction:column;align-items:center;flex-shrink:0">
+                <div style="width:36px;height:36px;background:#94a3b8;color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.9375rem">3</div>
               </div>
-              <p style="font-size:.8125rem;color:#64748b;margin-bottom:12px;line-height:1.6">アプリ起動後 <code style="background:#f1f5f9;padding:1px 5px;border-radius:4px;font-size:.75rem">http://localhost:3939</code> を開いて、カメラのRTSP URLを入力するだけ。</p>
-              <div style="background:#f1f5f9;border-radius:8px;padding:10px 14px;font-size:.75rem;color:#475569;line-height:1.7">
-                <div><b>Tapo C220:</b> <span style="font-family:monospace;color:#7c3aed">rtsp://user:pass@192.168.x.x/stream1</span></div>
-                <div><b>Hikvision:</b> <span style="font-family:monospace;color:#7c3aed">rtsp://admin:pass@{IP}/Streaming/Channels/101</span></div>
-                <div style="margin-top:4px"><a href="https://misebanai.com/cameras.html" target="_blank" style="color:var(--indigo-600);text-decoration:none">対応カメラ一覧 →</a></div>
+              <div style="background:#f8faff;border:1.5px solid #e0e7ff;border-radius:14px;padding:20px 24px;flex:1">
+                <div style="font-weight:700;font-size:1rem;color:#1e293b;margin-bottom:6px">デバイスのアプリでカメラを設定</div>
+                <p style="font-size:.8125rem;color:#64748b;margin:0 0 14px;line-height:1.6">コードを入力した後、デバイスのブラウザで <code style="background:#f1f5f9;padding:1px 6px;border-radius:4px">http://localhost:3939</code> を開いてカメラのRTSP URLを入力するだけで完了です。</p>
+                <div style="background:#f1f5f9;border-radius:10px;padding:14px 16px;font-size:.8125rem;color:#475569;line-height:1.8">
+                  <div style="font-weight:600;color:#334155;margin-bottom:6px">カメラのRTSP URLの例</div>
+                  <div><b>Tapo C220:</b> <code style="color:#7c3aed;font-size:.75rem">rtsp://ユーザー名:パスワード@192.168.x.x/stream1</code></div>
+                  <div><b>Hikvision:</b> <code style="color:#7c3aed;font-size:.75rem">rtsp://admin:パスワード@{IP}/Streaming/Channels/101</code></div>
+                  <div style="margin-top:8px"><a href="https://misebanai.com/cameras.html" target="_blank" style="color:var(--indigo-600);text-decoration:none;font-weight:500">対応カメラ一覧を見る →</a></div>
+                </div>
               </div>
             </div>
+
           </div>
 
           <!-- Help note -->
-          <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:12px 16px;font-size:.8125rem;color:#92400e;display:flex;align-items:flex-start;gap:10px;margin-bottom:24px">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:1px"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-            <span>ペアリングコードは<b>10分間有効</b>です。期限切れになった場合はコードを再発行してください。アプリのセットアップ画面 (<code style="background:rgba(0,0,0,.07);padding:0 4px;border-radius:3px">localhost:3939</code>) はagent起動中のみ表示されます。</span>
+          <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:14px 18px;font-size:.8125rem;color:#92400e;display:flex;align-items:flex-start;gap:10px;margin-bottom:28px">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:2px"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            <span>ペアリングコードは<b>10分間有効</b>です。期限切れになったら再度「コードを発行する」を押してください。アプリ（<code style="background:rgba(0,0,0,.07);padding:0 4px;border-radius:3px">localhost:3939</code>）はデバイスでエージェント起動中のみ表示されます。</span>
           </div>
         </div>
 
+        <!-- Add camera from dashboard -->
+        <div style="background:#fff;border:1.5px solid #e0e7ff;border-radius:14px;padding:20px 24px;margin-bottom:20px">
+          <div style="font-weight:700;font-size:1rem;color:#1e293b;margin-bottom:14px">ダッシュボードからカメラを追加</div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px">
+            <input id="new-cam-name" type="text" placeholder="カメラ名（例: 入口カメラ）"
+              style="flex:1;min-width:160px;padding:10px 14px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:.875rem;outline:none">
+            <input id="new-cam-url" type="text" placeholder="rtsp://user:pass@192.168.x.x/stream1"
+              style="flex:2;min-width:220px;padding:10px 14px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:.875rem;outline:none;font-family:monospace">
+            <button onclick="addCameraFromDashboard()" id="btn-add-cam"
+              style="padding:10px 20px;background:var(--indigo-600);color:#fff;border:none;border-radius:8px;font-weight:600;font-size:.875rem;cursor:pointer;white-space:nowrap">追加</button>
+          </div>
+          <p style="font-size:.75rem;color:#94a3b8">追加したカメラはエージェントに自動的に反映されます（再起動後）</p>
+        </div>
+
         <!-- Connected cameras list -->
+        <div id="cameras-list-header" style="font-weight:600;font-size:.9375rem;color:#334155;margin-bottom:10px;display:none">接続済みカメラ</div>
         <div class="camera-grid" id="camera-list">
           <!-- Populated by JS -->
         </div>
@@ -2167,7 +2258,7 @@ body {
             <ul class="pricing-features">
               <li>カメラ 1台</li>
               <li>基本来客カウント</li>
-              <li>7日間データ保持</li>
+              <li>データ保持 7日間<span style="display:block;font-size:.75rem;color:var(--gray-400);margin-top:2px">※統計データの期限削除は現在未実施です</span></li>
               <li>日次レポート</li>
             </ul>
             <button class="pricing-btn current" disabled>現在のプラン</button>
@@ -2183,7 +2274,7 @@ body {
             <ul class="pricing-features">
               <li>カメラ 4台まで</li>
               <li>来客カウント + 属性分析</li>
-              <li>30日間データ保持</li>
+              <li>データ保持 30日間<span style="display:block;font-size:.75rem;color:var(--gray-400);margin-top:2px">※統計データの期限削除は現在未実施です</span></li>
               <li>日次レポート</li>
               <li>LINE アラート</li>
             </ul>
@@ -2199,7 +2290,7 @@ body {
             <ul class="pricing-features">
               <li>カメラ 16台まで</li>
               <li>全分析機能</li>
-              <li>90日間データ保持</li>
+              <li>データ保持 90日間<span style="display:block;font-size:.75rem;color:var(--gray-400);margin-top:2px">※統計データの期限削除は現在未実施です</span></li>
               <li>ヒートマップ</li>
               <li>リアルタイムアラート</li>
               <li>CSV出力</li>
@@ -2217,7 +2308,7 @@ body {
             <ul class="pricing-features">
               <li>カメラ 無制限</li>
               <li>全機能</li>
-              <li>無制限データ保持</li>
+              <li>無制限データ保持<span style="display:block;font-size:.75rem;color:var(--gray-400);margin-top:2px">※現在は全プランで全データ保持中です</span></li>
               <li>カスタムモデル</li>
               <li>専任サポート</li>
               <li>SLA保証</li>
@@ -2239,6 +2330,7 @@ body {
             <div class="usage-card">
               <div class="usage-label">データ保持期間</div>
               <div class="usage-value" id="usage-retention">7日間</div>
+              <div style="font-size:.72rem;color:var(--gray-400);margin-top:4px">※統計データの期限削除は現在未実施です</div>
             </div>
             <div class="usage-card">
               <div class="usage-label">今月のAPI呼出</div>
@@ -2458,7 +2550,7 @@ async function apiFetch(path, options = {}) {
   const headers = { 'Content-Type': 'application/json', ...options.headers };
   if (token) headers['Authorization'] = `Bearer ${token}`;
 
-  const resp = await fetch(`${API_BASE}${path}`, { ...options, headers });
+  const resp = await fetch(`${API_BASE}${path}`, { ...options, headers, credentials: 'include' });
   if (resp.status === 401) {
     // Token expired or invalid — force re-login
     clearAuth();
@@ -2499,12 +2591,119 @@ const headerDate = $('#header-date');
 
 let isSignupMode = false;
 
-// ===== Demo Data (fallback when API is unavailable) =====
+// Detect signup mode from URL
+(function() {
+  const params = new URLSearchParams(location.search);
+  if (params.get('mode') === 'signup') {
+    isSignupMode = true;
+  }
+})();
+
+function showSignupForm() {
+  isSignupMode = true;
+  loginSubtitle.textContent = '無料アカウントを作成';
+  $('#auth-step-email').style.display = 'none';
+  $('#auth-step-signup').style.display = 'block';
+  $('#auth-step-otp').style.display = 'none';
+  hideLoginError();
+}
+
+function showLoginForm() {
+  isSignupMode = false;
+  loginSubtitle.textContent = 'メールアドレスでログイン';
+  $('#auth-step-email').style.display = 'block';
+  $('#auth-step-signup').style.display = 'none';
+  $('#auth-step-otp').style.display = 'none';
+  hideLoginError();
+}
+
+// Switch between login and signup
+document.addEventListener('DOMContentLoaded', () => {
+  const switchToSignup = $('#switch-to-signup');
+  const switchToLogin = $('#switch-to-login');
+  if (switchToSignup) switchToSignup.addEventListener('click', showSignupForm);
+  if (switchToLogin) switchToLogin.addEventListener('click', showLoginForm);
+
+  // Show signup form if ?mode=signup
+  if (isSignupMode && !currentUser) {
+    showSignupForm();
+  }
+});
+
+// Signup form handler
+document.addEventListener('DOMContentLoaded', () => {
+  const signupForm = $('#signup-form');
+  if (!signupForm) return;
+
+  signupForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const errorEl = $('#signup-error');
+    errorEl.style.display = 'none';
+
+    const email = $('#signup-email').value.trim();
+    const password = $('#signup-password').value;
+    const storeName = $('#signup-store-name').value.trim();
+
+    if (!email || !email.includes('@')) {
+      errorEl.textContent = '有効なメールアドレスを入力してください。';
+      errorEl.style.display = 'block';
+      return;
+    }
+    if (password.length < 8) {
+      errorEl.textContent = 'パスワードは8文字以上で入力してください。';
+      errorEl.style.display = 'block';
+      return;
+    }
+
+    const btn = $('#signup-btn');
+    const btnText = $('#signup-btn-text');
+    btn.disabled = true;
+    btnText.textContent = '登録中...';
+
+    try {
+      const payload = { email, password };
+      if (storeName) payload.store_name = storeName;
+      const resp = await fetch(`${API_BASE}/api/v1/auth/signup`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const data = await resp.json();
+
+      if (!resp.ok) {
+        errorEl.textContent = data.error || '登録に失敗しました。';
+        errorEl.style.display = 'block';
+        btn.disabled = false;
+        btnText.textContent = '無料でアカウント作成';
+        return;
+      }
+
+      storeAuth(data.token, { id: data.user_id, email });
+      currentUser = { id: data.user_id, email };
+      localStorage.removeItem('onboarding_completed');
+
+      if (typeof gtag === 'function') {
+        gtag('event', 'sign_up', { method: 'email' });
+        gtag('event', 'conversion', {send_to: 'AW-17994183406/PIU7CLyihYMcEO7lpYRD', value: 1.0, currency: 'JPY'});
+      }
+
+      history.replaceState(null, '', location.pathname);
+      showDashboard();
+    } catch (err) {
+      errorEl.textContent = '接続エラーが発生しました。';
+      errorEl.style.display = 'block';
+      btn.disabled = false;
+      btnText.textContent = '無料でアカウント作成';
+    }
+  });
+});
+
+// ===== Demo Data (shown when API unavailable or no cameras; replaced with real data on connect) =====
 const DEMO_DATA = {
-  today: 0,
-  yesterday: 0,
-  changePercent: 0,
-  peakHour: '—',
+  today: 35,
+  yesterday: 28,
+  changePercent: 25,
+  peakHour: '19時〜20時',
   camerasOnline: 0,
   camerasTotal: 0,
   weeklyLabels: (function() {
@@ -2518,12 +2717,12 @@ const DEMO_DATA = {
     }
     return labels;
   })(),
-  weeklyData: [0, 0, 0, 0, 0, 0, 0],
+  weeklyData: [42, 58, 51, 67, 74, 89, 63],
   hourlyLabels: [
-    '6時','7時','8時','9時','10時','11時','12時','13時',
-    '14時','15時','16時','17時','18時','19時','20時','21時'
+    '10時','11時','12時','13時','14時','15時','16時',
+    '17時','18時','19時','20時','21時'
   ],
-  hourlyData: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+  hourlyData: [8, 14, 22, 19, 12, 16, 21, 18, 27, 35, 28, 12],
   cameras: [],
   alerts: [],
   reportWeeklyLabels: [],
@@ -2542,7 +2741,7 @@ const DEMO_DATA = {
   DEMO_DATA.reportWeeklyData = DEMO_DATA.weeklyData.slice();
 })();
 
-// ===== Auth (OTP / passwordless) =====
+// ===== Auth (magic link / passwordless) =====
 let otpEmail = '';
 
 function showLoginError(msg) {
@@ -2560,7 +2759,6 @@ function showOtpStep(email) {
   $('#auth-step-otp').style.display = 'block';
   $('#otp-email-display').textContent = email;
   renderMailAppLinks(email);
-  setTimeout(() => { const c = $('#otp-code'); if(c) c.focus(); }, 100);
 }
 
 function renderMailAppLinks(email) {
@@ -2597,7 +2795,64 @@ function showEmailStep() {
   hideLoginError();
 }
 
-// Step 1: send OTP
+// Pre-fill email from ?email= query param (e.g. from landing page hero form)
+(function() {
+  const params = new URLSearchParams(location.search);
+  const emailParam = params.get('email');
+  if (emailParam) {
+    const emailInput = $('#email');
+    if (emailInput) {
+      emailInput.value = emailParam;
+      // Auto-submit: user already clicked "無料で始める" on landing page
+      // so we send the magic link immediately without requiring another click
+      setTimeout(async () => {
+        if (!currentUser) {
+          const btn = $('#login-btn');
+          const btnText = $('#login-btn-text');
+          btn.disabled = true;
+          btnText.textContent = '送信中…';
+          try {
+            const resp = await fetch(`${API_BASE}/api/v1/auth/send-otp`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ email: emailParam }),
+            });
+            if (resp.ok) {
+              showOtpStep(emailParam);
+            } else {
+              // Fall back to just pre-filled (user clicks manually)
+            }
+          } catch (_) {}
+          btn.disabled = false;
+          btnText.textContent = 'ログインリンクを送信';
+        }
+      }, 200);
+    }
+  }
+})();
+
+// Magic link: handle ?magic= in URL
+(async () => {
+  const magic = new URLSearchParams(location.search).get('magic');
+  if (magic) {
+    try {
+      const resp = await fetch(`${API_BASE}/api/v1/auth/magic?token=${encodeURIComponent(magic)}`);
+      const data = await resp.json();
+      if (resp.ok) {
+        storeAuth(data.token, { id: data.user_id, email: '' });
+        currentUser = { id: data.user_id, email: '' };
+        if (typeof gtag === 'function') gtag('event', 'login', { method: 'magic_link' });
+        history.replaceState(null, '', location.pathname);
+        showDashboard();
+        return;
+      }
+    } catch (_) {}
+    // Token invalid/expired — show login with error
+    showLoginError('リンクの有効期限が切れています。もう一度ログインしてください。');
+  }
+})();
+
+// Step 1: send magic link
 loginForm.addEventListener('submit', async (e) => {
   e.preventDefault();
   hideLoginError();
@@ -2623,44 +2878,11 @@ loginForm.addEventListener('submit', async (e) => {
     showLoginError('接続エラーが発生しました。もう一度お試しください。');
   }
   btn.disabled = false;
-  btnText.textContent = 'コードを送信';
-});
-
-// Step 2: verify OTP
-$('#otp-form').addEventListener('submit', async (e) => {
-  e.preventDefault();
-  hideLoginError();
-  const code = $('#otp-code').value.trim();
-  const btn = $('#otp-btn');
-  const btnText = $('#otp-btn-text');
-  btn.disabled = true;
-  btnText.textContent = '確認中…';
-
-  try {
-    const resp = await fetch(`${API_BASE}/api/v1/auth/verify-otp`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: otpEmail, code }),
-    });
-    const data = await resp.json();
-    if (!resp.ok) {
-      showLoginError(data.error || 'コードが正しくありません。');
-    } else {
-      storeAuth(data.token, { id: data.user_id, email: otpEmail });
-      currentUser = { id: data.user_id, email: otpEmail };
-      if (typeof gtag === 'function') gtag('event', 'login', { method: 'otp' });
-      showDashboard();
-    }
-  } catch (err) {
-    showLoginError('接続エラーが発生しました。もう一度お試しください。');
-  }
-  btn.disabled = false;
-  btnText.textContent = 'ログイン';
+  btnText.textContent = 'ログインリンクを送信';
 });
 
 $('#otp-back-btn').addEventListener('click', () => {
   showEmailStep();
-  $('#otp-code').value = '';
 });
 
 $('#otp-resend-btn').addEventListener('click', async () => {
@@ -2682,6 +2904,7 @@ $('#otp-resend-btn').addEventListener('click', async () => {
 });
 
 logoutBtn.addEventListener('click', async () => {
+  try { await fetch(`${API_BASE}/api/v1/auth/logout`, { method: 'POST', credentials: 'include' }); } catch (_) {}
   clearAuth();
   currentUser = null;
   showLogin();
@@ -2692,6 +2915,12 @@ async function checkSession() {
   const token = getStoredToken();
   if (!token) return;
 
+  // Restore cached user info immediately so dashboard loads fast
+  const cachedUser = localStorage.getItem(AUTH_USER_KEY);
+  if (cachedUser) {
+    try { currentUser = JSON.parse(cachedUser); } catch (_) {}
+  }
+
   try {
     const resp = await fetch(`${API_BASE}/api/v1/auth/me`, {
       headers: { 'Authorization': `Bearer ${token}` },
@@ -2699,15 +2928,17 @@ async function checkSession() {
     if (resp.ok) {
       const data = await resp.json();
       currentUser = { id: data.id, email: data.email };
-      // Update stored user info
       storeAuth(token, currentUser);
       showDashboard();
     } else {
-      // Token expired
+      // Token expired or invalid — force re-login
       clearAuth();
     }
   } catch (e) {
-    console.warn('Session check failed:', e);
+    // Network error (API cold start, offline, etc.) — show dashboard optimistically
+    // apiFetch() will force re-login if token is truly invalid when APIs respond
+    console.warn('Session check failed (network?):', e.message);
+    if (currentUser) showDashboard();
   }
 }
 
@@ -2828,11 +3059,10 @@ function updateOverviewCards() {
     camTotalSpan.textContent = ` / ${DEMO_DATA.camerasTotal}`;
   }
 
-  // Update camera status badge
+  // Update camera status badge (offline and analysis-error are distinct)
   const camStatusBadge = document.getElementById('change-cameras');
-  const offlineCount = DEMO_DATA.cameras.filter(c => c.status === 'offline').length
-    || ((DEMO_DATA.camerasTotal || 0) - (DEMO_DATA.camerasOnline || 0));
-  const errorCount = DEMO_DATA.cameras.filter(c => c.status === 'error').length;
+  const offlineCount = (DEMO_DATA.camerasTotal || 0) - (DEMO_DATA.camerasOnline || 0);
+  const errorCount = (DEMO_DATA.cameras || []).filter(c => c.status === 'error').length;
   if (camStatusBadge) {
     if (offlineCount > 0 || errorCount > 0) {
       const parts = [];
@@ -2852,12 +3082,14 @@ function updateOverviewCards() {
     }
   }
 
-  // Show/hide setup guide and charts
+  // Show/hide setup guide; always show charts (demo data if no camera)
   const setupGuide = document.getElementById('setup-guide');
   const chartsArea = document.getElementById('charts-area');
+  const demoBanner = document.getElementById('demo-data-banner');
   const hasCamera = (DEMO_DATA.camerasTotal || 0) > 0;
   if (setupGuide) setupGuide.classList.toggle('hidden', hasCamera);
-  if (chartsArea) chartsArea.style.display = hasCamera ? '' : 'none';
+  if (chartsArea) chartsArea.style.display = '';
+  if (demoBanner) demoBanner.style.display = hasCamera ? 'none' : '';
 }
 
 function updateUserDisplay() {
@@ -3113,22 +3345,38 @@ async function renderAlerts() {
     const alerts = await resp.json();
 
     if (alerts && alerts.length > 0) {
-      list.innerHTML = alerts.map(a => {
+      list.innerHTML = '';
+      alerts.forEach(a => {
         const typeClass = a.alert_type === 'intrusion' ? 'error' :
                          a.alert_type === 'crowding' ? 'warn' : 'info';
         const typeLabel = a.alert_type === 'intrusion' ? '侵入検知' :
                          a.alert_type === 'crowding' ? '混雑検知' : '異常検知';
         const time = new Date(a.created_at).toLocaleString('ja-JP', {hour:'2-digit', minute:'2-digit'});
         const unreadClass = a.is_read ? '' : 'unread';
-        return `<div class="alert-item ${unreadClass}" data-id="${a.id}" onclick="markAlertRead('${a.id}')">
-            <div class="alert-dot ${typeClass}"></div>
-            <div class="alert-content">
-                <div class="alert-label">${typeLabel}</div>
-                <div class="alert-text">${a.message || typeLabel}</div>
-            </div>
-            <div class="alert-time">${time}</div>
-        </div>`;
-      }).join('');
+        const div = document.createElement('div');
+        div.className = `alert-item ${unreadClass}`;
+        div.dataset.id = a.id;
+        div.addEventListener('click', () => markAlertRead(a.id));
+        const dot = document.createElement('div');
+        dot.className = `alert-dot ${typeClass}`;
+        const content = document.createElement('div');
+        content.className = 'alert-content';
+        const label = document.createElement('div');
+        label.className = 'alert-label';
+        label.textContent = typeLabel;
+        const text = document.createElement('div');
+        text.className = 'alert-text';
+        text.textContent = a.message || typeLabel;
+        const timeEl = document.createElement('div');
+        timeEl.className = 'alert-time';
+        timeEl.textContent = time;
+        content.appendChild(label);
+        content.appendChild(text);
+        div.appendChild(dot);
+        div.appendChild(content);
+        div.appendChild(timeEl);
+        list.appendChild(div);
+      });
 
       updateUnreadBadge(alerts.filter(a => !a.is_read).length);
       return;
@@ -3258,42 +3506,53 @@ async function submitLineCode() {
 // ===== Cameras =====
 async function renderCameras() {
   const grid = $('#camera-list');
+  let apiCameras = [];
 
-  // Try API first
+  // Fetch cameras from API
   try {
     const resp = await apiFetch('/api/v1/stores/me/cameras');
-    const cameras = await resp.json();
-
-    if (cameras && cameras.length > 0) {
-      DEMO_DATA.cameras = cameras.map(cam => ({
+    if (resp.ok) {
+      apiCameras = await resp.json();
+      DEMO_DATA.cameras = apiCameras.map(cam => ({
         id: cam.id,
         name: cam.name,
-        location: cam.rtsp_url ? 'RTSP接続' : '未設定',
+        location: cam.rtsp_url ? cam.rtsp_url : '未設定',
         status: cam.status || 'offline',
         todayCount: cam.today_count || 0,
         avgDaily: cam.avg_daily || 0,
       }));
-      DEMO_DATA.camerasTotal = cameras.length;
-      DEMO_DATA.camerasOnline = cameras.filter(c => c.status === 'online').length;
+      DEMO_DATA.camerasTotal = apiCameras.length;
+      DEMO_DATA.camerasOnline = apiCameras.filter(c => c.status === 'online').length;
     }
   } catch (e) {
-    console.warn('Camera API fetch failed, using demo data:', e.message);
+    console.warn('Camera API fetch failed:', e.message);
   }
 
-  // Render from DEMO_DATA (now potentially updated from API)
-  const statusLabel = (s) => s === 'online' ? 'オンライン' : s === 'error' ? '解析エラー' : 'オフライン';
+  // Show/hide cameras-list-header
+  const header = $('#cameras-list-header');
+  if (DEMO_DATA.cameras.length > 0) {
+    header.style.display = 'block';
+  } else {
+    header.style.display = 'none';
+  }
+
+  // Render camera cards
   grid.innerHTML = DEMO_DATA.cameras.map(cam => `
-    <div class="camera-card">
+    <div class="camera-card" style="position:relative">
+      <button onclick="deleteCameraFromDashboard('${cam.id}',this)"
+        title="削除"
+        style="position:absolute;top:10px;right:10px;background:none;border:none;cursor:pointer;color:#94a3b8;font-size:18px;line-height:1;padding:2px 6px;border-radius:4px"
+        onmouseover="this.style.color='#ef4444'" onmouseout="this.style.color='#94a3b8'">×</button>
       <div class="camera-preview">
         <span class="camera-status-badge ${cam.status}">
           <span class="camera-status-dot"></span>
-          ${statusLabel(cam.status)}
+          ${cam.status === 'online' ? 'オンライン' : cam.status === 'error' ? '解析エラー' : 'オフライン'}
         </span>
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1" stroke="currentColor" width="48" height="48" style="opacity:0.3"><path stroke-linecap="round" stroke-linejoin="round" d="m15.75 10.5 4.72-4.72a.75.75 0 0 1 1.28.53v11.38a.75.75 0 0 1-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 0 0 2.25-2.25v-9a2.25 2.25 0 0 0-2.25-2.25h-9A2.25 2.25 0 0 0 2.25 7.5v9a2.25 2.25 0 0 0 2.25 2.25Z"/></svg>
       </div>
       <div class="camera-info">
         <div class="camera-name">${cam.name}</div>
-        <div class="camera-location">${cam.location}</div>
+        <div class="camera-location" style="font-family:monospace;font-size:.75rem;word-break:break-all">${cam.location}</div>
         <div class="camera-stats">
           <div class="camera-stat-item">
             <div class="camera-stat-value">${cam.todayCount}</div>
@@ -3312,6 +3571,105 @@ async function renderCameras() {
   const icon = $('#camera-status-icon');
   const hasOffline = DEMO_DATA.cameras.some(c => c.status === 'offline' || c.status === 'error');
   icon.className = 'stat-card-icon ' + (hasOffline ? 'red' : 'green');
+
+  // Fetch agent status
+  updateAgentStatus();
+}
+
+async function updateAgentStatus() {
+  const dot = $('#agent-dot');
+  const text = $('#agent-status-text');
+  try {
+    const resp = await apiFetch('/api/v1/stores/me/cameras');
+    // Use a separate endpoint once agent heartbeat data is exposed; for now check via cameras API
+    // We'll poll agent status from a dedicated endpoint if/when added
+    // Temporarily: show online if any camera is online
+    if (resp.ok) {
+      const cams = await resp.json();
+      const anyOnline = cams.some(c => c.status === 'online');
+      if (anyOnline) {
+        dot.style.background = '#22c55e';
+        text.textContent = 'エージェント: オンライン';
+        text.style.color = '#16a34a';
+      } else if (cams.length > 0) {
+        dot.style.background = '#f59e0b';
+        text.textContent = 'エージェント: カメラ未接続';
+        text.style.color = '#d97706';
+      } else {
+        dot.style.background = '#cbd5e1';
+        text.textContent = 'エージェント: 未インストール';
+        text.style.color = '#475569';
+      }
+    }
+  } catch (e) {
+    dot.style.background = '#cbd5e1';
+    text.textContent = 'エージェント状態を取得できません';
+  }
+}
+
+function showUpgradeModal() {
+  const modal = document.createElement('div');
+  modal.className = 'modal-overlay';
+  modal.innerHTML = `
+    <div class="modal-content" style="max-width:420px;text-align:center;">
+      <div style="font-size:2rem;margin-bottom:12px">📷</div>
+      <h3 style="margin:0 0 8px;font-size:1.125rem;color:var(--gray-900)">カメラの上限に達しました</h3>
+      <p style="color:var(--gray-500);font-size:0.875rem;margin:0 0 20px">フリープランは<strong>カメラ1台</strong>まで利用できます。<br>スタータープランにアップグレードすると<strong>4台まで</strong>追加できます。</p>
+      <div style="background:var(--gray-50);border:1px solid var(--gray-200);border-radius:10px;padding:16px;margin-bottom:20px;text-align:left">
+        <div style="font-weight:700;color:var(--gray-900);margin-bottom:8px">スタータープラン <span style="color:var(--indigo-600)">¥9,800/月</span></div>
+        <ul style="margin:0;padding-left:18px;color:var(--gray-600);font-size:0.8125rem;line-height:1.8">
+          <li>カメラ 4台まで</li>
+          <li>来客カウント + 属性分析</li>
+          <li>週次・月次レポート</li>
+          <li>LINE アラート</li>
+        </ul>
+      </div>
+      <button onclick="this.closest('.modal-overlay').remove();switchTab('billing')" style="width:100%;padding:12px;background:var(--indigo-600);color:#fff;border:none;border-radius:8px;font-size:0.9375rem;font-weight:700;cursor:pointer;font-family:var(--font-sans);margin-bottom:8px">アップグレードする →</button>
+      <button onclick="this.closest('.modal-overlay').remove()" style="background:none;border:none;color:var(--gray-400);cursor:pointer;font-size:0.875rem;font-family:var(--font-sans)">キャンセル</button>
+    </div>`;
+  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+  document.body.appendChild(modal);
+}
+
+async function addCameraFromDashboard() {
+  const name = $('#new-cam-name').value.trim();
+  const url = $('#new-cam-url').value.trim();
+  const btn = $('#btn-add-cam');
+  if (!name || !url) { alert('カメラ名とRTSP URLを入力してください'); return; }
+  // Free plan: max 1 camera
+  const tier = (currentStore && currentStore.plan_tier) || 'free';
+  if (tier === 'free' && DEMO_DATA.camerasTotal >= 1) { showUpgradeModal(); return; }
+  btn.textContent = '追加中...'; btn.disabled = true;
+  try {
+    const resp = await apiFetch('/api/v1/stores/me/cameras', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, rtsp_url: url }),
+    });
+    if (resp.ok) {
+      $('#new-cam-name').value = '';
+      $('#new-cam-url').value = '';
+      await renderCameras();
+    } else {
+      const err = await resp.json().catch(() => ({}));
+      alert(err.error || 'カメラの追加に失敗しました');
+    }
+  } catch (e) {
+    alert('エラーが発生しました: ' + e.message);
+  }
+  btn.textContent = '追加'; btn.disabled = false;
+}
+
+async function deleteCameraFromDashboard(cameraId, btn) {
+  if (!confirm('このカメラを削除しますか？')) return;
+  btn.textContent = '…'; btn.disabled = true;
+  try {
+    await apiFetch(`/api/v1/stores/me/cameras/${cameraId}`, { method: 'DELETE' });
+    await renderCameras();
+  } catch (e) {
+    alert('削除に失敗しました');
+    btn.textContent = '×'; btn.disabled = false;
+  }
 }
 
 // Add camera form
@@ -3325,6 +3683,10 @@ $('#add-camera-form').addEventListener('submit', async (e) => {
     showToast('カメラ名を入力してください。', 'error');
     return;
   }
+
+  // Free plan: max 1 camera
+  const _tier = (currentStore && currentStore.plan_tier) || 'free';
+  if (_tier === 'free' && DEMO_DATA.camerasTotal >= 1) { showUpgradeModal(); return; }
 
   const submitBtn = e.target.querySelector('button[type="submit"]');
   const origText = submitBtn.innerHTML;
@@ -3488,14 +3850,29 @@ async function loadApiTokens() {
     list.innerHTML = '<div style="font-size:0.8125rem;color:var(--gray-400);">トークンがありません</div>';
     return;
   }
-  list.innerHTML = tokens.map(t => `
-    <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:var(--gray-50);border-radius:6px;gap:8px;">
-      <div>
-        <div style="font-size:0.875rem;font-weight:600;">${t.name || '名称未設定'}</div>
-        <div style="font-size:0.75rem;color:var(--gray-400);">作成: ${new Date(t.created_at).toLocaleDateString('ja-JP')}</div>
-      </div>
-      <button onclick="deleteApiToken('${t.id}')" style="background:none;border:none;color:var(--gray-400);cursor:pointer;font-size:0.75rem;padding:4px 8px;border-radius:4px;border:1px solid var(--gray-200);" onmouseover="this.style.color='var(--red-600)'" onmouseout="this.style.color='var(--gray-400)'">削除</button>
-    </div>`).join('');
+  list.innerHTML = '';
+  tokens.forEach(t => {
+    const row = document.createElement('div');
+    row.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:var(--gray-50);border-radius:6px;gap:8px;';
+    const info = document.createElement('div');
+    const nameEl = document.createElement('div');
+    nameEl.style.cssText = 'font-size:0.875rem;font-weight:600;';
+    nameEl.textContent = t.name || '名称未設定';
+    const dateEl = document.createElement('div');
+    dateEl.style.cssText = 'font-size:0.75rem;color:var(--gray-400);';
+    dateEl.textContent = '作成: ' + new Date(t.created_at).toLocaleDateString('ja-JP');
+    info.appendChild(nameEl);
+    info.appendChild(dateEl);
+    const btn = document.createElement('button');
+    btn.style.cssText = 'background:none;border:none;color:var(--gray-400);cursor:pointer;font-size:0.75rem;padding:4px 8px;border-radius:4px;border:1px solid var(--gray-200);';
+    btn.textContent = '削除';
+    btn.addEventListener('mouseover', () => { btn.style.color = 'var(--red-600)'; });
+    btn.addEventListener('mouseout', () => { btn.style.color = 'var(--gray-400)'; });
+    btn.addEventListener('click', () => deleteApiToken(t.id));
+    row.appendChild(info);
+    row.appendChild(btn);
+    list.appendChild(row);
+  });
 }
 
 async function createApiToken() {
@@ -3619,8 +3996,11 @@ function checkCheckoutResult() {
 // ===== Onboarding Wizard =====
 let onboardingStep = 1;
 const TOTAL_ONBOARDING_STEPS = 4;
+let onboardingShown = false; // prevent double-show
 
 function showOnboarding() {
+  if (onboardingShown) return; // never reset mid-flow
+  onboardingShown = true;
   const overlay = document.getElementById('onboarding-overlay');
   if (overlay) overlay.classList.remove('hidden');
   onboardingStep = 1;
@@ -3702,11 +4082,15 @@ async function onboardingSubmitStore() {
 
 function onboardingComplete() {
   localStorage.setItem('onboarding_completed', 'true');
+  onboardingShown = false;
   hideOnboarding();
 }
 
 function checkOnboarding() {
   if (localStorage.getItem('onboarding_completed')) return;
+  // Don't reset if onboarding is already visible (user may be mid-flow)
+  const overlay = document.getElementById('onboarding-overlay');
+  if (overlay && !overlay.classList.contains('hidden')) return;
   // Show for new users who have no cameras yet
   if (DEMO_DATA.camerasTotal === 0) {
     showOnboarding();
@@ -3759,7 +4143,7 @@ function setupSessionCheck() {
       const resp = await fetch(`${API_BASE}/api/v1/auth/me`, {
         headers: { 'Authorization': `Bearer ${t}` },
       });
-      if (!resp.ok && currentUser) {
+      if (resp.status === 401 && currentUser) {
         clearAuth();
         showSessionExpiredToast();
       }
@@ -3861,6 +4245,9 @@ document.getElementById('generate-pairing-btn')?.addEventListener('click', async
       const formatted = code.length === 6 ? code.slice(0, 3) + ' ' + code.slice(3) : code;
       codeEl.textContent = formatted;
       display.style.display = 'block';
+      // Update auto-pair deep link
+      const autoPairLink = document.getElementById('auto-pair-link');
+      if (autoPairLink) autoPairLink.href = `http://localhost:3939/?pair=${code}`;
 
       // Countdown timer (expires_in_seconds, default 600 = 10 min)
       let remaining = data.expires_in_seconds || 600;
@@ -3966,8 +4353,6 @@ showDashboard = async function() {
   await _originalShowDashboard();
   setupSessionCheck();
   startStatsPolling();
-  // Check onboarding after store load attempt completes
-  setTimeout(() => checkOnboarding(), 500);
 };
 
 // ===== Patched showLogin =====

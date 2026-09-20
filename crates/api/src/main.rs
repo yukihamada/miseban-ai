@@ -29,7 +29,6 @@ use tracing::{error, info, warn};
 use uuid::Uuid;
 
 use auth::{AuthUser, JwtSecret};
-use rand::Rng;
 
 // ---------------------------------------------------------------------------
 // AppState
@@ -54,6 +53,8 @@ struct AppState {
     trackers: Arc<tokio::sync::Mutex<HashMap<String, ai::Tracker>>>,
     /// Optional Gemini API key for age/gender demographics.
     gemini_key: Option<String>,
+    /// Per-email rate limiter for auth endpoints (max 5 OTP requests per 10 min).
+    auth_rate_limiter: Arc<tokio::sync::Mutex<HashMap<String, Vec<std::time::Instant>>>>,
 }
 
 // ---------------------------------------------------------------------------
@@ -71,6 +72,8 @@ enum ApiError {
     Forbidden(String),
     /// Something unexpected happened.
     Internal(String),
+    /// A dependency (AI model, upstream) is temporarily unavailable; retry later.
+    ServiceUnavailable(String),
     /// Authentication failed (invalid credentials, missing token, etc.).
     Unauthorized(String),
     /// Bad request (validation error, malformed input, etc.).
@@ -84,6 +87,7 @@ impl IntoResponse for ApiError {
             ApiError::NotFound(msg) => (StatusCode::NOT_FOUND, msg.clone()),
             ApiError::Forbidden(msg) => (StatusCode::FORBIDDEN, msg.clone()),
             ApiError::Internal(msg) => (StatusCode::INTERNAL_SERVER_ERROR, msg.clone()),
+            ApiError::ServiceUnavailable(msg) => (StatusCode::SERVICE_UNAVAILABLE, msg.clone()),
             ApiError::Unauthorized(msg) => (StatusCode::UNAUTHORIZED, msg.clone()),
             ApiError::BadRequest(msg) => (StatusCode::BAD_REQUEST, msg.clone()),
         };
@@ -103,6 +107,20 @@ impl From<sqlx::Error> for ApiError {
 // ---------------------------------------------------------------------------
 // Handlers
 // ---------------------------------------------------------------------------
+
+/// Mark a camera as `error` (frames arrive but analysis fails).
+///
+/// The camera UUID must already be resolved (store-scoped) by the caller.
+/// Returns an error if the UPDATE fails so the caller can decide whether
+/// the request as a whole failed.
+async fn mark_camera_analysis_error(state: &AppState, camera_uuid: &Uuid) -> Result<(), ApiError> {
+    sqlx::query("UPDATE cameras SET last_seen_at = now(), status = 'error' WHERE id = $1")
+        .bind(camera_uuid)
+        .execute(&state.pool)
+        .await
+        .map_err(|e| ApiError::Database(format!("failed to mark camera error: {e}")))?;
+    Ok(())
+}
 
 /// POST /api/v1/frames
 ///
@@ -136,61 +154,105 @@ async fn receive_frame(
         "Frame received"
     );
 
-    // Plan enforcement: check camera limit and rate limit.
-    if let Some(store) = db::get_store_by_owner(&state.pool, &user_id).await {
-        // Rate limit check (hard enforcement).
-        if !state.rate_limiter.check(&store.id, &store.plan_tier).await {
+    // Resolve the store and camera BEFORE any inference work.
+    //
+    // A camera_id UUID is only accepted if the camera belongs to this user's
+    // store — otherwise an agent could write visitor counts into another
+    // store. A name-based camera_id is resolved within the store, or
+    // auto-registered on first frame.
+    let store = db::get_store_by_owner(&state.pool, &user_id)
+        .await
+        .ok_or_else(|| ApiError::NotFound("No store found for this user".to_string()))?;
+
+    let camera_uuid = match Uuid::parse_str(&frame.camera_id) {
+        Ok(uuid) => db::find_owned_camera(&state.pool, &store.id, &uuid)
+            .await
+            .ok_or_else(|| {
+                ApiError::NotFound(format!(
+                    "Camera {} not found in this store",
+                    frame.camera_id
+                ))
+            })?,
+        Err(_) => match db::find_camera_by_name(&state.pool, &store.id, &frame.camera_id).await {
+            Some(uuid) => uuid,
+            None => {
+                // Auto-register the camera on first frame.
+                db::register_camera(&state.pool, &store.id, &frame.camera_id)
+                    .await
+                    .map_err(|e| {
+                        ApiError::Database(format!("failed to auto-register camera: {e}"))
+                    })?
+            }
+        },
+    };
+    // Tracker key: the resolved camera UUID, so two stores can never share
+    // tracker state through a colliding camera name.
+    let tracker_key = camera_uuid.to_string();
+
+    // Plan enforcement: rate limit (hard) and camera limit (soft).
+    if !state.rate_limiter.check(&store.id, &store.plan_tier).await {
+        warn!(
+            store_id = %store.id,
+            plan_tier = %store.plan_tier,
+            "Frame submission rate limited"
+        );
+        return Err(ApiError::Forbidden(
+            "Rate limit exceeded. Please wait before submitting another frame.".to_string(),
+        ));
+    }
+    match plan_guard::can_add_camera(&state.pool, &store.id).await {
+        Ok(false) => {
             warn!(
                 store_id = %store.id,
                 plan_tier = %store.plan_tier,
-                "Frame submission rate limited"
+                "Store is at or over camera limit for its plan tier (soft enforcement)"
             );
-            return Err(ApiError::Forbidden(
-                "Rate limit exceeded. Please wait before submitting another frame.".to_string(),
-            ));
         }
-
-        // Camera limit check (soft enforcement).
-        match plan_guard::can_add_camera(&state.pool, &store.id).await {
-            Ok(false) => {
-                warn!(
-                    store_id = %store.id,
-                    plan_tier = %store.plan_tier,
-                    "Store is at or over camera limit for its plan tier (soft enforcement)"
-                );
-            }
-            Err(e) => {
-                warn!(error = %e, "Failed to check plan camera limit (non-fatal)");
-            }
-            _ => {}
+        Err(e) => {
+            warn!(error = %e, "Failed to check plan camera limit (non-fatal)");
         }
+        _ => {}
     }
 
     // Run AI inference: detect people (sync ONNX) + track + demographics.
+    //
+    // Failure policy: a failed analysis is NOT a zero-visit. Model missing,
+    // undecodable JPEG, or inference failure records the camera as `error`
+    // (frames arrive but analysis fails — distinct from a disconnected
+    // camera) and returns 503 so the agent retries instead of persisting a
+    // fabricated "0 customers" row.
     let jpeg = frame.jpeg_bytes.clone();
-    let detections_outcome = tokio::task::spawn_blocking(move || ai::detect_people(&jpeg)).await;
-    let analysis_failed = !matches!(&detections_outcome, Ok(Ok(_)));
-    match &detections_outcome {
-        Err(e) => warn!(
-            camera_id = %frame.camera_id,
-            error = %e,
-            "AI analysis task failed (join error); frame will not be counted"
-        ),
-        Ok(Err(e)) => warn!(
-            camera_id = %frame.camera_id,
-            error = %e,
-            "AI analysis failed; frame will not be counted"
-        ),
-        Ok(Ok(_)) => {}
-    }
-    let detections = detections_outcome.unwrap_or_default();
+    let detections =
+        match tokio::task::spawn_blocking(move || ai::detect_people_checked(&jpeg)).await {
+            Ok(Ok(dets)) => dets,
+            Ok(Err(e)) => {
+                warn!(
+                    camera_id = %frame.camera_id,
+                    error = %e,
+                    "AI analysis failed; frame will not be counted"
+                );
+                mark_camera_analysis_error(&state, &camera_uuid).await?;
+                return Err(ApiError::ServiceUnavailable(format!(
+                    "AI analysis failed: {e}. The frame was not counted."
+                )));
+            }
+            Err(e) => {
+                warn!(
+                    camera_id = %frame.camera_id,
+                    error = %e,
+                    "AI analysis task failed (join error); frame will not be counted"
+                );
+                mark_camera_analysis_error(&state, &camera_uuid).await?;
+                return Err(ApiError::ServiceUnavailable(format!(
+                    "AI analysis task failed: {e}. The frame was not counted."
+                )));
+            }
+        };
 
     // Update per-camera tracker (lock held only for sync update, not during Gemini call).
     let (people_count, zones, tracker_out) = {
         let mut map = state.trackers.lock().await;
-        let tracker = map
-            .entry(frame.camera_id.clone())
-            .or_insert_with(ai::Tracker::new);
+        let tracker = map.entry(tracker_key).or_insert_with(ai::Tracker::new);
         let out = tracker.update(&detections);
         let zones = ai::compute_zones(&detections);
         (out.people_count, zones, out)
@@ -198,9 +260,7 @@ async fn receive_frame(
 
     // Demographics via Gemini (optional, async, no lock held).
     let demographics = match &state.gemini_key {
-        Some(key) => {
-            ai::demographics::estimate(&frame.jpeg_bytes, people_count, key).await
-        }
+        Some(key) => ai::demographics::estimate(&frame.jpeg_bytes, people_count, key).await,
         None => ai::demographics::fallback(people_count),
     };
 
@@ -216,139 +276,63 @@ async fn receive_frame(
         unique_visitors: tracker_out.total_unique,
     };
 
-    // Persist to DB: resolve camera_id to a UUID.
-    // The camera_id may be a UUID string or a human-readable name (e.g. "cam-1").
-    // If it's not a UUID, look it up by name within the user's store, or auto-register.
-    let camera_uuid = match Uuid::parse_str(&result.camera_id) {
-        Ok(uuid) => Some(uuid),
-        Err(_) => {
-            // Not a UUID -- try to resolve by name within the user's store.
-            if let Some(store) = db::get_store_by_owner(&state.pool, &user_id).await {
-                match db::find_camera_by_name(&state.pool, &store.id, &result.camera_id).await {
-                    Some(uuid) => Some(uuid),
-                    None => {
-                        // Auto-register the camera on first frame.
-                        match db::register_camera(&state.pool, &store.id, &result.camera_id).await {
-                            Ok(uuid) => {
-                                info!(
-                                    camera_id = %result.camera_id,
-                                    camera_uuid = %uuid,
-                                    store_id = %store.id,
-                                    "Auto-registered new camera from frame submission"
-                                );
-                                Some(uuid)
-                            }
-                            Err(e) => {
-                                warn!(
-                                    camera_id = %result.camera_id,
-                                    error = %e,
-                                    "Failed to auto-register camera (non-fatal)"
-                                );
-                                None
-                            }
-                        }
-                    }
-                }
-            } else {
-                warn!(
-                    camera_id = %frame.camera_id,
-                    "camera_id is not a UUID and user has no store; skipping DB insert"
-                );
-                None
-            }
-        }
-    };
-
-    if let Some(ref cam_id) = camera_uuid {
-        if analysis_failed {
-            // Analysis failure is not a zero-visit: skip the visitor_counts
-            // insert so a broken camera never masquerades as "0 customers".
-            // Record the failure on the existing status column instead.
-            if let Err(e) = sqlx::query(
-                "UPDATE cameras SET last_seen_at = now(), status = 'error' WHERE id = $1",
-            )
-            .bind(cam_id)
-            .execute(&state.pool)
-            .await
-            {
-                warn!(
-                    camera_id = %result.camera_id,
-                    error = %e,
-                    "Failed to record analysis failure (non-fatal)"
-                );
-            }
-        } else {
-            let demographics_json =
-                serde_json::to_value(&result.demographics).unwrap_or(serde_json::Value::Null);
-            let zones_json = serde_json::to_value(&result.zones).unwrap_or(serde_json::Value::Null);
-
-            if let Err(e) = db::insert_visitor_count(
-                &state.pool,
-                cam_id,
-                result.people_count as i32,
-                demographics_json,
-                zones_json,
-            )
-            .await
-            {
-                warn!(
-                    camera_id = %result.camera_id,
-                    error = %e,
-                    "Failed to persist visitor count (non-fatal)"
-                );
-            }
-        }
-    }
+    // Persist the count. A DB failure is a request failure: returning success
+    // here would tell the agent the frame was stored when it was not.
+    let demographics_json =
+        serde_json::to_value(&result.demographics).unwrap_or(serde_json::Value::Null);
+    let zones_json = serde_json::to_value(&result.zones).unwrap_or(serde_json::Value::Null);
+    db::insert_visitor_count(
+        &state.pool,
+        &camera_uuid,
+        result.people_count as i32,
+        demographics_json,
+        zones_json,
+    )
+    .await
+    .map_err(|e| ApiError::Database(format!("failed to persist visitor count: {e}")))?;
 
     // Evaluate and persist alerts from AI analysis.
     let pending_alerts = alerts::evaluate_alerts(&result);
     if !pending_alerts.is_empty() {
-        if let Some(ref cam_id) = camera_uuid {
-            // Look up the store_id for this camera's owner.
-            if let Some(store) = db::get_store_by_owner(&state.pool, &user_id).await {
-                for pa in &pending_alerts {
-                    match alerts::insert_alert(
-                        &state.pool,
-                        &store.id,
-                        cam_id,
-                        &pa.alert_type,
-                        pa.confidence,
-                        &pa.message,
-                    )
-                    .await
-                    {
-                        Ok(row) => {
-                            info!(
-                                alert_id = %row.id,
-                                alert_type = %pa.alert_type,
-                                "Alert persisted"
-                            );
+        for pa in &pending_alerts {
+            match alerts::insert_alert(
+                &state.pool,
+                &store.id,
+                &camera_uuid,
+                &pa.alert_type,
+                pa.confidence,
+                &pa.message,
+            )
+            .await
+            {
+                Ok(row) => {
+                    info!(
+                        alert_id = %row.id,
+                        alert_type = %pa.alert_type,
+                        "Alert persisted"
+                    );
 
-                            // Send LINE notification if configured.
-                            if let Some(ref client) = state.line_client.0 {
-                                if let Some(line_uid) =
-                                    db::get_store_line_user_id(&state.pool, &store.id).await
-                                {
-                                    let payload = alerts::AlertPayload::from(row);
-                                    if let Err(e) =
-                                        client.push_alert_message(&line_uid, &payload).await
-                                    {
-                                        warn!(
-                                            error = %e,
-                                            "Failed to send LINE alert notification (non-fatal)"
-                                        );
-                                    }
-                                }
+                    // Send LINE notification if configured.
+                    if let Some(ref client) = state.line_client.0 {
+                        if let Some(line_uid) =
+                            db::get_store_line_user_id(&state.pool, &store.id).await
+                        {
+                            let payload = alerts::AlertPayload::from(row);
+                            if let Err(e) = client.push_alert_message(&line_uid, &payload).await {
+                                warn!(
+                                    error = %e,
+                                    "Failed to send LINE alert notification (non-fatal)"
+                                );
                             }
                         }
-                        Err(e) => {
-                            warn!(
-                                error = %e,
-                                alert_type = %pa.alert_type,
-                                "Failed to persist alert (non-fatal)"
-                            );
-                        }
                     }
+                }
+                Err(e) => {
+                    warn!(
+                        error = %e,
+                        alert_type = %pa.alert_type,
+                        "Failed to persist alert (non-fatal)"
+                    );
                 }
             }
         }
@@ -366,7 +350,7 @@ struct StoreStats {
     cameras_online: i64,
     /// Live people count from most recent frame(s) across all cameras.
     live_count: u32,
-    /// Average dwell time in seconds (from IoU tracker).
+    /// Average dwell time in seconds (from the IoU tracker).
     avg_dwell_secs: f32,
 }
 
@@ -407,13 +391,33 @@ async fn get_my_store_stats(
 
     let (today_total, cameras_online) = db::get_store_stats_db(&state.pool, &store.id).await;
 
-    // Pull live count from in-memory trackers (sum of active tracks across all cameras).
+    // Pull live count from in-memory trackers, limited to cameras that
+    // belong to this store AND are currently fresh (a frame arrived within
+    // the offline threshold). Trackers are keyed by camera UUID, so other
+    // stores' cameras and disconnected cameras are excluded.
+    let owned: std::collections::HashSet<String> = db::get_cameras(&state.pool, &store.id)
+        .await
+        .into_iter()
+        .filter(|c| c.status == "online")
+        .map(|c| c.id.to_string())
+        .collect();
     let (live_count, avg_dwell_secs) = {
         let map = state.trackers.lock().await;
-        let total: u32 = map.values().map(|t| t.current_count()).sum();
-        let avg: f32 = {
-            let counts: Vec<f32> = map.values().map(|t| t.avg_dwell_secs()).filter(|&d| d > 0.0).collect();
-            if counts.is_empty() { 0.0 } else { counts.iter().sum::<f32>() / counts.len() as f32 }
+        let total: u32 = map
+            .iter()
+            .filter(|(k, _)| owned.contains(k.as_str()))
+            .map(|(_, t)| t.current_count())
+            .sum();
+        let dwells: Vec<f32> = map
+            .iter()
+            .filter(|(k, _)| owned.contains(k.as_str()))
+            .map(|(_, t)| t.avg_dwell_secs())
+            .filter(|&d| d > 0.0)
+            .collect();
+        let avg = if dwells.is_empty() {
+            0.0
+        } else {
+            dwells.iter().sum::<f32>() / dwells.len() as f32
         };
         (total, avg)
     };
@@ -606,16 +610,40 @@ fn parse_demographics_summary(value: &serde_json::Value) -> Option<DemographicsS
         }
         return Some(DemographicsSummary {
             age_distribution: vec![
-                AgeDistribution { age_group: AgeGroup::Child,      percentage: child as f32 / a_total * 100.0 },
-                AgeDistribution { age_group: AgeGroup::Teen,       percentage: teen as f32 / a_total * 100.0 },
-                AgeDistribution { age_group: AgeGroup::YoungAdult, percentage: young_adult as f32 / a_total * 100.0 },
-                AgeDistribution { age_group: AgeGroup::Adult,      percentage: adult as f32 / a_total * 100.0 },
-                AgeDistribution { age_group: AgeGroup::Senior,     percentage: senior as f32 / a_total * 100.0 },
+                AgeDistribution {
+                    age_group: AgeGroup::Child,
+                    percentage: child as f32 / a_total * 100.0,
+                },
+                AgeDistribution {
+                    age_group: AgeGroup::Teen,
+                    percentage: teen as f32 / a_total * 100.0,
+                },
+                AgeDistribution {
+                    age_group: AgeGroup::YoungAdult,
+                    percentage: young_adult as f32 / a_total * 100.0,
+                },
+                AgeDistribution {
+                    age_group: AgeGroup::Adult,
+                    percentage: adult as f32 / a_total * 100.0,
+                },
+                AgeDistribution {
+                    age_group: AgeGroup::Senior,
+                    percentage: senior as f32 / a_total * 100.0,
+                },
             ],
             gender_distribution: vec![
-                GenderDistribution { gender: GenderEstimate::Male,    percentage: male as f32 / g_total * 100.0 },
-                GenderDistribution { gender: GenderEstimate::Female,  percentage: female as f32 / g_total * 100.0 },
-                GenderDistribution { gender: GenderEstimate::Unknown, percentage: unknown as f32 / g_total * 100.0 },
+                GenderDistribution {
+                    gender: GenderEstimate::Male,
+                    percentage: male as f32 / g_total * 100.0,
+                },
+                GenderDistribution {
+                    gender: GenderEstimate::Female,
+                    percentage: female as f32 / g_total * 100.0,
+                },
+                GenderDistribution {
+                    gender: GenderEstimate::Unknown,
+                    percentage: unknown as f32 / g_total * 100.0,
+                },
             ],
         });
     }
@@ -647,9 +675,18 @@ fn parse_demographics_summary(value: &serde_json::Value) -> Option<DemographicsS
         age_distribution: default_age_distribution(),
         gender_distribution: if gender_total > 0.0 {
             vec![
-                GenderDistribution { gender: GenderEstimate::Male,    percentage: (male_count / gender_total * 100.0) as f32 },
-                GenderDistribution { gender: GenderEstimate::Female,  percentage: (female_count / gender_total * 100.0) as f32 },
-                GenderDistribution { gender: GenderEstimate::Unknown, percentage: (other_count / gender_total * 100.0) as f32 },
+                GenderDistribution {
+                    gender: GenderEstimate::Male,
+                    percentage: (male_count / gender_total * 100.0) as f32,
+                },
+                GenderDistribution {
+                    gender: GenderEstimate::Female,
+                    percentage: (female_count / gender_total * 100.0) as f32,
+                },
+                GenderDistribution {
+                    gender: GenderEstimate::Unknown,
+                    percentage: (other_count / gender_total * 100.0) as f32,
+                },
             ]
         } else {
             default_gender_distribution()
@@ -745,12 +782,24 @@ async fn create_my_camera(
         .ok_or_else(|| ApiError::NotFound("No store found for this user".to_string()))?;
 
     // Check camera limit for plan
-    if !plan_guard::can_add_camera(&state.pool, &store.id).await.unwrap_or(false) {
-        return Err(ApiError::Forbidden("Camera limit reached for your plan".to_string()));
+    if !plan_guard::can_add_camera(&state.pool, &store.id)
+        .await
+        .unwrap_or(false)
+    {
+        return Err(ApiError::Forbidden(
+            "Camera limit reached for your plan".to_string(),
+        ));
     }
 
-    let camera = db::create_camera(&state.pool, &store.id, &req.name, req.rtsp_url.as_deref(), req.location.as_deref()).await
-        .map_err(|e| ApiError::Internal(e.to_string()))?;
+    let camera = db::create_camera(
+        &state.pool,
+        &store.id,
+        &req.name,
+        req.rtsp_url.as_deref(),
+        req.location.as_deref(),
+    )
+    .await
+    .map_err(|e| ApiError::Internal(e.to_string()))?;
 
     Ok(Json(camera))
 }
@@ -815,14 +864,12 @@ async fn agent_heartbeat(
     let store = db::get_store_by_owner(&state.pool, &user_id)
         .await
         .ok_or_else(|| ApiError::NotFound("No store found".to_string()))?;
-    sqlx::query(
-        "UPDATE stores SET agent_last_seen_at = now(), agent_version = $1 WHERE id = $2",
-    )
-    .bind(body.version.as_deref())
-    .bind(store.id)
-    .execute(&state.pool)
-    .await
-    .map_err(|e| ApiError::Internal(e.to_string()))?;
+    sqlx::query("UPDATE stores SET agent_last_seen_at = now(), agent_version = $1 WHERE id = $2")
+        .bind(body.version.as_deref())
+        .bind(store.id)
+        .execute(&state.pool)
+        .await
+        .map_err(|e| ApiError::Internal(e.to_string()))?;
     Ok(StatusCode::NO_CONTENT)
 }
 
@@ -1072,7 +1119,9 @@ async fn create_checkout(
     } else if let Some(pid) = &body.price_id {
         pid.clone()
     } else {
-        return Err(ApiError::BadRequest("Must provide either 'tier' or 'price_id'".to_string()));
+        return Err(ApiError::BadRequest(
+            "Must provide either 'tier' or 'price_id'".to_string(),
+        ));
     };
 
     let store = db::get_store_by_owner(&state.pool, &user_id)
@@ -1202,7 +1251,8 @@ async fn stripe_webhook(
                         tokio::spawn(async move {
                             let resend_key = std::env::var("RESEND_API_KEY").ok();
                             if let Some(key) = resend_key {
-                                let body = build_subscription_activated_email(&store_name, &tier_str);
+                                let body =
+                                    build_subscription_activated_email(&store_name, &tier_str);
                                 let _ = http.post("https://api.resend.com/emails")
                                     .header("Authorization", format!("Bearer {key}"))
                                     .json(&serde_json::json!({
@@ -1268,7 +1318,8 @@ async fn stripe_webhook(
                             let resend_key = std::env::var("RESEND_API_KEY").ok();
                             if let Some(key) = resend_key {
                                 let body = build_payment_failed_email(&store_name);
-                                let _ = http.post("https://api.resend.com/emails")
+                                let _ = http
+                                    .post("https://api.resend.com/emails")
                                     .header("Authorization", format!("Bearer {key}"))
                                     .json(&serde_json::json!({
                                         "from": "ミセバンAI <noreply@misebanai.com>",
@@ -1276,7 +1327,8 @@ async fn stripe_webhook(
                                         "subject": "【ミセバンAI】お支払いに問題が発生しました",
                                         "html": body,
                                     }))
-                                    .send().await;
+                                    .send()
+                                    .await;
                             }
                         });
                     }
@@ -1489,6 +1541,21 @@ async fn send_otp(
         return Err(ApiError::BadRequest("Invalid email".to_string()));
     }
 
+    // Rate limit: max 5 OTP requests per 10 minutes per email.
+    {
+        let mut rl = state.auth_rate_limiter.lock().await;
+        let now = std::time::Instant::now();
+        let window = std::time::Duration::from_secs(600);
+        let entry = rl.entry(email.clone()).or_insert_with(Vec::new);
+        entry.retain(|t: &std::time::Instant| now.duration_since(*t) < window);
+        if entry.len() >= 5 {
+            return Err(ApiError::BadRequest(
+                "Too many requests. Please wait before requesting another link.".to_string(),
+            ));
+        }
+        entry.push(now);
+    }
+
     // Auto-create user if not exists (email-only registration)
     if db::find_user_by_email(&state.pool, &email).await.is_none() {
         let placeholder_hash = "passwordless".to_string();
@@ -1528,17 +1595,17 @@ async fn send_otp(
     let token = uuid::Uuid::new_v4().to_string();
     let expires_at = chrono::Utc::now() + chrono::Duration::minutes(15);
 
-    sqlx::query(
-        "INSERT INTO otp_codes (email, code, expires_at) VALUES ($1, $2, $3)"
-    )
-    .bind(&email)
-    .bind(&token)
-    .bind(expires_at)
-    .execute(&state.pool)
-    .await
-    .map_err(|e| ApiError::Internal(format!("DB error: {e}")))?;
+    sqlx::query("INSERT INTO otp_codes (email, code, expires_at) VALUES ($1, $2, $3)")
+        .bind(&email)
+        .bind(&token)
+        .bind(expires_at)
+        .execute(&state.pool)
+        .await
+        .map_err(|e| ApiError::Internal(format!("DB error: {e}")))?;
 
-    let magic_url = format!("https://misebanai.com/dashboard/?magic={}", token);
+    let base_url =
+        std::env::var("BASE_URL").unwrap_or_else(|_| "https://misebanai.com".to_string());
+    let magic_url = format!("{}/dashboard/?magic={}", base_url, token);
 
     // Send magic link email
     let resend_key = std::env::var("RESEND_API_KEY").ok();
@@ -1580,26 +1647,27 @@ async fn send_otp(
 }
 
 /// GET /api/v1/auth/magic?token=UUID
-/// Verifies a magic link token and returns a JWT.
+/// Verifies a magic link token, sets an HttpOnly session cookie, and returns a JWT.
 async fn magic_login(
     State(state): State<AppState>,
     axum::extract::Query(params): axum::extract::Query<std::collections::HashMap<String, String>>,
-) -> Result<Json<AuthResponse>, ApiError> {
-    let token = params.get("token")
+) -> Result<impl axum::response::IntoResponse, ApiError> {
+    let token = params
+        .get("token")
         .ok_or_else(|| ApiError::BadRequest("Missing token".to_string()))?
         .clone();
 
     let row: Option<(uuid::Uuid, bool, chrono::DateTime<chrono::Utc>, String)> = sqlx::query_as(
         "SELECT id, used, expires_at, email FROM otp_codes \
-         WHERE code = $1 ORDER BY created_at DESC LIMIT 1"
+         WHERE code = $1 ORDER BY created_at DESC LIMIT 1",
     )
     .bind(&token)
     .fetch_optional(&state.pool)
     .await
     .map_err(|e| ApiError::Internal(format!("DB error: {e}")))?;
 
-    let (otp_id, used, expires_at, email) = row
-        .ok_or_else(|| ApiError::Unauthorized("Invalid token".to_string()))?;
+    let (otp_id, used, expires_at, email) =
+        row.ok_or_else(|| ApiError::Unauthorized("Invalid token".to_string()))?;
     if used {
         return Err(ApiError::Unauthorized("Link already used".to_string()));
     }
@@ -1620,7 +1688,10 @@ async fn magic_login(
     let jwt = auth::issue_token(&user.id, &state.jwt_secret.0)
         .map_err(|e| ApiError::Internal(format!("Token error: {e}")))?;
 
-    Ok(Json(AuthResponse { token: jwt, user_id: user.id.to_string() }))
+    Ok(Json(AuthResponse {
+        token: jwt,
+        user_id: user.id.to_string(),
+    }))
 }
 
 /// POST /api/v1/auth/verify-otp
@@ -1628,14 +1699,14 @@ async fn magic_login(
 async fn verify_otp(
     State(state): State<AppState>,
     Json(body): Json<VerifyOtpRequest>,
-) -> Result<Json<AuthResponse>, ApiError> {
+) -> Result<impl axum::response::IntoResponse, ApiError> {
     let email = body.email.trim().to_lowercase();
     let code = body.code.trim().to_string();
 
     let row: Option<(uuid::Uuid, bool, chrono::DateTime<chrono::Utc>)> = sqlx::query_as(
         "SELECT id, used, expires_at FROM otp_codes \
          WHERE email = $1 AND code = $2 \
-         ORDER BY created_at DESC LIMIT 1"
+         ORDER BY created_at DESC LIMIT 1",
     )
     .bind(&email)
     .bind(&code)
@@ -1643,7 +1714,8 @@ async fn verify_otp(
     .await
     .map_err(|e| ApiError::Internal(format!("DB error: {e}")))?;
 
-    let (otp_id, used, expires_at) = row.ok_or_else(|| ApiError::Unauthorized("Invalid code".to_string()))?;
+    let (otp_id, used, expires_at) =
+        row.ok_or_else(|| ApiError::Unauthorized("Invalid code".to_string()))?;
     if used {
         return Err(ApiError::Unauthorized("Code already used".to_string()));
     }
@@ -1665,17 +1737,28 @@ async fn verify_otp(
     let token = auth::issue_token(&user.id, &state.jwt_secret.0)
         .map_err(|e| ApiError::Internal(format!("Token error: {e}")))?;
 
-    Ok(Json(AuthResponse {
-        token,
-        user_id: user.id.to_string(),
-    }))
+    let cookie = auth::session_cookie_value(&token);
+    let mut headers = axum::http::HeaderMap::new();
+    headers.insert(
+        axum::http::header::SET_COOKIE,
+        axum::http::HeaderValue::from_str(&cookie)
+            .map_err(|e| ApiError::Internal(format!("Cookie error: {e}")))?,
+    );
+
+    Ok((
+        headers,
+        Json(AuthResponse {
+            token,
+            user_id: user.id.to_string(),
+        }),
+    ))
 }
 
 /// POST /api/v1/auth/signup
 async fn signup(
     State(state): State<AppState>,
     Json(body): Json<AuthRequest>,
-) -> Result<(StatusCode, Json<AuthResponse>), ApiError> {
+) -> Result<impl axum::response::IntoResponse, ApiError> {
     let email = body.email.trim().to_lowercase();
     if email.is_empty() || !email.contains('@') {
         return Err(ApiError::BadRequest("Invalid email".to_string()));
@@ -1699,10 +1782,11 @@ async fn signup(
         .map_err(|e| ApiError::Internal(format!("DB error: {e}")))?;
 
     // Create a default store for the new user
-    let store_name = body.store_name
+    let store_name = body
+        .store_name
         .as_deref()
         .filter(|s| !s.trim().is_empty())
-        .unwrap_or_else(|| "")
+        .unwrap_or("")
         .to_string();
     let store_name = if store_name.is_empty() {
         format!("{}のお店", email.split('@').next().unwrap_or("user"))
@@ -1740,13 +1824,33 @@ async fn signup(
     let token = auth::issue_token(&user_id, &state.jwt_secret.0)
         .map_err(|e| ApiError::Internal(format!("Token error: {e}")))?;
 
+    let cookie = auth::session_cookie_value(&token);
+    let mut headers = axum::http::HeaderMap::new();
+    headers.insert(
+        axum::http::header::SET_COOKIE,
+        axum::http::HeaderValue::from_str(&cookie)
+            .map_err(|e| ApiError::Internal(format!("Cookie error: {e}")))?,
+    );
+
     Ok((
         StatusCode::CREATED,
+        headers,
         Json(AuthResponse {
             token,
             user_id: user_id.to_string(),
         }),
     ))
+}
+
+/// POST /api/v1/auth/logout
+/// Clears the session cookie.
+async fn logout() -> impl axum::response::IntoResponse {
+    let mut headers = axum::http::HeaderMap::new();
+    headers.insert(
+        axum::http::header::SET_COOKIE,
+        axum::http::HeaderValue::from_static(auth::clear_session_cookie_value()),
+    );
+    (headers, Json(serde_json::json!({ "ok": true })))
 }
 
 /// GET /api/v1/auth/me
@@ -1787,7 +1891,7 @@ async fn auth_me(
 async fn login(
     State(state): State<AppState>,
     Json(body): Json<AuthRequest>,
-) -> Result<Json<AuthResponse>, ApiError> {
+) -> Result<impl axum::response::IntoResponse, ApiError> {
     let email = body.email.trim().to_lowercase();
 
     let user = db::find_user_by_email(&state.pool, &email)
@@ -1803,10 +1907,21 @@ async fn login(
     let token = auth::issue_token(&user.id, &state.jwt_secret.0)
         .map_err(|e| ApiError::Internal(format!("Token error: {e}")))?;
 
-    Ok(Json(AuthResponse {
-        token,
-        user_id: user.id.to_string(),
-    }))
+    let cookie = auth::session_cookie_value(&token);
+    let mut headers = axum::http::HeaderMap::new();
+    headers.insert(
+        axum::http::header::SET_COOKIE,
+        axum::http::HeaderValue::from_str(&cookie)
+            .map_err(|e| ApiError::Internal(format!("Cookie error: {e}")))?,
+    );
+
+    Ok((
+        headers,
+        Json(AuthResponse {
+            token,
+            user_id: user.id.to_string(),
+        }),
+    ))
 }
 
 // ---------------------------------------------------------------------------
@@ -1980,7 +2095,8 @@ fn build_subscription_activated_email(store_name: &str, tier: &str) -> String {
         "enterprise" => "エンタープライズ",
         _ => "スターター",
     };
-    format!(r#"<div style="font-family:sans-serif;max-width:600px;margin:0 auto;color:#1e293b">
+    format!(
+        r#"<div style="font-family:sans-serif;max-width:600px;margin:0 auto;color:#1e293b">
 <div style="background:linear-gradient(135deg,#4f46e5,#7c3aed);padding:32px;border-radius:12px 12px 0 0;text-align:center">
   <h1 style="color:white;margin:0;font-size:28px;font-weight:700">ミセバンAI</h1>
   <p style="color:rgba(255,255,255,0.85);margin:8px 0 0">AI店舗分析サービス</p>
@@ -1998,11 +2114,15 @@ fn build_subscription_activated_email(store_name: &str, tier: &str) -> String {
   <p style="font-size:13px;color:#64748b">ご不明な点は <a href="mailto:info@misebanai.com" style="color:#4f46e5">info@misebanai.com</a> までご連絡ください。</p>
 </div>
 <div style="padding:16px;text-align:center;font-size:12px;color:#94a3b8">© 2026 ミセバンAI. <a href="https://misebanai.com/privacy.html" style="color:#94a3b8">プライバシーポリシー</a></div>
-</div>"#, store_name = store_name, tier_label = tier_label)
+</div>"#,
+        store_name = store_name,
+        tier_label = tier_label
+    )
 }
 
 fn build_subscription_cancelled_email(store_name: &str) -> String {
-    format!(r#"<div style="font-family:sans-serif;max-width:600px;margin:0 auto;color:#1e293b">
+    format!(
+        r#"<div style="font-family:sans-serif;max-width:600px;margin:0 auto;color:#1e293b">
 <div style="background:linear-gradient(135deg,#4f46e5,#7c3aed);padding:32px;border-radius:12px 12px 0 0;text-align:center">
   <h1 style="color:white;margin:0;font-size:28px;font-weight:700">ミセバンAI</h1>
   <p style="color:rgba(255,255,255,0.85);margin:8px 0 0">AI店舗分析サービス</p>
@@ -2016,11 +2136,14 @@ fn build_subscription_cancelled_email(store_name: &str) -> String {
   <p style="font-size:14px;color:#475569">解約のお心当たりがない場合は <a href="mailto:info@misebanai.com" style="color:#4f46e5">info@misebanai.com</a> までご連絡ください。</p>
 </div>
 <div style="padding:16px;text-align:center;font-size:12px;color:#94a3b8">© 2026 ミセバンAI. <a href="https://misebanai.com/privacy.html" style="color:#94a3b8">プライバシーポリシー</a></div>
-</div>"#, store_name = store_name)
+</div>"#,
+        store_name = store_name
+    )
 }
 
 fn build_payment_failed_email(store_name: &str) -> String {
-    format!(r#"<div style="font-family:sans-serif;max-width:600px;margin:0 auto;color:#1e293b">
+    format!(
+        r#"<div style="font-family:sans-serif;max-width:600px;margin:0 auto;color:#1e293b">
 <div style="background:linear-gradient(135deg,#dc2626,#b91c1c);padding:32px;border-radius:12px 12px 0 0;text-align:center">
   <h1 style="color:white;margin:0;font-size:28px;font-weight:700">ミセバンAI</h1>
   <p style="color:rgba(255,255,255,0.85);margin:8px 0 0">AI店舗分析サービス</p>
@@ -2037,11 +2160,14 @@ fn build_payment_failed_email(store_name: &str) -> String {
   <p style="font-size:13px;color:#64748b">ご不明な点は <a href="mailto:info@misebanai.com" style="color:#4f46e5">info@misebanai.com</a> までご連絡ください。</p>
 </div>
 <div style="padding:16px;text-align:center;font-size:12px;color:#94a3b8">© 2026 ミセバンAI. <a href="https://misebanai.com/privacy.html" style="color:#94a3b8">プライバシーポリシー</a></div>
-</div>"#, store_name = store_name)
+</div>"#,
+        store_name = store_name
+    )
 }
 
 fn build_welcome_email(store_name: &str) -> String {
-    format!(r#"<div style="font-family:sans-serif;max-width:600px;margin:0 auto;color:#1e293b">
+    format!(
+        r#"<div style="font-family:sans-serif;max-width:600px;margin:0 auto;color:#1e293b">
 <div style="background:linear-gradient(135deg,#4f46e5,#7c3aed);padding:32px;border-radius:12px 12px 0 0;text-align:center">
   <h1 style="color:white;margin:0;font-size:28px;font-weight:700">ミセバンAI</h1>
   <p style="color:rgba(255,255,255,0.85);margin:8px 0 0;font-size:14px">AI店舗分析サービス</p>
@@ -2053,9 +2179,9 @@ fn build_welcome_email(store_name: &str) -> String {
   <div style="background:#f8fafc;border-radius:10px;padding:20px;margin:24px 0">
     <h3 style="margin-top:0;font-size:15px;color:#334155">🚀 はじめの3ステップ</h3>
     <ol style="margin:0;padding-left:20px;color:#475569;line-height:2">
-      <li><strong>カメラを接続</strong> — 既存のIPカメラまたはRTSP対応カメラを登録</li>
-      <li><strong>エージェントをインストール</strong> — Raspberry Pi / PC へワンコマンドで導入</li>
-      <li><strong>データを確認</strong> — リアルタイムの来客数・属性分析を確認</li>
+      <li><strong>カメラを登録</strong> — スマホはアプリを入れるだけ。既存の防犯カメラも接続できます</li>
+      <li><strong>AIが自動分析</strong> — 来客数・客層・ピーク時間をリアルタイムで取得</li>
+      <li><strong>LINEに届く</strong> — 毎日の営業レポートがLINEに自動送信されます</li>
     </ol>
   </div>
 
@@ -2078,7 +2204,9 @@ fn build_welcome_email(store_name: &str) -> String {
 <div style="padding:16px;text-align:center;font-size:12px;color:#94a3b8">
   © 2026 ミセバンAI. <a href="https://misebanai.com/privacy.html" style="color:#94a3b8">プライバシーポリシー</a>
 </div>
-</div>"#, store_name = store_name)
+</div>"#,
+        store_name = store_name
+    )
 }
 
 fn build_auto_reply(contact_type: &str, name: &str, company: &str) -> (String, String) {
@@ -2252,7 +2380,9 @@ async fn resolve_store_from_auth(
     if let Some(bearer) = auth_header.and_then(|v| v.strip_prefix("Bearer ")) {
         use jsonwebtoken::{decode, DecodingKey, Validation};
         #[derive(serde::Deserialize)]
-        struct Cl { sub: String }
+        struct Cl {
+            sub: String,
+        }
         let mut val = Validation::new(jsonwebtoken::Algorithm::HS256);
         val.validate_aud = false;
         if let Ok(td) = decode::<Cl>(
@@ -2293,39 +2423,42 @@ async fn receive_snapshot(
     let auth_val = headers
         .get(header::AUTHORIZATION)
         .and_then(|v| v.to_str().ok());
-    let store_id =
-        resolve_store_from_auth(&state, auth_val, q.token.as_deref()).await?;
+    let store_id = resolve_store_from_auth(&state, auth_val, q.token.as_deref()).await?;
 
     // Parse multipart fields
     let mut jpeg_bytes: Option<Vec<u8>> = None;
     let mut camera_id: Option<String> = None;
 
-    while let Some(field) = multipart.next_field().await.map_err(|e| {
-        ApiError::BadRequest(format!("Multipart error: {e}"))
-    })? {
+    while let Some(field) = multipart
+        .next_field()
+        .await
+        .map_err(|e| ApiError::BadRequest(format!("Multipart error: {e}")))?
+    {
         match field.name() {
             Some("image") | Some("snapshot") | Some("file") | Some("picture") => {
-                let data = field.bytes().await.map_err(|e| {
-                    ApiError::BadRequest(format!("Failed to read image: {e}"))
-                })?;
+                let data = field
+                    .bytes()
+                    .await
+                    .map_err(|e| ApiError::BadRequest(format!("Failed to read image: {e}")))?;
                 jpeg_bytes = Some(data.to_vec());
             }
             Some("camera_id") | Some("channel") | Some("deviceSerial") => {
-                let text = field.text().await.map_err(|e| {
-                    ApiError::BadRequest(format!("Failed to read camera_id: {e}"))
-                })?;
+                let text = field
+                    .text()
+                    .await
+                    .map_err(|e| ApiError::BadRequest(format!("Failed to read camera_id: {e}")))?;
                 camera_id = Some(text);
             }
             _ => {}
         }
     }
 
-    let jpeg = jpeg_bytes
-        .ok_or_else(|| ApiError::BadRequest("Missing image field".to_string()))?;
+    let jpeg = jpeg_bytes.ok_or_else(|| ApiError::BadRequest("Missing image field".to_string()))?;
     let cam_id = camera_id
         .or_else(|| q.camera_id.clone())
         .or_else(|| {
-            headers.get("x-camera-id")
+            headers
+                .get("x-camera-id")
                 .and_then(|v| v.to_str().ok())
                 .map(|s| s.to_string())
         })
@@ -2346,7 +2479,9 @@ async fn snapshot_process(
         return Err(ApiError::BadRequest("Empty image data".to_string()));
     }
     if jpeg_bytes.len() > MAX_JPEG {
-        return Err(ApiError::BadRequest("Image too large (max 10MB)".to_string()));
+        return Err(ApiError::BadRequest(
+            "Image too large (max 10MB)".to_string(),
+        ));
     }
     if camera_id.is_empty() || camera_id.len() > 128 {
         return Err(ApiError::BadRequest("Invalid camera_id".to_string()));
@@ -2354,41 +2489,84 @@ async fn snapshot_process(
 
     info!(store_id = %store_id, camera_id = %camera_id, bytes = jpeg_bytes.len(), "Snapshot received");
 
+    // Resolve the camera FIRST, scoped to this store: a UUID is only
+    // accepted if the camera belongs to the authenticated store; a name is
+    // resolved within the store or auto-registered on first snapshot.
+    let camera_uuid = match Uuid::parse_str(&camera_id) {
+        Ok(uuid) => db::find_owned_camera(&state.pool, &store_id, &uuid)
+            .await
+            .ok_or_else(|| {
+                ApiError::NotFound(format!("Camera {camera_id} not found in this store"))
+            })?,
+        Err(_) => match db::find_camera_by_name(&state.pool, &store_id, &camera_id).await {
+            Some(uuid) => uuid,
+            None => {
+                let uuid = db::register_camera(&state.pool, &store_id, &camera_id)
+                    .await
+                    .map_err(|e| {
+                        ApiError::Database(format!("failed to auto-register camera: {e}"))
+                    })?;
+                info!(camera_id = %camera_id, "Auto-registered camera");
+                uuid
+            }
+        },
+    };
+
     let frame = shared::FrameData {
         camera_id: camera_id.clone(),
         timestamp: chrono::Utc::now(),
         jpeg_bytes,
-        resolution: shared::Resolution { width: 0, height: 0 },
-    };
-    let result = ai::analyze_frame(&frame).await;
-
-    let camera_uuid = match Uuid::parse_str(&camera_id) {
-        Ok(uuid) => Some(uuid),
-        Err(_) => match db::find_camera_by_name(&state.pool, &store_id, &camera_id).await {
-            Some(uuid) => Some(uuid),
-            None => match db::register_camera(&state.pool, &store_id, &camera_id).await {
-                Ok(uuid) => { info!(camera_id = %camera_id, "Auto-registered camera"); Some(uuid) }
-                Err(e) => { warn!(error = %e, "Camera auto-register failed (non-fatal)"); None }
-            },
+        resolution: shared::Resolution {
+            width: 0,
+            height: 0,
         },
     };
+    // A failed analysis is not a zero-visit: mark the camera as error and
+    // return 503 so the caller retries instead of persisting a fake "0".
+    let result = match ai::analyze_frame_checked(&frame).await {
+        Ok(r) => r,
+        Err(e) => {
+            warn!(store_id = %store_id, camera_id = %camera_id, error = %e, "Snapshot analysis failed; not counted");
+            mark_camera_analysis_error(state, &camera_uuid).await?;
+            return Err(ApiError::ServiceUnavailable(format!(
+                "AI analysis failed: {e}. The snapshot was not counted."
+            )));
+        }
+    };
 
-    if let Some(ref cam_uuid) = camera_uuid {
-        let demo_json = serde_json::to_value(&result.demographics).unwrap_or_default();
-        let zones_json = serde_json::to_value(&result.zones).unwrap_or_default();
-        if let Err(e) = db::insert_visitor_count(&state.pool, cam_uuid, result.people_count as i32, demo_json, zones_json).await {
-            warn!(error = %e, "Failed to persist snapshot count (non-fatal)");
-        }
-        for pa in &alerts::evaluate_alerts(&result) {
-            let _ = alerts::insert_alert(&state.pool, &store_id, cam_uuid, &pa.alert_type, pa.confidence, &pa.message).await;
-        }
+    // Persist the count. A DB failure is a request failure.
+    let demo_json = serde_json::to_value(&result.demographics).unwrap_or_default();
+    let zones_json = serde_json::to_value(&result.zones).unwrap_or_default();
+    db::insert_visitor_count(
+        &state.pool,
+        &camera_uuid,
+        result.people_count as i32,
+        demo_json,
+        zones_json,
+    )
+    .await
+    .map_err(|e| ApiError::Database(format!("failed to persist snapshot count: {e}")))?;
+
+    for pa in &alerts::evaluate_alerts(&result) {
+        let _ = alerts::insert_alert(
+            &state.pool,
+            &store_id,
+            &camera_uuid,
+            &pa.alert_type,
+            pa.confidence,
+            &pa.message,
+        )
+        .await;
     }
 
-    Ok((StatusCode::OK, Json(serde_json::json!({
-        "camera_id": camera_id,
-        "people_count": result.people_count,
-        "timestamp": result.timestamp,
-    }))))
+    Ok((
+        StatusCode::OK,
+        Json(serde_json::json!({
+            "camera_id": camera_id,
+            "people_count": result.people_count,
+            "timestamp": result.timestamp,
+        })),
+    ))
 }
 
 // ---------------------------------------------------------------------------
@@ -2431,10 +2609,9 @@ async fn create_token(
         .await
         .ok_or_else(|| ApiError::NotFound("Store not found".to_string()))?;
 
-    let (raw_token, row) =
-        db::create_api_token(&state.pool, &store.id, body.name.as_deref())
-            .await
-            .map_err(|e| ApiError::Database(e.to_string()))?;
+    let (raw_token, row) = db::create_api_token(&state.pool, &store.id, body.name.as_deref())
+        .await
+        .map_err(|e| ApiError::Database(e.to_string()))?;
 
     Ok((
         StatusCode::CREATED,
@@ -2521,8 +2698,14 @@ fn build_router(state: AppState) -> Router {
         .route("/api/v1/stores/me/stats/weekly", get(get_weekly_stats))
         .route("/api/v1/stores/me/stats/hourly", get(get_hourly_stats))
         .route("/api/v1/stores/me/daily", get(get_my_daily_report))
-        .route("/api/v1/stores/me/cameras", get(get_my_cameras).post(create_my_camera))
-        .route("/api/v1/stores/me/cameras/:camera_id", delete(delete_my_camera))
+        .route(
+            "/api/v1/stores/me/cameras",
+            get(get_my_cameras).post(create_my_camera),
+        )
+        .route(
+            "/api/v1/stores/me/cameras/:camera_id",
+            delete(delete_my_camera),
+        )
         .route("/api/v1/agent/config", get(agent_config))
         .route("/api/v1/agent/heartbeat", post(agent_heartbeat))
         .route("/api/v1/stores/me/usage", get(get_my_usage))
@@ -2540,7 +2723,10 @@ fn build_router(state: AppState) -> Router {
         // Camera snapshot upload (HTTP POST — no edge device required)
         .route("/api/v1/camera/snapshot", post(receive_snapshot))
         // API token management (for cameras that can't use JWT)
-        .route("/api/v1/stores/me/tokens", post(create_token).get(list_tokens))
+        .route(
+            "/api/v1/stores/me/tokens",
+            post(create_token).get(list_tokens),
+        )
         .route("/api/v1/stores/me/tokens/:token_id", delete(delete_token))
         // Pairing routes
         .route("/api/v1/pair", post(handle_pair)) // public (agent setup)
@@ -2551,9 +2737,13 @@ fn build_router(state: AppState) -> Router {
         .route("/api/v1/auth/verify-otp", post(verify_otp))
         .route("/api/v1/auth/signup", post(signup))
         .route("/api/v1/auth/login", post(login))
+        .route("/api/v1/auth/logout", post(logout))
         .route("/api/v1/auth/me", get(auth_me))
         // Public routes
         .route("/api/v1/health", get(health_check))
+        // Standard aliases so /health and /healthz both work (verify.sh convention)
+        .route("/health", get(health_check))
+        .route("/healthz", get(health_check))
         .route("/api/v1/config", get(get_public_config))
         .route("/api/v1/pricing", get(get_pricing))
         .route("/api/v1/contact", post(handle_contact))
@@ -2648,6 +2838,7 @@ async fn main() {
         rate_limiter: plan_guard::RateLimiter::new(),
         trackers: Arc::new(tokio::sync::Mutex::new(HashMap::new())),
         gemini_key,
+        auth_rate_limiter: Arc::new(tokio::sync::Mutex::new(HashMap::new())),
     };
 
     let app = build_router(state);
@@ -2691,6 +2882,7 @@ mod tests {
             rate_limiter: plan_guard::RateLimiter::new(),
             trackers: Arc::new(tokio::sync::Mutex::new(HashMap::new())),
             gemini_key: None,
+            auth_rate_limiter: Arc::new(tokio::sync::Mutex::new(HashMap::new())),
         };
 
         build_router(state)
@@ -3032,6 +3224,75 @@ mod tests {
             .uri("/api/v1/pair/generate")
             .method("POST")
             .body(axum::body::Body::empty())
+            .unwrap();
+
+        let response = app.oneshot(request).await.unwrap();
+        assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
+    }
+
+    #[tokio::test]
+    async fn frames_requires_auth() {
+        let app = test_app();
+
+        let request = Request::builder()
+            .uri("/api/v1/frames")
+            .method("POST")
+            .header("content-type", "application/json")
+            .body(axum::body::Body::from(
+                r#"{"camera_id":"cam-1","timestamp":"2026-09-20T00:00:00Z","jpeg_bytes":"/9j/4AAQ","resolution":{"width":640,"height":480}}"#,
+            ))
+            .unwrap();
+
+        let response = app.oneshot(request).await.unwrap();
+        assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
+    }
+
+    #[tokio::test]
+    async fn frames_rejects_oversized_or_empty_payload_before_db() {
+        // Validation happens before any store/camera lookup, so these must
+        // fail with 403 even with a (fake) JWT and no database.
+        let app = test_app();
+        let user_id = uuid::Uuid::new_v4();
+        let token =
+            auth::issue_token(&user_id, "test-secret-for-integration-tests").expect("token");
+
+        // Empty frame data -> 403 (rejected as invalid, never counted).
+        let request = Request::builder()
+            .uri("/api/v1/frames")
+            .method("POST")
+            .header("content-type", "application/json")
+            .header("authorization", format!("Bearer {token}"))
+            .body(axum::body::Body::from(
+                r#"{"camera_id":"cam-1","timestamp":"2026-09-20T00:00:00Z","jpeg_bytes":"","resolution":{"width":640,"height":480}}"#,
+            ))
+            .unwrap();
+        let response = app.oneshot(request).await.unwrap();
+        assert_eq!(response.status(), StatusCode::FORBIDDEN);
+
+        // Invalid camera_id (empty) -> 403.
+        let app = test_app();
+        let request = Request::builder()
+            .uri("/api/v1/frames")
+            .method("POST")
+            .header("content-type", "application/json")
+            .header("authorization", format!("Bearer {token}"))
+            .body(axum::body::Body::from(
+                r#"{"camera_id":"","timestamp":"2026-09-20T00:00:00Z","jpeg_bytes":"/9j/4AAQ","resolution":{"width":640,"height":480}}"#,
+            ))
+            .unwrap();
+        let response = app.oneshot(request).await.unwrap();
+        assert_eq!(response.status(), StatusCode::FORBIDDEN);
+    }
+
+    #[tokio::test]
+    async fn snapshot_requires_auth() {
+        let app = test_app();
+
+        let request = Request::builder()
+            .uri("/api/v1/camera/snapshot")
+            .method("POST")
+            .header("content-type", "multipart/form-data; boundary=X")
+            .body(axum::body::Body::from("--X--"))
             .unwrap();
 
         let response = app.oneshot(request).await.unwrap();
