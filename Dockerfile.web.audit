@@ -3,3 +3,5 @@
 FROM registry.fly.io/miseban-ai@sha256:4a2b6926e638fea37675b1a488961adb78142c919338058cef7a95eec051088a
 COPY web/dashboard/index.html /usr/share/nginx/html/dashboard/index.html
 COPY web/landing/privacy.html /usr/share/nginx/html/privacy.html
+COPY nginx.conf /etc/nginx/nginx.conf
+RUN nginx -t
