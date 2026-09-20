@@ -168,9 +168,22 @@ async fn receive_frame(
 
     // Run AI inference: detect people (sync ONNX) + track + demographics.
     let jpeg = frame.jpeg_bytes.clone();
-    let detections = tokio::task::spawn_blocking(move || ai::detect_people(&jpeg))
-        .await
-        .unwrap_or_default();
+    let detections_outcome = tokio::task::spawn_blocking(move || ai::detect_people(&jpeg)).await;
+    let analysis_failed = !matches!(&detections_outcome, Ok(Ok(_)));
+    match &detections_outcome {
+        Err(e) => warn!(
+            camera_id = %frame.camera_id,
+            error = %e,
+            "AI analysis task failed (join error); frame will not be counted"
+        ),
+        Ok(Err(e)) => warn!(
+            camera_id = %frame.camera_id,
+            error = %e,
+            "AI analysis failed; frame will not be counted"
+        ),
+        Ok(Ok(_)) => {}
+    }
+    let detections = detections_outcome.unwrap_or_default();
 
     // Update per-camera tracker (lock held only for sync update, not during Gemini call).
     let (people_count, zones, tracker_out) = {
@@ -247,24 +260,43 @@ async fn receive_frame(
     };
 
     if let Some(ref cam_id) = camera_uuid {
-        let demographics_json =
-            serde_json::to_value(&result.demographics).unwrap_or(serde_json::Value::Null);
-        let zones_json = serde_json::to_value(&result.zones).unwrap_or(serde_json::Value::Null);
+        if analysis_failed {
+            // Analysis failure is not a zero-visit: skip the visitor_counts
+            // insert so a broken camera never masquerades as "0 customers".
+            // Record the failure on the existing status column instead.
+            if let Err(e) = sqlx::query(
+                "UPDATE cameras SET last_seen_at = now(), status = 'error' WHERE id = $1",
+            )
+            .bind(cam_id)
+            .execute(&state.pool)
+            .await
+            {
+                warn!(
+                    camera_id = %result.camera_id,
+                    error = %e,
+                    "Failed to record analysis failure (non-fatal)"
+                );
+            }
+        } else {
+            let demographics_json =
+                serde_json::to_value(&result.demographics).unwrap_or(serde_json::Value::Null);
+            let zones_json = serde_json::to_value(&result.zones).unwrap_or(serde_json::Value::Null);
 
-        if let Err(e) = db::insert_visitor_count(
-            &state.pool,
-            cam_id,
-            result.people_count as i32,
-            demographics_json,
-            zones_json,
-        )
-        .await
-        {
-            warn!(
-                camera_id = %result.camera_id,
-                error = %e,
-                "Failed to persist visitor count (non-fatal)"
-            );
+            if let Err(e) = db::insert_visitor_count(
+                &state.pool,
+                cam_id,
+                result.people_count as i32,
+                demographics_json,
+                zones_json,
+            )
+            .await
+            {
+                warn!(
+                    camera_id = %result.camera_id,
+                    error = %e,
+                    "Failed to persist visitor count (non-fatal)"
+                );
+            }
         }
     }
 

@@ -26,6 +26,8 @@ pub struct CameraRow {
     pub last_seen_at: Option<chrono::DateTime<Utc>>,
 }
 
+pub use db_health::{compute_camera_health, CameraHealth, CAMERA_OFFLINE_THRESHOLD_MINUTES};
+
 #[derive(Debug, FromRow)]
 #[allow(dead_code)]
 pub struct DailyReportRow {
@@ -150,9 +152,15 @@ pub async fn user_owns_store(pool: &PgPool, owner_id: &Uuid, store_id: &Uuid) ->
 }
 
 /// Query today's aggregate stats from visitor_counts.
+///
+/// Returns `(today_total, cameras_online)` where `cameras_online` counts only
+/// cameras that are actually live: a frame arrived within
+/// [`CAMERA_OFFLINE_THRESHOLD_MINUTES`]. The stored `status` column is never
+/// updated after auto-registration, so counting `status = 'online'` would
+/// report disconnected cameras as online forever.
 pub async fn get_store_stats_db(pool: &PgPool, store_id: &Uuid) -> (i64, i64) {
     // today_total: sum of people_count for today
-    // cameras_online: count of cameras with status = 'online'
+    // cameras_online: cameras seen within the offline threshold
     let today = Utc::now().date_naive();
     let start = today.and_hms_opt(0, 0, 0).expect("valid midnight");
 
@@ -170,10 +178,15 @@ pub async fn get_store_stats_db(pool: &PgPool, store_id: &Uuid) -> (i64, i64) {
 
     let today_total = total_row.and_then(|r| r.0).unwrap_or(0);
 
+    let threshold = format!("{CAMERA_OFFLINE_THRESHOLD_MINUTES} minutes");
     let cameras_row: Option<(i64,)> = sqlx::query_as(
-        "SELECT COUNT(*)::bigint FROM cameras WHERE store_id = $1 AND status = 'online'",
+        "SELECT COUNT(*)::bigint FROM cameras \
+         WHERE store_id = $1 \
+           AND last_seen_at IS NOT NULL \
+           AND last_seen_at >= now() - $2::interval",
     )
     .bind(store_id)
+    .bind(threshold)
     .fetch_optional(pool)
     .await
     .ok()
@@ -220,6 +233,13 @@ pub async fn insert_visitor_count(
     .bind(&zones_json)
     .execute(pool)
     .await?;
+
+    // Mark the camera as live: a successfully analysed frame proves the
+    // camera/agent path is working and clears any previous analysis error.
+    sqlx::query("UPDATE cameras SET last_seen_at = now(), status = 'online' WHERE id = $1")
+        .bind(camera_id)
+        .execute(pool)
+        .await?;
 
     Ok(())
 }
@@ -319,7 +339,8 @@ pub async fn register_camera(
     name: &str,
 ) -> Result<Uuid, sqlx::Error> {
     let row: (Uuid,) = sqlx::query_as(
-        "INSERT INTO cameras (store_id, name, status) VALUES ($1, $2, 'online') RETURNING id",
+        "INSERT INTO cameras (store_id, name, status, last_seen_at) \
+         VALUES ($1, $2, 'online', now()) RETURNING id",
     )
     .bind(store_id)
     .bind(name)
@@ -385,9 +406,9 @@ fn rand_u32() -> u32 {
     ns.wrapping_mul(2654435761)
 }
 
-/// List cameras for a given store.
+/// List cameras for a given store with derived health status.
 pub async fn get_cameras(pool: &PgPool, store_id: &Uuid) -> Vec<CameraRow> {
-    sqlx::query_as::<_, CameraRow>(
+    let mut rows = sqlx::query_as::<_, CameraRow>(
         "SELECT id, store_id, name, status, last_seen_at \
          FROM cameras \
          WHERE store_id = $1 \
@@ -396,5 +417,12 @@ pub async fn get_cameras(pool: &PgPool, store_id: &Uuid) -> Vec<CameraRow> {
     .bind(store_id)
     .fetch_all(pool)
     .await
-    .unwrap_or_default()
+    .unwrap_or_default();
+
+    let now = Utc::now();
+    for row in &mut rows {
+        let health = compute_camera_health(&row.status, row.last_seen_at, now);
+        row.status = health.as_str().to_string();
+    }
+    rows
 }

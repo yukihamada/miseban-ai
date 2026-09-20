@@ -671,6 +671,7 @@ body {
 
 .camera-status-badge.online { background: rgba(34,197,94,.15); color: var(--green-500); }
 .camera-status-badge.offline { background: rgba(239,68,68,.15); color: var(--red-500); }
+.camera-status-badge.error { background: rgba(245,158,11,.15); color: #d97706; }
 
 .camera-status-dot {
   width: 6px;
@@ -680,6 +681,7 @@ body {
 
 .camera-status-badge.online .camera-status-dot { background: var(--green-500); }
 .camera-status-badge.offline .camera-status-dot { background: var(--red-500); }
+.camera-status-badge.error .camera-status-dot { background: #d97706; }
 
 .camera-info {
   padding: 1rem 1.25rem;
@@ -2826,12 +2828,17 @@ function updateOverviewCards() {
     camTotalSpan.textContent = ` / ${DEMO_DATA.camerasTotal}`;
   }
 
-  // Update camera offline badge
+  // Update camera status badge
   const camStatusBadge = document.getElementById('change-cameras');
-  const offlineCount = (DEMO_DATA.camerasTotal || 0) - (DEMO_DATA.camerasOnline || 0);
+  const offlineCount = DEMO_DATA.cameras.filter(c => c.status === 'offline').length
+    || ((DEMO_DATA.camerasTotal || 0) - (DEMO_DATA.camerasOnline || 0));
+  const errorCount = DEMO_DATA.cameras.filter(c => c.status === 'error').length;
   if (camStatusBadge) {
-    if (offlineCount > 0) {
-      camStatusBadge.textContent = `${offlineCount}台オフライン`;
+    if (offlineCount > 0 || errorCount > 0) {
+      const parts = [];
+      if (offlineCount > 0) parts.push(`${offlineCount}台オフライン`);
+      if (errorCount > 0) parts.push(`${errorCount}台解析エラー`);
+      camStatusBadge.textContent = parts.join('・');
       camStatusBadge.style.background = 'var(--red-50)';
       camStatusBadge.style.color = 'var(--red-600)';
     } else if (DEMO_DATA.camerasTotal > 0) {
@@ -3274,12 +3281,13 @@ async function renderCameras() {
   }
 
   // Render from DEMO_DATA (now potentially updated from API)
+  const statusLabel = (s) => s === 'online' ? 'オンライン' : s === 'error' ? '解析エラー' : 'オフライン';
   grid.innerHTML = DEMO_DATA.cameras.map(cam => `
     <div class="camera-card">
       <div class="camera-preview">
         <span class="camera-status-badge ${cam.status}">
           <span class="camera-status-dot"></span>
-          ${cam.status === 'online' ? 'オンライン' : 'オフライン'}
+          ${statusLabel(cam.status)}
         </span>
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1" stroke="currentColor" width="48" height="48" style="opacity:0.3"><path stroke-linecap="round" stroke-linejoin="round" d="m15.75 10.5 4.72-4.72a.75.75 0 0 1 1.28.53v11.38a.75.75 0 0 1-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 0 0 2.25-2.25v-9a2.25 2.25 0 0 0-2.25-2.25h-9A2.25 2.25 0 0 0 2.25 7.5v9a2.25 2.25 0 0 0 2.25 2.25Z"/></svg>
       </div>
@@ -3302,7 +3310,7 @@ async function renderCameras() {
 
   // Update camera status icon color on overview
   const icon = $('#camera-status-icon');
-  const hasOffline = DEMO_DATA.cameras.some(c => c.status === 'offline');
+  const hasOffline = DEMO_DATA.cameras.some(c => c.status === 'offline' || c.status === 'error');
   icon.className = 'stat-card-icon ' + (hasOffline ? 'red' : 'green');
 }
 
