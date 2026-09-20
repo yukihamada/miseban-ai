@@ -2,7 +2,7 @@ app = "miseban-ai"
 primary_region = "nrt"
 
 [build]
-  dockerfile = "Dockerfile.web"
+  dockerfile = "Dockerfile.web.audit"
 
 [http_service]
   internal_port = 8080
