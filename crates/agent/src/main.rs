@@ -603,7 +603,7 @@ fn print_banner(config: &AgentConfig, dry_run: bool, buffer_path: &Path, pending
     println!("  Endpoint : {}", config.server.endpoint);
     println!(
         "  Token    : {}...",
-        &config.server.token.get(..8).unwrap_or("****")
+        config.server.token.get(..8).unwrap_or("****")
     );
     println!("  Dry-run  : {}", dry_run);
     println!("  Cameras  : {}", config.cameras.len());

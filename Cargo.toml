@@ -4,6 +4,7 @@ members = [
     "crates/agent",
     "crates/api",
     "crates/ai",
+    "crates/db-health",
     "crates/shared",
 ]
 

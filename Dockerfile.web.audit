@@ -1,0 +1,5 @@
+# Preserve the observed live site's assets while replacing only audited pages.
+# Base digest measured with `fly status -a miseban-ai` on 2026-09-20.
+FROM registry.fly.io/miseban-ai@sha256:4a2b6926e638fea37675b1a488961adb78142c919338058cef7a95eec051088a
+COPY web/dashboard/index.html /usr/share/nginx/html/dashboard/index.html
+COPY web/landing/privacy.html /usr/share/nginx/html/privacy.html

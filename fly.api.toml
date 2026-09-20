@@ -4,16 +4,20 @@ primary_region = "nrt"
 [build]
   dockerfile = "Dockerfile.api"
 
+[processes]
+  app = "/usr/local/bin/docker-entrypoint.sh"
+
 [env]
   PORT = "3000"
   RUST_LOG = "info"
 
 [http_service]
   internal_port = 3000
+  processes = ["app"]
   force_https = true
   auto_stop_machines = true
   auto_start_machines = true
-  min_machines_running = 0
+  min_machines_running = 1
 
   [[http_service.checks]]
     interval = "30s"

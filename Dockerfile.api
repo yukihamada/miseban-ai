@@ -1,49 +1,32 @@
 # ============================================================================
 # MisebanAI API Server — Docker Image
-# Multi-stage build: Rust 1.86 → model export → minimal runtime
+# Multi-stage build: Rust 1.94 + YOLOv8n ONNX → minimal runtime
 # ============================================================================
 
 # Stage 1: Build
-FROM rust:1.86-slim-bookworm AS builder
+FROM rust:1.94-slim-bookworm AS builder
 
-RUN apt-get update && apt-get install -y pkg-config libssl-dev && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y pkg-config libssl-dev curl libstdc++-12-dev && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 COPY Cargo.toml Cargo.lock rust-toolchain.toml ./
 COPY crates/ crates/
 
-# Build only the API binary in release mode
-RUN cargo build --release --package api
+# Build the API binary with real ONNX inference
+RUN cargo build --locked --release --package api
 
-# Stage 2: Download and export YOLOv8n ONNX model
-# The API currently compiles with the "mock" feature by default, but when
-# switching to real inference the model will already be in place.
-FROM python:3.11-slim-bookworm AS model
-
-RUN pip install --no-cache-dir ultralytics
-
-WORKDIR /models
-RUN python3 -c "\
-from ultralytics import YOLO; \
-model = YOLO('yolov8n.pt'); \
-model.export(format='onnx', imgsz=640, simplify=True)" \
-    && mv yolov8n.onnx /models/yolov8n.onnx \
-    && rm -f yolov8n.pt
-
-# Stage 3: Runtime
+# Stage 2: Runtime
 FROM debian:bookworm-slim
 
-RUN apt-get update && apt-get install -y ca-certificates libssl3 && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y ca-certificates libssl3 curl && rm -rf /var/lib/apt/lists/*
 
 COPY --from=builder /app/target/release/api /usr/local/bin/miseban-api
-
-# Copy the ONNX model from model stage
-COPY --from=model /models/yolov8n.onnx /app/models/yolov8n.onnx
+COPY scripts/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh && mkdir -p /models
 
 ENV PORT=3000
 ENV RUST_LOG=info
-ENV MISEBAN_MODEL_PATH=/app/models/yolov8n.onnx
-
+ENV MISEBAN_MODEL_PATH=/models/yolov8n.onnx
 EXPOSE 3000
 
-CMD ["miseban-api"]
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]

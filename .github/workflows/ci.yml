@@ -29,6 +29,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
@@ -49,11 +51,10 @@ jobs:
 
       # cargo-deny: check advisories and licenses
       - name: Install cargo-deny
-        run: cargo install cargo-deny@0.18.3 --locked
+        run: cargo install cargo-deny@0.20.2 --locked
 
       - name: cargo deny check advisories
         run: cargo deny check advisories
-        continue-on-error: true  # CVSS 4.0 entries in advisory-db not supported by 0.18.x
 
       - name: cargo deny check licenses
         run: cargo deny check licenses
@@ -83,7 +84,7 @@ jobs:
 
       - name: Upload Trivy SARIF
         uses: github/codeql-action/upload-sarif@v3
-        if: always()
+        if: always() && hashFiles('trivy-fs-results.sarif') != ''
         with:
           sarif_file: "trivy-fs-results.sarif"
 
@@ -185,10 +186,17 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # Build the Docker image
+      # Scan the same pinned live-image overlay that deployment publishes.
+      - name: Authenticate to Fly registry
+        uses: docker/login-action@v3
+        with:
+          registry: registry.fly.io
+          username: x
+          password: ${{ secrets.FLY_API_TOKEN }}
+
       - name: Build Docker image
         run: |
-          docker build -f Dockerfile.web -t ${{ env.IMAGE_NAME }}:ci-${{ github.sha }} .
+          docker build -f Dockerfile.web.audit -t ${{ env.IMAGE_NAME }}:ci-${{ github.sha }} .
 
       # Trivy: scan container image for vulnerabilities
       - name: Trivy image scan
@@ -201,7 +209,7 @@ jobs:
 
       - name: Upload Trivy image SARIF
         uses: github/codeql-action/upload-sarif@v3
-        if: always()
+        if: always() && hashFiles('trivy-image-results.sarif') != ''
         with:
           sarif_file: "trivy-image-results.sarif"
 
